@@ -1,0 +1,88 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F6-001
+title: Define FixPhone API Contract and ApiBlueprint reuse plan
+objective: Define the v1 REST operation inventory and cross-cutting API contracts, then evaluate ApiBlueprint capabilities against approved FixPhone architecture using REUSE/ADAPT/EXCLUDE/MISSING.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: 3d7387f665392c873cd1e99aba874339934d5531
+  working_branch: blueprint/fixphone-api-contract-001
+  head_sha: null
+  pull_request: null
+source:
+  feature: FixPhone API Contract Design
+  requirements:
+    - NFR-016
+    - FR-ADM-001
+    - FR-INV-008
+    - FR-SAL-004
+    - FR-ML-001
+    - FR-META-001
+    - FR-WA-001
+  business_rules:
+    - Architecture Ready must be approved before API implementation begins.
+    - API contracts are authoritative for all API-backed clients.
+    - ApiBlueprint is a reuse source, not a requirement source.
+    - No provider-specific capability may be invented beyond verified contract intent.
+  acceptance_criteria:
+    - AC-API-001
+    - AC-API-002
+    - AC-API-003
+scope:
+  in:
+    - API scope
+    - endpoint inventory
+    - auth contract
+    - permission matrix
+    - audit-event mapping
+    - idempotency matrix
+    - contract traceability
+    - ApiBlueprint capability review
+  out:
+    - Laravel implementation
+    - migrations
+    - validated OpenAPI executable contract
+    - Postman executable collection
+    - Web/Android/iOS implementation
+owner_agent: architect
+required_agents:
+  - orchestrator
+  - analyst
+  - planner
+  - architect
+  - backend
+  - security
+  - documentation
+  - auditor
+optional_agents:
+  - database
+not_applicable_agents:
+  - frontend
+  - qa
+dependencies:
+  - FIX-F5-001
+implementation_constraints:
+  - do not import ApiBlueprint code in this task
+  - keep operationIds stable after approval
+  - preserve backend authorization authority
+  - document idempotency for duplicate-risk commands
+expected_outputs:
+  - docs/api/FIXPHONE_API_CONTRACT_001.md
+  - docs/api/FIXPHONE_APIBLUEPRINT_REUSE_001.md
+  - updated Blueprint status
+  - updated orchestration
+validation:
+  build: not_required
+  tests: not_required
+  visual: not_required
+  security: required
+  notes:
+    - Audit checks API completeness, authorization, idempotency and phase boundaries.
+risks:
+  - id: R-API-CONTRACT-DRIFT
+    description: Implementation could drift from approved operation inventory.
+    probability: MEDIUM
+    impact: HIGH
+    mitigation: OpenAPI generation/validation and operation-level traceability in following phases.
+checkpoint: Every API Contract Ready check has explicit reviewable evidence.
+exit_gate: api_contract_ready
