@@ -12,8 +12,8 @@ phases:
     note: v1 operation inventory and ApiBlueprint capability review approved and merged in PR #7.
   api_implementation:
     status: IN_PROGRESS
-    progress: 15
-    note: F7A foundation complete; F7B authentication vertical slice implemented and awaiting review.
+    progress: 22
+    note: F7A foundation and F7B authentication are merged; F7C RBAC/IAM implementation is in review.
   openapi_validation: {status: NOT_STARTED, progress: 0}
   postman_contract: {status: NOT_STARTED, progress: 0}
   api_qa: {status: NOT_STARTED, progress: 0}
