@@ -1,19 +1,19 @@
 schema_version: agent-protocol-proposal-1
 task:
-  id: FIX-F1-001
-  title: Establish FixPhone product discovery
+  id: FIX-F2-001
+  title: Define FixPhone target product
   classification: DOCUMENTATION_ONLY
 baseline:
   repository: LuisHdezE/FixPhone
   base_branch: main
-  base_sha: 63f029a15dbfe2f507255ae03be885cd68f890ea
-  working_branch: blueprint/fixphone-discovery-001
+  base_sha: f69e51dc99aced3885f750878b60d065da3a8216
+  working_branch: blueprint/fixphone-target-definition-001
   head_sha: null
-  pull_request: 2
+  pull_request: null
 agents:
   orchestrator: COMPLETED
   analyst: COMPLETED
-  planner: NOT_APPLICABLE
+  planner: COMPLETED
   architect: OPTIONAL
   database: NOT_APPLICABLE
   backend: NOT_APPLICABLE
@@ -21,21 +21,21 @@ agents:
   qa: NOT_APPLICABLE
   security: OPTIONAL
   documentation: COMPLETED
-  auditor: COMPLETED
+  auditor: REQUIRED
 execution_order:
   - orchestrator
   - analyst
+  - planner
   - documentation
   - auditor
-current_agent: null
-current_state: READY_FOR_HUMAN_DECISION
+current_agent: auditor
+current_state: READY_FOR_AUDIT
 blocked_by: []
 required_human_decisions:
-  - requirement_decision
+  - scope_change
   - merge_approval
 handoffs: []
 notes:
-  - Discovery is repository-owned but remains subject to product-owner review.
-  - Target Definition and Requirements have not started.
-  - No implementation or Blueprint reuse/import has started.
-  - Audit evidence: .blueprint/agents/evidence/FIX-F1-001-AUDIT.md
+  - Target Definition formalizes TO-BE and completion boundaries only.
+  - Requirements & Domain has not started.
+  - No architecture, API, Blueprint reuse or implementation has started.
