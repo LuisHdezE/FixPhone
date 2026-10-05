@@ -1,0 +1,78 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F0-001
+title: Bootstrap FixPhone as governed Blueprint consumer
+objective: Establish the minimum repository-owned governance artifacts required before Discovery starts.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: 7c233b224224dd451e635057eccb019a95cb01fd
+  working_branch: blueprint/fixphone-consumer-bootstrap
+  head_sha: null
+  pull_request: null
+source:
+  feature: FixPhone Consumer Bootstrap
+  requirements:
+    - BOOTSTRAP-001
+  business_rules:
+    - Stable Blueprint 0.5.4 remains authoritative.
+    - Multi-agent adoption is explicit and proposal-scoped.
+    - Human merge approval is mandatory.
+  acceptance_criteria:
+    - AC-BOOTSTRAP-001
+    - AC-BOOTSTRAP-002
+    - AC-BOOTSTRAP-003
+scope:
+  in:
+    - project manifest
+    - initial Blueprint status
+    - multi-agent adoption decision
+    - orchestration state
+    - repository governance directories
+  out:
+    - Laravel implementation
+    - React implementation
+    - KMP implementation
+    - WebBlueprint capability selection
+    - ApiBlueprint capability selection
+    - product requirements implementation
+owner_agent: orchestrator
+required_agents:
+  - orchestrator
+  - documentation
+  - auditor
+optional_agents:
+  - analyst
+not_applicable_agents:
+  - planner
+  - architect
+  - database
+  - backend
+  - frontend
+  - qa
+  - security
+dependencies: []
+implementation_constraints:
+  - do not claim the multi-agent proposal as stable Blueprint semantics
+  - do not mark product gates PASS
+  - do not add product implementation code
+expected_outputs:
+  - .blueprint/project.yaml
+  - .blueprint/status.yaml
+  - .blueprint/agents/adoption.yaml
+  - .blueprint/agents/orchestration.yaml
+  - docs/adr/ADR-AGENT-001.md
+validation:
+  build: not_required
+  tests: not_required
+  visual: not_required
+  security: not_required
+  notes:
+    - Validation is documentary and structural for this bootstrap increment.
+risks:
+  - id: R-BOOTSTRAP-PROPOSAL
+    description: Proposal-stage multi-agent semantics could be mistaken for stable Blueprint rules.
+    probability: MEDIUM
+    impact: HIGH
+    mitigation: Record stable and proposal provenance separately and forbid automatic consumer upgrade.
+checkpoint: FixPhone repository is ready to enter governed Greenfield Discovery.
+exit_gate: READY_FOR_AUDIT
