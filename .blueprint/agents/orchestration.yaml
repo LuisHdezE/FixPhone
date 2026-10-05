@@ -1,39 +1,40 @@
 schema_version: agent-protocol-proposal-1
 task:
-  id: FIX-F0-001
-  title: Bootstrap FixPhone as governed Blueprint consumer
+  id: FIX-F1-001
+  title: Establish FixPhone product discovery
   classification: DOCUMENTATION_ONLY
 baseline:
   repository: LuisHdezE/FixPhone
   base_branch: main
-  base_sha: 7c233b224224dd451e635057eccb019a95cb01fd
-  working_branch: blueprint/fixphone-consumer-bootstrap
+  base_sha: 63f029a15dbfe2f507255ae03be885cd68f890ea
+  working_branch: blueprint/fixphone-discovery-001
   head_sha: null
-  pull_request: 1
+  pull_request: null
 agents:
   orchestrator: COMPLETED
-  analyst: OPTIONAL
+  analyst: COMPLETED
   planner: NOT_APPLICABLE
-  architect: NOT_APPLICABLE
+  architect: OPTIONAL
   database: NOT_APPLICABLE
   backend: NOT_APPLICABLE
   frontend: NOT_APPLICABLE
   qa: NOT_APPLICABLE
-  security: NOT_APPLICABLE
+  security: OPTIONAL
   documentation: COMPLETED
-  auditor: COMPLETED
+  auditor: REQUIRED
 execution_order:
   - orchestrator
+  - analyst
   - documentation
   - auditor
-current_agent: null
-current_state: READY_FOR_HUMAN_DECISION
+current_agent: auditor
+current_state: READY_FOR_AUDIT
 blocked_by: []
 required_human_decisions:
+  - requirement_decision
   - merge_approval
 handoffs: []
 notes:
-  - F0 contains governance/bootstrap artifacts only.
-  - Discovery has not started.
-  - Stable Blueprint gate status remains authoritative in .blueprint/status.yaml.
-  - Audit evidence: .blueprint/agents/evidence/FIX-F0-001-AUDIT.md
+  - Discovery is repository-owned but remains subject to product-owner review.
+  - Target Definition and Requirements have not started.
+  - No implementation or Blueprint reuse/import has started.
