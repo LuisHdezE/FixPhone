@@ -1,46 +1,44 @@
 schema_version: agent-protocol-proposal-1
 task:
-  id: FIX-F6-001
-  title: Define FixPhone API Contract and ApiBlueprint reuse plan
-  classification: API_CONTRACT
+  id: FIX-F7A-001
+  title: Bootstrap FixPhone API foundation
+  classification: IMPLEMENTATION
 baseline:
   repository: LuisHdezE/FixPhone
   base_branch: main
-  base_sha: 3d7387f665392c873cd1e99aba874339934d5531
-  working_branch: blueprint/fixphone-api-contract-001
+  base_sha: 4ac91a4bbea531cd2af6282a334d4f3952c966a6
+  working_branch: blueprint/fixphone-api-implementation-f7a-foundation
   head_sha: null
-  pull_request: 7
+  pull_request: null
 agents:
   orchestrator: COMPLETED
-  analyst: COMPLETED
+  analyst: NOT_APPLICABLE
   planner: COMPLETED
   architect: COMPLETED
-  database: OPTIONAL
+  database: COMPLETED
   backend: COMPLETED
   frontend: NOT_APPLICABLE
-  qa: NOT_APPLICABLE
+  qa: IN_PROGRESS
   security: COMPLETED
   documentation: COMPLETED
-  auditor: COMPLETED
+  auditor: REQUIRED
 execution_order:
   - orchestrator
-  - analyst
   - planner
   - architect
+  - database
   - backend
   - security
+  - qa
   - documentation
   - auditor
-current_agent: null
-current_state: READY_FOR_HUMAN_DECISION
+current_agent: qa
+current_state: WAITING_FOR_CI
 blocked_by: []
 required_human_decisions:
-  - requirement_decision
   - merge_approval
 handoffs: []
 notes:
-  - architecture_ready is PASS from explicit approval and merge of PR #6.
-  - ApiBlueprint was reviewed after FixPhone contract definition, not used as a requirements source.
-  - No ApiBlueprint code has been imported yet.
-  - api_contract_ready has complete evidence and passed audit.
-  - Audit evidence: .blueprint/agents/evidence/FIX-F6-001-AUDIT.md
+  - api_contract_ready is PASS from explicit approval and merge of PR #7.
+  - F7A is only the API foundation; api_implemented remains PENDING.
+  - No ApiBlueprint demo business domain was copied.
