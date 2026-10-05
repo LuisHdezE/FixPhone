@@ -45,11 +45,11 @@ required_agents:
   - orchestrator
   - analyst
   - planner
+  - security
   - documentation
   - auditor
 optional_agents:
   - architect
-  - security
   - database
 not_applicable_agents:
   - backend
