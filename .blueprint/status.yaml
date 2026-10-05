@@ -1,23 +1,45 @@
 blueprint_version: 0.5.4
-updated_at: '2026-10-05T01:45:00-03:00'
+updated_at: '2026-10-05T02:10:00-03:00'
 phases:
   discovery:
+    status: COMPLETE
+    progress: 100
+    note: FIXPHONE_DISCOVERY_001 approved and merged in PR #2.
+  target_definition:
     status: READY_FOR_REVIEW
     progress: 100
-    note: FIXPHONE_DISCOVERY_001 drafted and awaiting product-owner approval.
-  requirements:
+    note: FIXPHONE_TARGET_001 drafted from the approved Discovery and awaiting product-owner approval.
+  requirements_domain:
     status: NOT_STARTED
     progress: 0
-  architecture:
+  interface_scope_baseline:
     status: NOT_STARTED
     progress: 0
-  api_contract:
+  architecture_security_data:
+    status: NOT_STARTED
+    progress: 0
+  api_contract_design:
     status: NOT_STARTED
     progress: 0
   api_implementation:
     status: NOT_STARTED
     progress: 0
-  interface_scope_baseline:
+  openapi_validation:
+    status: NOT_STARTED
+    progress: 0
+  postman_contract:
+    status: NOT_STARTED
+    progress: 0
+  api_qa:
+    status: NOT_STARTED
+    progress: 0
+  api_gate:
+    status: NOT_STARTED
+    progress: 0
+  interface_inventory:
+    status: NOT_STARTED
+    progress: 0
+  design_system:
     status: NOT_STARTED
     progress: 0
   client_architecture:
@@ -26,10 +48,29 @@ phases:
   functional_interface_slice:
     status: NOT_STARTED
     progress: 0
+  visual_functional_review:
+    status: NOT_STARTED
+    progress: 0
   integration_qa:
     status: NOT_STARTED
     progress: 0
-checks: {}
+  release_gate:
+    status: NOT_STARTED
+    progress: 0
+  operations:
+    status: NOT_STARTED
+    progress: 0
+checks:
+  discovery.product_vision:
+    status: PASS
+    verification: manual
+    evidence_ids:
+      - EVD-DISCOVERY-001
+  discovery.scope_mvp:
+    status: PASS
+    verification: manual
+    evidence_ids:
+      - EVD-DISCOVERY-001
 gates:
   requirements_ready:
     status: PENDING
@@ -41,6 +82,18 @@ gates:
     status: PENDING
     evaluated_at: null
   api_contract_ready:
+    status: PENDING
+    evaluated_at: null
+  api_implemented:
+    status: PENDING
+    evaluated_at: null
+  openapi_valid:
+    status: PENDING
+    evaluated_at: null
+  postman_ready:
+    status: PENDING
+    evaluated_at: null
+  api_qa_pass:
     status: PENDING
     evaluated_at: null
   api_gate:
@@ -63,3 +116,6 @@ artifacts:
   - id: EVD-DISCOVERY-001
     type: discovery
     value: docs/discovery/FIXPHONE_DISCOVERY_001.md
+  - id: EVD-TARGET-001
+    type: target_definition
+    value: docs/discovery/FIXPHONE_TARGET_DEFINITION_001.md
