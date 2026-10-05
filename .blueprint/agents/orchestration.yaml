@@ -9,7 +9,7 @@ baseline:
   base_sha: 51c1952fd20e8cbca66c81bfe8b24d03607c7d4b
   working_branch: blueprint/fixphone-interface-scope-baseline-001
   head_sha: null
-  pull_request: null
+  pull_request: 5
 agents:
   orchestrator: COMPLETED
   analyst: COMPLETED
@@ -21,21 +21,22 @@ agents:
   qa: NOT_APPLICABLE
   security: OPTIONAL
   documentation: COMPLETED
-  auditor: REQUIRED
+  auditor: COMPLETED
 execution_order:
   - orchestrator
   - analyst
   - planner
   - documentation
   - auditor
-current_agent: auditor
-current_state: READY_FOR_AUDIT
+current_agent: null
+current_state: READY_FOR_HUMAN_DECISION
 blocked_by: []
 required_human_decisions:
   - requirement_decision
   - merge_approval
 handoffs: []
 notes:
-  - requirements_ready is promoted to PASS from the explicit approval and merge of PR #4.
-  - Scope baseline contains 45 proposed interfaces: 29 Web, 8 Android and 8 iOS.
+  - requirements_ready is PASS from the approved and merged PR #4.
+  - Interface Scope Baseline contains 45 proposed interfaces: 29 Web, 8 Android and 8 iOS.
   - No API operationId or executable client contract has been introduced.
+  - Audit evidence: .blueprint/agents/evidence/FIX-F4-001-AUDIT.md
