@@ -9,7 +9,7 @@ baseline:
   base_sha: 7c233b224224dd451e635057eccb019a95cb01fd
   working_branch: blueprint/fixphone-consumer-bootstrap
   head_sha: null
-  pull_request: null
+  pull_request: 1
 agents:
   orchestrator: COMPLETED
   analyst: OPTIONAL
@@ -21,13 +21,13 @@ agents:
   qa: NOT_APPLICABLE
   security: NOT_APPLICABLE
   documentation: COMPLETED
-  auditor: REQUIRED
+  auditor: COMPLETED
 execution_order:
   - orchestrator
   - documentation
   - auditor
-current_agent: auditor
-current_state: READY_FOR_AUDIT
+current_agent: null
+current_state: READY_FOR_HUMAN_DECISION
 blocked_by: []
 required_human_decisions:
   - merge_approval
@@ -36,3 +36,4 @@ notes:
   - F0 contains governance/bootstrap artifacts only.
   - Discovery has not started.
   - Stable Blueprint gate status remains authoritative in .blueprint/status.yaml.
+  - Audit evidence: .blueprint/agents/evidence/FIX-F0-001-AUDIT.md
