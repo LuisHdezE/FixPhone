@@ -1,17 +1,18 @@
 blueprint_version: 0.5.4
-updated_at: '2026-10-05T02:10:00-03:00'
+updated_at: '2026-10-05T02:34:00-03:00'
 phases:
   discovery:
     status: COMPLETE
     progress: 100
     note: FIXPHONE_DISCOVERY_001 approved and merged in PR #2.
   target_definition:
+    status: COMPLETE
+    progress: 100
+    note: FIXPHONE_TARGET_001 approved and merged in PR #3.
+  requirements_domain:
     status: READY_FOR_REVIEW
     progress: 100
-    note: FIXPHONE_TARGET_001 drafted from the approved Discovery and awaiting product-owner approval.
-  requirements_domain:
-    status: NOT_STARTED
-    progress: 0
+    note: FIXPHONE_REQUIREMENTS_DOMAIN_001 drafted with full Requirements Ready evidence and awaiting human approval.
   interface_scope_baseline:
     status: NOT_STARTED
     progress: 0
@@ -71,10 +72,53 @@ checks:
     verification: manual
     evidence_ids:
       - EVD-DISCOVERY-001
+  requirements.actors_authorization:
+    status: PASS
+    verification: evidence
+    evidence_ids:
+      - EVD-REQ-001
+  requirements.functional:
+    status: PASS
+    verification: evidence
+    evidence_ids:
+      - EVD-REQ-001
+  requirements.non_functional:
+    status: PASS
+    verification: evidence
+    evidence_ids:
+      - EVD-REQ-001
+  requirements.business_rules:
+    status: PASS
+    verification: evidence
+    evidence_ids:
+      - EVD-REQ-001
+  requirements.mobile_licensing_decision:
+    status: PASS
+    verification: evidence
+    evidence_ids:
+      - EVD-REQ-001
+  requirements.use_cases:
+    status: PASS
+    verification: evidence
+    evidence_ids:
+      - EVD-REQ-001
+  requirements.acceptance_criteria:
+    status: PASS
+    verification: evidence
+    evidence_ids:
+      - EVD-REQ-001
+  requirements.traceability:
+    status: PASS
+    verification: evidence
+    evidence_ids:
+      - EVD-REQ-TRACE-001
 gates:
   requirements_ready:
-    status: PENDING
+    status: READY_FOR_REVIEW
     evaluated_at: null
+    evidence_ids:
+      - EVD-REQ-001
+      - EVD-REQ-TRACE-001
   interface_scope_ready:
     status: PENDING
     evaluated_at: null
@@ -119,3 +163,9 @@ artifacts:
   - id: EVD-TARGET-001
     type: target_definition
     value: docs/discovery/FIXPHONE_TARGET_DEFINITION_001.md
+  - id: EVD-REQ-001
+    type: requirements_domain
+    value: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md
+  - id: EVD-REQ-TRACE-001
+    type: requirements_traceability
+    value: .blueprint/requirements/requirements-traceability.yaml
