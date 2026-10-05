@@ -29,6 +29,8 @@ final readonly class IamService
    throw new IdempotencyConflict('Request with this idempotency key is still reserved.');
   }
 
+  if($this->repository->emailExists($data['email'])) return ['status'=>422,'data'=>['duplicate_email'=>true],'replayed'=>false];
+
   if(!$this->idempotency->reserve('usersCreate',$key,$requestHash)) throw new IdempotencyConflict('Unable to reserve idempotency key.');
 
   $user=$this->repository->createUser($data['name'],$data['email'],$data['password'],$data['roles']);
