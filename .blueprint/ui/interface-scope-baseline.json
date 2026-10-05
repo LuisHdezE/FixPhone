@@ -1,0 +1,3727 @@
+{
+  "schema_version": "0.5.4",
+  "project": "LuisHdezE/FixPhone",
+  "mode": "greenfield",
+  "maturity": "SCOPE_BASELINE",
+  "baseline_revision": "fixphone-scope-001",
+  "items": [
+    {
+      "id": "WEB-001",
+      "platform": "web",
+      "module": "Identity",
+      "name": "Customer Login & Registration",
+      "purpose": "Authenticate/register storefront customers.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-SAL-001",
+        "FR-SAL-002"
+      ],
+      "roles": [
+        "guest",
+        "customer"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "customer identity",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Register",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Sign in",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Recover access",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "error",
+        "422",
+        "429"
+      ],
+      "navigation": {
+        "route": "/account/access",
+        "entry_points": [],
+        "destinations": [
+          "WEB-002"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-002",
+      "platform": "web",
+      "module": "Storefront",
+      "name": "Storefront Home",
+      "purpose": "Public landing and discovery entry point.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-WEB-001",
+        "FR-WEB-009",
+        "FR-SEO-001",
+        "FR-SEO-002"
+      ],
+      "roles": [
+        "guest",
+        "customer"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "featured catalog",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "categories",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "trust content",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Browse catalog",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open category",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Contact via WhatsApp",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "error"
+      ],
+      "navigation": {
+        "route": "/",
+        "entry_points": [],
+        "destinations": [
+          "WEB-003",
+          "WEB-004"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-003",
+      "platform": "web",
+      "module": "Storefront",
+      "name": "Catalog & Search",
+      "purpose": "Search/filter/sort sellable devices and parts.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-WEB-002",
+        "FR-WEB-003",
+        "FR-CAT-006"
+      ],
+      "roles": [
+        "guest",
+        "customer"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "catalog results",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "filters",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "compatibility",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Search",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Filter",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Sort",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open product",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "filtered_empty",
+        "error"
+      ],
+      "navigation": {
+        "route": "/store",
+        "entry_points": [],
+        "destinations": [
+          "WEB-004"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-004",
+      "platform": "web",
+      "module": "Storefront",
+      "name": "Product Detail",
+      "purpose": "Show product identity, condition, pricing, warranty and availability.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-WEB-004",
+        "FR-CAT-006",
+        "FR-CAT-007",
+        "FR-SEO-003",
+        "FR-SEO-004"
+      ],
+      "roles": [
+        "guest",
+        "customer"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "product",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "photos",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "availability",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "pricing",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "warranty",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "compatibility",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add to cart",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open WhatsApp",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "View compatible products",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "404",
+        "error"
+      ],
+      "navigation": {
+        "route": "/store/products/:slug",
+        "entry_points": [],
+        "destinations": [
+          "WEB-005"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-005",
+      "platform": "web",
+      "module": "Commerce",
+      "name": "Cart",
+      "purpose": "Manage selected items and reservation intent.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-SAL-003",
+        "FR-INV-006",
+        "FR-INV-007"
+      ],
+      "roles": [
+        "customer"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "cart",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "availability",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "shipping estimate",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Change quantity",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Remove item",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Proceed to checkout",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "409",
+        "error"
+      ],
+      "navigation": {
+        "route": "/cart",
+        "entry_points": [],
+        "destinations": [
+          "WEB-006"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-006",
+      "platform": "web",
+      "module": "Commerce",
+      "name": "Checkout",
+      "purpose": "Confirm address, fulfillment and payment initiation.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-SAL-003",
+        "FR-PAY-001",
+        "FR-PAY-002",
+        "FR-FUL-001",
+        "FR-FUL-002"
+      ],
+      "roles": [
+        "customer"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "customer",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "cart",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "fulfillment options",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "payment options",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Confirm order",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Select shipping",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Initiate payment",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/checkout",
+        "entry_points": [],
+        "destinations": [
+          "WEB-007"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-007",
+      "platform": "web",
+      "module": "Customer",
+      "name": "My Account & Orders",
+      "purpose": "Manage own profile, addresses, orders and post-sale requests.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-SAL-001",
+        "FR-SAL-009",
+        "FR-WEB-006",
+        "FR-WAR-002"
+      ],
+      "roles": [
+        "customer"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "profile",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "addresses",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "orders",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "claims",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Update profile",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open order",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Start claim",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "401",
+        "403",
+        "error"
+      ],
+      "navigation": {
+        "route": "/account",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-008",
+      "platform": "web",
+      "module": "Operations",
+      "name": "Operations Dashboard",
+      "purpose": "Summarize inventory, work, sales, finance and alerts.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-FIN-011",
+        "FR-ADM-006"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "inventory_operator",
+        "sales_operator",
+        "finance"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "operational summary",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "financial summary",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "alerts",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open work queue",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open alerts",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Drill into KPI",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/dashboard",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-009",
+      "platform": "web",
+      "module": "Master Data",
+      "name": "Brands & Models",
+      "purpose": "Manage brands, models, capacities, colors and compatibility foundations.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-CAT-001",
+        "FR-CAT-002",
+        "FR-CAT-003",
+        "FR-CAT-004"
+      ],
+      "roles": [
+        "owner",
+        "administrator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "brands",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "models",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "attributes",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "compatibility",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Create",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Edit",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Deactivate",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Manage compatibility",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/catalog/master-data",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-010",
+      "platform": "web",
+      "module": "Catalog",
+      "name": "Product Catalog Admin",
+      "purpose": "Manage commercial product definitions and public/channel content.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-CAT-005",
+        "FR-CAT-006",
+        "FR-CAT-007",
+        "FR-CST-004"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "sales_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "products",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "photos",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "pricing",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "channel visibility",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Create product",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Edit product",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Set price",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Set visibility",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/catalog/products",
+        "entry_points": [],
+        "destinations": [
+          "WEB-011"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-011",
+      "platform": "web",
+      "module": "Catalog",
+      "name": "Product Admin Detail",
+      "purpose": "Inspect/edit one product and associated physical availability.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-CAT-005",
+        "FR-CST-004",
+        "FR-CST-005"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "sales_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "product",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "inventory availability",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "channel mappings",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "margin",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Edit",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Publish",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Pause channel",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "404",
+        "403",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/catalog/products/:id",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-012",
+      "platform": "web",
+      "module": "Acquisition",
+      "name": "Lots & Sources",
+      "purpose": "Manage acquisition lots, sources, costs and provenance.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-ACQ-001",
+        "FR-ACQ-002",
+        "FR-ACQ-003",
+        "FR-ACQ-004"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "intake_operator",
+        "finance"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "lots",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "sources",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "costs",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "documents",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Create lot",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Add cost",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Attach evidence",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open lot",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/acquisitions/lots",
+        "entry_points": [],
+        "destinations": [
+          "WEB-013"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-013",
+      "platform": "web",
+      "module": "Devices",
+      "name": "Device Intake",
+      "purpose": "Register physical devices and identity/provenance evidence.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-DEV-001",
+        "FR-DEV-002",
+        "FR-DEV-004",
+        "FR-DEV-005",
+        "FR-DEV-006"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "intake_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device identity",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "provenance",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "photos",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "location",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Register device",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Capture identity",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Attach evidence",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Save intake",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/devices/intake",
+        "entry_points": [],
+        "destinations": [
+          "WEB-014"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-014",
+      "platform": "web",
+      "module": "Devices",
+      "name": "Device Detail & Timeline",
+      "purpose": "View unit identity, lifecycle, costs, location and audit-linked history.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-DEV-007",
+        "FR-CST-002",
+        "FR-CST-003"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "intake_operator",
+        "technician",
+        "inventory_operator",
+        "sales_operator",
+        "finance"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "timeline",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "cost summary",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "location",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open diagnosis",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open evaluation",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open work order",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "404",
+        "403",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/devices/:id",
+        "entry_points": [],
+        "destinations": [
+          "WEB-015",
+          "WEB-016"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-015",
+      "platform": "web",
+      "module": "Workshop",
+      "name": "Diagnosis & Grading",
+      "purpose": "Perform/review diagnostic checklist and grade.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-DIA-001",
+        "FR-DIA-002",
+        "FR-DIA-003",
+        "FR-DIA-004",
+        "FR-DIA-005",
+        "FR-DIA-006"
+      ],
+      "roles": [
+        "technician",
+        "owner",
+        "administrator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "diagnostic checklist",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "diagnosis history",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Run diagnosis",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Assign grade",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Save findings",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Re-diagnose",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "403",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/devices/:id/diagnosis",
+        "entry_points": [],
+        "destinations": [
+          "WEB-016"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-016",
+      "platform": "web",
+      "module": "Routing",
+      "name": "Economic Evaluation & Routing",
+      "purpose": "Compare disposition economics and approve/override route.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-ROU-001",
+        "FR-ROU-002",
+        "FR-ROU-003",
+        "FR-ROU-004",
+        "FR-ROU-005",
+        "FR-ROU-006",
+        "FR-ROU-007",
+        "FR-ROU-008",
+        "FR-ROU-009"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "technician"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "economic evaluation",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "routing recommendation",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "rule version",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Evaluate",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Approve route",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Override route",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "403",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/devices/:id/evaluation",
+        "entry_points": [],
+        "destinations": [
+          "WEB-017",
+          "WEB-018"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-017",
+      "platform": "web",
+      "module": "Workshop",
+      "name": "Repair Orders",
+      "purpose": "Create/manage repair work and QC.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-REP-001",
+        "FR-REP-002",
+        "FR-REP-003",
+        "FR-REP-004",
+        "FR-REP-005",
+        "FR-REP-006",
+        "FR-REP-007"
+      ],
+      "roles": [
+        "technician",
+        "owner",
+        "administrator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "repair orders",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "parts",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "labor",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "QC",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Create repair",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Consume part",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Record labor",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Complete QC",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Return to evaluation",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/workshop/repairs",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-018",
+      "platform": "web",
+      "module": "Workshop",
+      "name": "Dismantling Orders",
+      "purpose": "Transform donors into traced recovered parts.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-DIS-001",
+        "FR-DIS-002",
+        "FR-DIS-003",
+        "FR-DIS-004",
+        "FR-DIS-005",
+        "FR-DIS-006",
+        "FR-DIS-007"
+      ],
+      "roles": [
+        "technician",
+        "owner",
+        "administrator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "dismantling orders",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "donor",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "recovered parts",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "cost allocation",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Create dismantling",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Register part",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Grade part",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Complete dismantling",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/workshop/dismantling",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-019",
+      "platform": "web",
+      "module": "Inventory",
+      "name": "Inventory Explorer",
+      "purpose": "Inspect devices/parts, states, locations, reservations and aging.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-INV-001",
+        "FR-INV-002",
+        "FR-INV-003",
+        "FR-INV-004",
+        "FR-INV-010",
+        "FR-INV-011"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "inventory_operator",
+        "sales_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "inventory",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "locations",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "reservations",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "aging",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Search stock",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Filter",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open item",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Move item",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "filtered_empty",
+        "403",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/inventory",
+        "entry_points": [],
+        "destinations": [
+          "WEB-020"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-020",
+      "platform": "web",
+      "module": "Inventory",
+      "name": "Movements & Counts",
+      "purpose": "Perform movements, counts and controlled adjustments.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-INV-005",
+        "FR-INV-009"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "inventory_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "stock movements",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "counts",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "adjustments",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Move stock",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Start count",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Adjust with reason",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/inventory/movements",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-021",
+      "platform": "web",
+      "module": "Sales",
+      "name": "Orders",
+      "purpose": "Manage unified orders across channels.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-SAL-004",
+        "FR-SAL-005",
+        "FR-SAL-006",
+        "FR-SAL-007",
+        "FR-SAL-008"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "sales_operator",
+        "finance"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "orders",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "payments",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "fees",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "fulfillment",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open order",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Cancel",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Refund",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Update fulfillment",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "409",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/orders",
+        "entry_points": [],
+        "destinations": [
+          "WEB-022"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-022",
+      "platform": "web",
+      "module": "Fulfillment",
+      "name": "Picking & Shipping",
+      "purpose": "Pick from locations, dispatch and track fulfillment.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-FUL-003",
+        "FR-FUL-004",
+        "FR-FUL-005"
+      ],
+      "roles": [
+        "inventory_operator",
+        "sales_operator",
+        "owner",
+        "administrator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "order",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "pick list",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "locations",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "shipment",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Pick",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Pack",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Dispatch",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Record tracking",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "409",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/fulfillment",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-023",
+      "platform": "web",
+      "module": "Post Sale",
+      "name": "Warranty & Returns",
+      "purpose": "Handle claims, returns, resolutions and re-evaluation.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-WAR-001",
+        "FR-WAR-002",
+        "FR-WAR-003",
+        "FR-WAR-004",
+        "FR-WAR-005",
+        "FR-WAR-006"
+      ],
+      "roles": [
+        "post_sale_operator",
+        "owner",
+        "administrator",
+        "finance"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "claims",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "returned units",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "resolution",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "cost",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Assess claim",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Approve resolution",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Receive return",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Re-evaluate",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/post-sale",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-024",
+      "platform": "web",
+      "module": "Finance",
+      "name": "Expenses & Consignments",
+      "purpose": "Manage expenses, consignor obligations and settlements.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-FIN-001",
+        "FR-FIN-002",
+        "FR-FIN-004",
+        "FR-FIN-005"
+      ],
+      "roles": [
+        "finance",
+        "owner",
+        "administrator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "expenses",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "consignments",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "settlements",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Record expense",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Record payment",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Settle consignor",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/finance/operations",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-025",
+      "platform": "web",
+      "module": "Reporting",
+      "name": "Reports & Profitability",
+      "purpose": "Analyze profitability, valuation, aging and operating result.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-FIN-006",
+        "FR-FIN-007",
+        "FR-FIN-008",
+        "FR-FIN-009",
+        "FR-FIN-010",
+        "FR-FIN-011",
+        "FR-FIN-012"
+      ],
+      "roles": [
+        "finance",
+        "owner",
+        "administrator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "profitability",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "inventory valuation",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "aging",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "operating result",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Filter report",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Drill down",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Export",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "filtered_empty",
+        "403",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/reports",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-026",
+      "platform": "web",
+      "module": "Channels",
+      "name": "Channel Integrations",
+      "purpose": "Configure/observe Mercado Libre, Meta and WhatsApp synchronization.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-ML-001",
+        "FR-ML-002",
+        "FR-ML-003",
+        "FR-ML-004",
+        "FR-META-001",
+        "FR-META-002",
+        "FR-META-005",
+        "FR-WA-001",
+        "FR-ADM-004",
+        "FR-ADM-005"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "sales_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "integration accounts",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "sync state",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "errors",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "provider mappings",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Connect provider",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Sync",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Retry",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Inspect error",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/integrations",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-027",
+      "platform": "web",
+      "module": "Administration",
+      "name": "Users, Roles & Permissions",
+      "purpose": "Administer internal identities and authorization assignments.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-ADM-001"
+      ],
+      "roles": [
+        "owner",
+        "administrator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "users",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "roles",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "permissions",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Create user",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Assign role",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Change permissions",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Deactivate user",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/security/access",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-028",
+      "platform": "web",
+      "module": "Administration",
+      "name": "Audit Explorer",
+      "purpose": "Search durable sensitive-operation audit history.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-ADM-002",
+        "NFR-005"
+      ],
+      "roles": [
+        "owner",
+        "administrator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "audit events",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Search audit",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Filter",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open event",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/audit",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "WEB-029",
+      "platform": "web",
+      "module": "Consignment",
+      "name": "Consignors & Agreements",
+      "purpose": "Manage consignors and sale/settlement terms.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-ACQ-005",
+        "FR-ACQ-006",
+        "FR-FIN-005"
+      ],
+      "roles": [
+        "owner",
+        "administrator",
+        "finance"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "consignors",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "agreements",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "settlement status",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Create agreement",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Update terms",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open settlement",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "403",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": "/admin/consignments",
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "APP-001",
+      "platform": "android",
+      "module": "Identity",
+      "name": "Staff Sign In",
+      "purpose": "Authenticate an internal mobile user.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-MOB-003",
+        "FR-ADM-001"
+      ],
+      "roles": [
+        "internal_user"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "session",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Sign in",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "401",
+        "429",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "APP-002"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "APP-002",
+      "platform": "android",
+      "module": "Operations",
+      "name": "Mobile Work Home",
+      "purpose": "Prioritize operational mobile queues and quick lookup.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "intake_operator",
+        "technician",
+        "inventory_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "work queues",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "alerts",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open intake",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open workshop",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Scan item",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "offline",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "APP-003",
+          "APP-004",
+          "APP-006"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "APP-003",
+      "platform": "android",
+      "module": "Devices",
+      "name": "Mobile Device Intake",
+      "purpose": "Capture identity, scan codes and photos at intake.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-DEV-001",
+        "FR-DEV-002",
+        "FR-DEV-005",
+        "FR-DEV-009",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "intake_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device intake",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "camera/scanner",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Scan IMEI",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Take photos",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Save intake",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "APP-004"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "APP-004",
+      "platform": "android",
+      "module": "Workshop",
+      "name": "Mobile Diagnosis",
+      "purpose": "Execute diagnostic checklist and grade in-hand device.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-DIA-001",
+        "FR-DIA-002",
+        "FR-DIA-004",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "technician"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "diagnostic checklist",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Run checklist",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Capture evidence",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Assign grade",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "APP-005"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "APP-005",
+      "platform": "android",
+      "module": "Workshop",
+      "name": "Mobile Repair / Dismantling",
+      "purpose": "Operate repair and dismantling tasks from the bench.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-REP-003",
+        "FR-REP-004",
+        "FR-DIS-003",
+        "FR-DIS-004",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "technician"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "work order",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "parts",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "donor",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Consume part",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Register recovered part",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Complete step",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "APP-006",
+      "platform": "android",
+      "module": "Inventory",
+      "name": "Mobile Stock Locate & Move",
+      "purpose": "Scan/locate/move physical stock.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-INV-004",
+        "FR-INV-005",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "inventory_operator",
+        "technician"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "inventory unit",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "location",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Scan",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Move",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Confirm location",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "404",
+        "409",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "APP-007"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "APP-007",
+      "platform": "android",
+      "module": "Fulfillment",
+      "name": "Mobile Picking",
+      "purpose": "Pick order items by physical location and identity.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-FUL-004",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "inventory_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "pick list",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "inventory unit",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "location",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Scan item",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Confirm pick",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "404",
+        "409",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "APP-008",
+      "platform": "android",
+      "module": "Lookup",
+      "name": "Mobile Item Lookup",
+      "purpose": "Quickly inspect device/part identity, state and history summary.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-MOB-002",
+        "FR-DEV-007"
+      ],
+      "roles": [
+        "intake_operator",
+        "technician",
+        "inventory_operator",
+        "sales_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device or part summary",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Scan",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Search",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open summary",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "404",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "IOS-001",
+      "platform": "ios",
+      "module": "Identity",
+      "name": "Staff Sign In",
+      "purpose": "Authenticate an internal mobile user.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-MOB-003",
+        "FR-ADM-001"
+      ],
+      "roles": [
+        "internal_user"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "session",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Sign in",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "401",
+        "429",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "IOS-002"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "IOS-002",
+      "platform": "ios",
+      "module": "Operations",
+      "name": "Mobile Work Home",
+      "purpose": "Prioritize operational mobile queues and quick lookup.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "intake_operator",
+        "technician",
+        "inventory_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "work queues",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "alerts",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open intake",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open workshop",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Scan item",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "offline",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "IOS-003",
+          "IOS-004",
+          "IOS-006"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "IOS-003",
+      "platform": "ios",
+      "module": "Devices",
+      "name": "Mobile Device Intake",
+      "purpose": "Capture identity, scan codes and photos at intake.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-DEV-001",
+        "FR-DEV-002",
+        "FR-DEV-005",
+        "FR-DEV-009",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "intake_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device intake",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "camera/scanner",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Scan IMEI",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Take photos",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Save intake",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "IOS-004"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "IOS-004",
+      "platform": "ios",
+      "module": "Workshop",
+      "name": "Mobile Diagnosis",
+      "purpose": "Execute diagnostic checklist and grade in-hand device.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-DIA-001",
+        "FR-DIA-002",
+        "FR-DIA-004",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "technician"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "diagnostic checklist",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Run checklist",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Capture evidence",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Assign grade",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "IOS-005"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "IOS-005",
+      "platform": "ios",
+      "module": "Workshop",
+      "name": "Mobile Repair / Dismantling",
+      "purpose": "Operate repair and dismantling tasks from the bench.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-REP-003",
+        "FR-REP-004",
+        "FR-DIS-003",
+        "FR-DIS-004",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "technician"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "work order",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "parts",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "donor",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Consume part",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Register recovered part",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Complete step",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "409",
+        "422",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "IOS-006",
+      "platform": "ios",
+      "module": "Inventory",
+      "name": "Mobile Stock Locate & Move",
+      "purpose": "Scan/locate/move physical stock.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-INV-004",
+        "FR-INV-005",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "inventory_operator",
+        "technician"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "inventory unit",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "location",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Scan",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Move",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Confirm location",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "404",
+        "409",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": [
+          "IOS-007"
+        ]
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "IOS-007",
+      "platform": "ios",
+      "module": "Fulfillment",
+      "name": "Mobile Picking",
+      "purpose": "Pick order items by physical location and identity.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-FUL-004",
+        "FR-MOB-002"
+      ],
+      "roles": [
+        "inventory_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "pick list",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "inventory unit",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        },
+        {
+          "name": "location",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Scan item",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Confirm pick",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "404",
+        "409",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    },
+    {
+      "id": "IOS-008",
+      "platform": "ios",
+      "module": "Lookup",
+      "name": "Mobile Item Lookup",
+      "purpose": "Quickly inspect device/part identity, state and history summary.",
+      "source_classification": "PROPOSED",
+      "implementation_status": "PROPOSED",
+      "requirements": [
+        "FR-MOB-002",
+        "FR-DEV-007"
+      ],
+      "roles": [
+        "intake_operator",
+        "technician",
+        "inventory_operator",
+        "sales_operator"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "device or part summary",
+          "source": "unknown",
+          "authoritative": true,
+          "note": "Authoritative source and API binding are intentionally unresolved until Architecture/API Contract."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Scan",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Search",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        },
+        {
+          "name": "Open summary",
+          "kind": "proposed",
+          "permission": null,
+          "source_classification": "PROPOSED",
+          "note": "Business intent only; API operation and permission contract remain unresolved."
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "offline",
+        "404",
+        "error"
+      ],
+      "navigation": {
+        "route": null,
+        "entry_points": [],
+        "destinations": []
+      },
+      "unresolved_api_needs": [
+        "Authoritative API/data binding and permission contract must be reconciled after Architecture/API Contract and API Gate."
+      ],
+      "notes": []
+    }
+  ]
+}
