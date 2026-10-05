@@ -1,0 +1,38 @@
+project:
+  name: FixPhone
+  repository: LuisHdezE/FixPhone
+  description: Greenfield omnichannel platform for phone repair, dismantling, parts inventory, resale, commerce and operations.
+blueprint:
+  version: 0.5.4
+  mode: greenfield
+stack:
+  backend: laravel
+  database: mysql
+  frontend: react-typescript-vite
+  styling: tailwind-css
+  mobile: kotlin-multiplatform
+mobile:
+  strategy: cross_platform
+capabilities:
+  web: true
+  android: true
+  ios: true
+  mobile_licensing: false
+  saas: false
+  multi_tenant: false
+  offline_mobile: false
+  redis: false
+  docker: false
+artifact_locations:
+  status: .blueprint/status.yaml
+  evidence_root: .blueprint/evidence
+  interface_scope_baseline: .blueprint/ui/interface-scope-baseline.json
+  interface_inventory: .blueprint/ui/interface-inventory.json
+  visual_identity: .blueprint/ui/visual-identity.md
+  design_system: .blueprint/ui/design-system.json
+  design_tokens: .blueprint/ui/design-tokens.json
+  mockups_root: .blueprint/mockups
+  client_architecture_root: .blueprint/client-architecture
+  functional_slices_root: .blueprint/functional-slices
+  api_impacts_root: .blueprint/api-impacts
+  openapi: openapi.yaml
