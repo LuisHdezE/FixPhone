@@ -1,0 +1,99 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F5-001
+title: Define FixPhone Architecture Security and Data
+objective: Establish the server/domain architecture, security model, data authority, migration policy, audit policy and API architecture policies required to evaluate Architecture Ready.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: 8a5f5bcf7bad56ae73bd4c20012b54f6fa508cf6
+  working_branch: blueprint/fixphone-architecture-security-data-001
+  head_sha: null
+  pull_request: null
+source:
+  feature: FixPhone Architecture Security Data
+  requirements:
+    - NFR-001
+    - NFR-003
+    - NFR-004
+    - NFR-005
+    - NFR-006
+    - NFR-009
+    - NFR-010
+    - NFR-015
+    - NFR-016
+  business_rules:
+    - FixPhone remains authoritative for inventory availability.
+    - One serialized unit cannot be allocated twice.
+    - External providers remain adapters, not domain authorities.
+    - Architecture design acceptance does not prove implementation conformance.
+  acceptance_criteria:
+    - AC-ARCH-001
+    - AC-ARCH-002
+    - AC-ARCH-003
+scope:
+  in:
+    - domain module boundaries
+    - dependency direction
+    - authoritative database
+    - schema migration policy
+    - concurrency and transaction strategy
+    - security and threat model
+    - durable audit catalog and retention
+    - authentication strategy
+    - API error contract
+    - API versioning policy
+    - integration reliability patterns
+    - architecture decision records
+  out:
+    - endpoint inventory
+    - OpenAPI operations
+    - implementation
+    - WebBlueprint export
+    - ApiBlueprint reuse decision
+    - client architecture
+owner_agent: architect
+required_agents:
+  - orchestrator
+  - analyst
+  - planner
+  - architect
+  - database
+  - security
+  - documentation
+  - auditor
+optional_agents:
+  - backend
+not_applicable_agents:
+  - frontend
+  - qa
+dependencies:
+  - FIX-F4-001
+implementation_constraints:
+  - use Laravel and MySQL as fixed consumer technology choices
+  - preserve API as authoritative security/business boundary
+  - do not introduce microservices without evidence
+  - do not define operationIds before API Contract Design
+expected_outputs:
+  - docs/architecture/FIXPHONE_ARCHITECTURE_001.md
+  - docs/architecture/FIXPHONE_DATA_ARCHITECTURE_001.md
+  - docs/architecture/FIXPHONE_SECURITY_MODEL_001.md
+  - docs/architecture/FIXPHONE_THREAT_MODEL_001.md
+  - docs/architecture/FIXPHONE_API_POLICIES_001.md
+  - docs/architecture/FIXPHONE_AUDIT_RETENTION_001.md
+  - docs/architecture/FIXPHONE_ADRS_001.md
+  - .blueprint/architecture/audit-event-catalog.yaml
+validation:
+  build: not_required
+  tests: not_required
+  visual: not_required
+  security: required
+  notes:
+    - This phase validates architecture contracts, not implementation conformance.
+risks:
+  - id: R-ARCH-DOMAIN-LEAK
+    description: Provider/framework concerns could leak into core business modules.
+    probability: MEDIUM
+    impact: HIGH
+    mitigation: Ports/adapters, dependency rules and later executable architecture conformance tests.
+checkpoint: Every applicable Architecture Ready check has explicit reviewable evidence.
+exit_gate: architecture_ready

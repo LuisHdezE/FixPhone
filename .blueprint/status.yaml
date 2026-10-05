@@ -1,176 +1,89 @@
 blueprint_version: 0.5.4
-updated_at: '2026-10-05T00:16:00-03:00'
+updated_at: '2026-10-05T12:01:00-03:00'
 phases:
-  discovery:
-    status: COMPLETE
-    progress: 100
-    note: FIXPHONE_DISCOVERY_001 approved and merged in PR #2.
-  target_definition:
-    status: COMPLETE
-    progress: 100
-    note: FIXPHONE_TARGET_001 approved and merged in PR #3.
-  requirements_domain:
-    status: COMPLETE
-    progress: 100
-    note: FIXPHONE_REQUIREMENTS_DOMAIN_001 approved and merged in PR #4.
-  interface_scope_baseline:
-    status: READY_FOR_REVIEW
-    progress: 100
-    note: 45 proposed interfaces mapped across Web, Android and iOS; awaiting human scope approval.
+  discovery: {status: COMPLETE, progress: 100}
+  target_definition: {status: COMPLETE, progress: 100}
+  requirements_domain: {status: COMPLETE, progress: 100}
+  interface_scope_baseline: {status: COMPLETE, progress: 100}
   architecture_security_data:
-    status: NOT_STARTED
-    progress: 0
-  api_contract_design:
-    status: NOT_STARTED
-    progress: 0
-  api_implementation:
-    status: NOT_STARTED
-    progress: 0
-  openapi_validation:
-    status: NOT_STARTED
-    progress: 0
-  postman_contract:
-    status: NOT_STARTED
-    progress: 0
-  api_qa:
-    status: NOT_STARTED
-    progress: 0
-  api_gate:
-    status: NOT_STARTED
-    progress: 0
-  interface_inventory:
-    status: NOT_STARTED
-    progress: 0
-  design_system:
-    status: NOT_STARTED
-    progress: 0
-  client_architecture:
-    status: NOT_STARTED
-    progress: 0
-  functional_interface_slice:
-    status: NOT_STARTED
-    progress: 0
-  visual_functional_review:
-    status: NOT_STARTED
-    progress: 0
-  integration_qa:
-    status: NOT_STARTED
-    progress: 0
-  release_gate:
-    status: NOT_STARTED
-    progress: 0
-  operations:
-    status: NOT_STARTED
-    progress: 0
+    status: READY_FOR_REVIEW
+    progress: 100
+    note: Architecture, security, threat, data, audit and API policy artifacts drafted and awaiting human approval.
+  api_contract_design: {status: NOT_STARTED, progress: 0}
+  api_implementation: {status: NOT_STARTED, progress: 0}
+  openapi_validation: {status: NOT_STARTED, progress: 0}
+  postman_contract: {status: NOT_STARTED, progress: 0}
+  api_qa: {status: NOT_STARTED, progress: 0}
+  api_gate: {status: NOT_STARTED, progress: 0}
+  interface_inventory: {status: NOT_STARTED, progress: 0}
+  design_system: {status: NOT_STARTED, progress: 0}
+  client_architecture: {status: NOT_STARTED, progress: 0}
+  functional_interface_slice: {status: NOT_STARTED, progress: 0}
+  visual_functional_review: {status: NOT_STARTED, progress: 0}
+  integration_qa: {status: NOT_STARTED, progress: 0}
+  release_gate: {status: NOT_STARTED, progress: 0}
+  operations: {status: NOT_STARTED, progress: 0}
 checks:
-  discovery.product_vision:
-    status: PASS
-    verification: manual
-    evidence_ids: [EVD-DISCOVERY-001]
-  discovery.scope_mvp:
-    status: PASS
-    verification: manual
-    evidence_ids: [EVD-DISCOVERY-001]
-  requirements.actors_authorization:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-REQ-001]
-  requirements.functional:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-REQ-001]
-  requirements.non_functional:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-REQ-001]
-  requirements.business_rules:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-REQ-001]
-  requirements.mobile_licensing_decision:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-REQ-001]
-  requirements.use_cases:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-REQ-001]
-  requirements.acceptance_criteria:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-REQ-001]
-  requirements.traceability:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-REQ-TRACE-001]
-  ui.interface_scope_baseline:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-IFACE-SCOPE-001]
-  ui.interface_scope_traceability:
-    status: PASS
-    verification: evidence
-    evidence_ids: [EVD-IFACE-TRACE-001]
+  discovery.product_vision: {status: PASS, verification: manual, evidence_ids: [EVD-DISCOVERY-001]}
+  discovery.scope_mvp: {status: PASS, verification: manual, evidence_ids: [EVD-DISCOVERY-001]}
+  requirements.actors_authorization: {status: PASS, verification: evidence, evidence_ids: [EVD-REQ-001]}
+  requirements.functional: {status: PASS, verification: evidence, evidence_ids: [EVD-REQ-001]}
+  requirements.non_functional: {status: PASS, verification: evidence, evidence_ids: [EVD-REQ-001]}
+  requirements.business_rules: {status: PASS, verification: evidence, evidence_ids: [EVD-REQ-001]}
+  requirements.mobile_licensing_decision: {status: PASS, verification: evidence, evidence_ids: [EVD-REQ-001]}
+  requirements.use_cases: {status: PASS, verification: evidence, evidence_ids: [EVD-REQ-001]}
+  requirements.acceptance_criteria: {status: PASS, verification: evidence, evidence_ids: [EVD-REQ-001]}
+  requirements.traceability: {status: PASS, verification: evidence, evidence_ids: [EVD-REQ-TRACE-001]}
+  ui.interface_scope_baseline: {status: PASS, verification: evidence, evidence_ids: [EVD-IFACE-SCOPE-001]}
+  ui.interface_scope_traceability: {status: PASS, verification: evidence, evidence_ids: [EVD-IFACE-TRACE-001]}
+  architecture.domain_model: {status: PASS, verification: evidence, evidence_ids: [EVD-ARCH-001]}
+  architecture.decision_records: {status: PASS, verification: evidence, evidence_ids: [EVD-ADR-001]}
+  architecture.security_model: {status: PASS, verification: evidence, evidence_ids: [EVD-SEC-001]}
+  architecture.threat_model: {status: PASS, verification: evidence, evidence_ids: [EVD-THREAT-001]}
+  data.architecture: {status: PASS, verification: evidence, evidence_ids: [EVD-DATA-001]}
+  data.schema_migrations: {status: PASS, verification: evidence, evidence_ids: [EVD-DATA-001]}
+  data.authoritative_database: {status: PASS, verification: evidence, evidence_ids: [EVD-DATA-001]}
+  audit.event_catalog: {status: PASS, verification: evidence, evidence_ids: [EVD-AUDIT-CAT-001]}
+  audit.retention_policy: {status: PASS, verification: evidence, evidence_ids: [EVD-AUDIT-RET-001]}
+  api.auth_strategy: {status: PASS, verification: evidence, evidence_ids: [EVD-API-POL-001]}
+  api.error_contract: {status: PASS, verification: evidence, evidence_ids: [EVD-API-POL-001]}
+  api.versioning_policy: {status: PASS, verification: evidence, evidence_ids: [EVD-API-POL-001]}
 gates:
-  requirements_ready:
-    status: PASS
-    evaluated_at: '2026-10-05T00:16:00-03:00'
-    evidence_ids: [EVD-REQ-001, EVD-REQ-TRACE-001]
-    note: Explicit human approval recorded by merge authorization for PR #4.
+  requirements_ready: {status: PASS, evaluated_at: '2026-10-05T00:16:00-03:00', evidence_ids: [EVD-REQ-001, EVD-REQ-TRACE-001]}
   interface_scope_ready:
+    status: PASS
+    evaluated_at: '2026-10-05T12:01:00-03:00'
+    evidence_ids: [EVD-IFACE-SCOPE-001, EVD-IFACE-TRACE-001]
+    note: Explicit human approval recorded by merge authorization for PR #5.
+  architecture_ready:
     status: READY_FOR_REVIEW
     evaluated_at: null
-    evidence_ids: [EVD-IFACE-SCOPE-001, EVD-IFACE-TRACE-001]
-  architecture_ready:
-    status: PENDING
-    evaluated_at: null
-  api_contract_ready:
-    status: PENDING
-    evaluated_at: null
-  api_implemented:
-    status: PENDING
-    evaluated_at: null
-  openapi_valid:
-    status: PENDING
-    evaluated_at: null
-  postman_ready:
-    status: PENDING
-    evaluated_at: null
-  api_qa_pass:
-    status: PENDING
-    evaluated_at: null
-  api_gate:
-    status: PENDING
-    evaluated_at: null
-  interface_inventory_ready:
-    status: PENDING
-    evaluated_at: null
-  design_system_ready:
-    status: PENDING
-    evaluated_at: null
-  release_gate:
-    status: PENDING
-    evaluated_at: null
+    evidence_ids: [EVD-ARCH-001, EVD-ADR-001, EVD-SEC-001, EVD-THREAT-001, EVD-DATA-001, EVD-AUDIT-CAT-001, EVD-AUDIT-RET-001, EVD-API-POL-001]
+  api_contract_ready: {status: PENDING, evaluated_at: null}
+  api_implemented: {status: PENDING, evaluated_at: null}
+  openapi_valid: {status: PENDING, evaluated_at: null}
+  postman_ready: {status: PENDING, evaluated_at: null}
+  api_qa_pass: {status: PENDING, evaluated_at: null}
+  api_gate: {status: PENDING, evaluated_at: null}
+  interface_inventory_ready: {status: PENDING, evaluated_at: null}
+  design_system_ready: {status: PENDING, evaluated_at: null}
+  release_gate: {status: PENDING, evaluated_at: null}
 functional_slices: []
 scoped_gates: []
 blockers: []
 api_impacts: []
 artifacts:
-  - id: EVD-DISCOVERY-001
-    type: discovery
-    value: docs/discovery/FIXPHONE_DISCOVERY_001.md
-  - id: EVD-TARGET-001
-    type: target_definition
-    value: docs/discovery/FIXPHONE_TARGET_DEFINITION_001.md
-  - id: EVD-REQ-001
-    type: requirements_domain
-    value: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md
-  - id: EVD-REQ-TRACE-001
-    type: requirements_traceability
-    value: .blueprint/requirements/requirements-traceability.yaml
-  - id: EVD-IFACE-SCOPE-001
-    type: interface_scope_baseline
-    value: .blueprint/ui/interface-scope-baseline.json
-  - id: EVD-IFACE-TRACE-001
-    type: interface_scope_traceability
-    value: docs/interfaces/FIXPHONE_INTERFACE_SCOPE_TRACEABILITY_001.md
+  - {id: EVD-DISCOVERY-001, type: discovery, value: docs/discovery/FIXPHONE_DISCOVERY_001.md}
+  - {id: EVD-TARGET-001, type: target_definition, value: docs/discovery/FIXPHONE_TARGET_DEFINITION_001.md}
+  - {id: EVD-REQ-001, type: requirements_domain, value: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md}
+  - {id: EVD-REQ-TRACE-001, type: requirements_traceability, value: .blueprint/requirements/requirements-traceability.yaml}
+  - {id: EVD-IFACE-SCOPE-001, type: interface_scope_baseline, value: .blueprint/ui/interface-scope-baseline.json}
+  - {id: EVD-IFACE-TRACE-001, type: interface_scope_traceability, value: docs/interfaces/FIXPHONE_INTERFACE_SCOPE_TRACEABILITY_001.md}
+  - {id: EVD-ARCH-001, type: architecture, value: docs/architecture/FIXPHONE_ARCHITECTURE_001.md}
+  - {id: EVD-ADR-001, type: architecture_decisions, value: docs/architecture/FIXPHONE_ADRS_001.md}
+  - {id: EVD-SEC-001, type: security_model, value: docs/architecture/FIXPHONE_SECURITY_MODEL_001.md}
+  - {id: EVD-THREAT-001, type: threat_model, value: docs/architecture/FIXPHONE_THREAT_MODEL_001.md}
+  - {id: EVD-DATA-001, type: data_architecture, value: docs/architecture/FIXPHONE_DATA_ARCHITECTURE_001.md}
+  - {id: EVD-AUDIT-CAT-001, type: audit_event_catalog, value: .blueprint/architecture/audit-event-catalog.yaml}
+  - {id: EVD-AUDIT-RET-001, type: audit_retention, value: docs/architecture/FIXPHONE_AUDIT_RETENTION_001.md}
+  - {id: EVD-API-POL-001, type: api_architecture_policies, value: docs/architecture/FIXPHONE_API_POLICIES_001.md}
