@@ -1,0 +1,84 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F2-001
+title: Define FixPhone target product
+objective: Convert the approved Discovery into a clear TO-BE product target and completion boundary before detailed Requirements begin.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: f69e51dc99aced3885f750878b60d065da3a8216
+  working_branch: blueprint/fixphone-target-definition-001
+  head_sha: null
+  pull_request: null
+source:
+  feature: FixPhone Target Definition
+  requirements:
+    - TARGET-001
+  business_rules:
+    - FixPhone remains an independent Greenfield consumer.
+    - The final target includes Web, Android, iOS, Mercado Libre, Facebook, Instagram and WhatsApp.
+    - Real bulk inventory entry is deferred until evidence-backed Inventory Entry Readiness is defined and satisfied.
+    - Reusable Blueprints are selectively consumed only after FixPhone establishes its needs.
+  acceptance_criteria:
+    - AC-TARGET-001
+    - AC-TARGET-002
+    - AC-TARGET-003
+    - AC-TARGET-004
+scope:
+  in:
+    - product TO-BE
+    - finished-product definition
+    - business outcomes
+    - client/channel targets
+    - inventory-entry direction
+    - selective reuse boundary
+    - technology direction
+    - success definition
+  out:
+    - detailed requirements
+    - authorization matrix
+    - domain schema
+    - architecture
+    - API operations
+    - interface inventory
+    - implementation
+owner_agent: analyst
+required_agents:
+  - orchestrator
+  - analyst
+  - planner
+  - documentation
+  - auditor
+optional_agents:
+  - architect
+  - security
+not_applicable_agents:
+  - database
+  - backend
+  - frontend
+  - qa
+dependencies:
+  - FIX-F1-001
+implementation_constraints:
+  - preserve Discovery intent
+  - do not convert target statements into unreviewed detailed requirements
+  - do not authorize implementation
+  - keep final scope distinct from incremental sequencing
+expected_outputs:
+  - docs/discovery/FIXPHONE_TARGET_DEFINITION_001.md
+  - updated Blueprint status
+  - updated orchestration state
+validation:
+  build: not_required
+  tests: not_required
+  visual: not_required
+  security: conditional
+  notes:
+    - Validation confirms scope fidelity, phase separation and product-owner reviewability.
+risks:
+  - id: R-TARGET-SCOPE-CREEP
+    description: A broad complete-product target could absorb generic ERP features unrelated to the actual business.
+    probability: MEDIUM
+    impact: HIGH
+    mitigation: Require every later requirement to trace to the approved FixPhone operating model or an explicit scope decision.
+checkpoint: Product owner confirms the TO-BE boundary and completion definition.
+exit_gate: READY_FOR_HUMAN_DECISION
