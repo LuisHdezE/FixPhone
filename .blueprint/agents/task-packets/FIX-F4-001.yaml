@@ -1,0 +1,100 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F4-001
+title: Establish FixPhone Interface Scope Baseline
+objective: Define the descriptive Greenfield interface scope for Web, Android and iOS from approved Requirements without inventing API operations or implementation contracts.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: 51c1952fd20e8cbca66c81bfe8b24d03607c7d4b
+  working_branch: blueprint/fixphone-interface-scope-baseline-001
+  head_sha: null
+  pull_request: null
+source:
+  feature: FixPhone Interface Scope Baseline
+  requirements:
+    - FR-CAT-001
+    - FR-ACQ-001
+    - FR-DEV-001
+    - FR-DIA-001
+    - FR-ROU-001
+    - FR-REP-001
+    - FR-DIS-001
+    - FR-INV-001
+    - FR-SAL-001
+    - FR-WEB-001
+    - FR-FIN-001
+    - FR-ADM-001
+    - FR-ML-001
+    - FR-META-001
+    - FR-WA-001
+    - FR-MOB-001
+    - FR-SEO-001
+    - FR-IER-001
+  business_rules:
+    - Requirements Ready must be PASS before this phase can proceed.
+    - Interface scope is descriptive and non-executable.
+    - No operationId, endpoint or final permission may be invented before API Contract.
+    - WebBlueprint availability does not create interface scope.
+  acceptance_criteria:
+    - AC-IFACE-001
+    - AC-IFACE-002
+    - AC-IFACE-003
+scope:
+  in:
+    - intended Web interfaces
+    - intended Android interfaces
+    - intended iOS interfaces
+    - roles and descriptive actions
+    - states and navigation intent
+    - requirement traceability
+    - unresolved API needs
+  out:
+    - endpoint inventory
+    - OpenAPI operationIds
+    - executable interface inventory
+    - client architecture
+    - design system
+    - WebBlueprint export
+    - React or KMP implementation
+owner_agent: analyst
+required_agents:
+  - orchestrator
+  - analyst
+  - planner
+  - documentation
+  - auditor
+optional_agents:
+  - architect
+  - security
+not_applicable_agents:
+  - database
+  - backend
+  - frontend
+  - qa
+dependencies:
+  - FIX-F3-001
+implementation_constraints:
+  - use SCOPE_BASELINE maturity
+  - use platform namespaces WEB-### APP-### IOS-###
+  - leave API bindings unresolved
+  - do not authorize client implementation
+expected_outputs:
+  - .blueprint/ui/interface-scope-baseline.json
+  - docs/interfaces/FIXPHONE_INTERFACE_SCOPE_TRACEABILITY_001.md
+  - updated Blueprint status
+  - updated orchestration
+validation:
+  build: not_required
+  tests: not_required
+  visual: not_required
+  security: conditional
+  notes:
+    - Structural validation checks schema-required fields, platform namespaces and absence of premature operationId bindings.
+risks:
+  - id: R-IFACE-PREMATURE-BINDING
+    description: Interface planning could accidentally fabricate backend contracts before Architecture/API Contract.
+    probability: MEDIUM
+    impact: HIGH
+    mitigation: Keep every API need unresolved and reconcile only after API Gate.
+checkpoint: Product owner reviews the complete descriptive interface scope before Architecture/Security/Data.
+exit_gate: interface_scope_ready

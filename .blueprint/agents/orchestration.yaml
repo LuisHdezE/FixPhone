@@ -1,32 +1,31 @@
 schema_version: agent-protocol-proposal-1
 task:
-  id: FIX-F3-001
-  title: Establish FixPhone Requirements and Domain contract
+  id: FIX-F4-001
+  title: Establish FixPhone Interface Scope Baseline
   classification: DOCUMENTATION_ONLY
 baseline:
   repository: LuisHdezE/FixPhone
   base_branch: main
-  base_sha: c841c62a53fe1e0d9a9c618bba8a3d68ea958ee8
-  working_branch: blueprint/fixphone-requirements-domain-001
+  base_sha: 51c1952fd20e8cbca66c81bfe8b24d03607c7d4b
+  working_branch: blueprint/fixphone-interface-scope-baseline-001
   head_sha: null
-  pull_request: 4
+  pull_request: 5
 agents:
   orchestrator: COMPLETED
   analyst: COMPLETED
   planner: COMPLETED
   architect: OPTIONAL
-  database: OPTIONAL
+  database: NOT_APPLICABLE
   backend: NOT_APPLICABLE
   frontend: NOT_APPLICABLE
   qa: NOT_APPLICABLE
-  security: COMPLETED
+  security: OPTIONAL
   documentation: COMPLETED
   auditor: COMPLETED
 execution_order:
   - orchestrator
   - analyst
   - planner
-  - security
   - documentation
   - auditor
 current_agent: null
@@ -37,7 +36,7 @@ required_human_decisions:
   - merge_approval
 handoffs: []
 notes:
-  - All Requirements Ready checks have reviewable evidence.
-  - requirements_ready remains READY_FOR_REVIEW pending human approval.
-  - Interface Scope Baseline and later phases remain blocked.
-  - Audit evidence: .blueprint/agents/evidence/FIX-F3-001-AUDIT.md
+  - requirements_ready is PASS from the approved and merged PR #4.
+  - Interface Scope Baseline contains 45 proposed interfaces: 29 Web, 8 Android and 8 iOS.
+  - No API operationId or executable client contract has been introduced.
+  - Audit evidence: .blueprint/agents/evidence/FIX-F4-001-AUDIT.md
