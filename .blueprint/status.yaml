@@ -1,9 +1,10 @@
 blueprint_version: 0.5.4
-updated_at: '2026-10-04T21:48:00-03:00'
+updated_at: '2026-10-05T01:45:00-03:00'
 phases:
   discovery:
-    status: NOT_STARTED
-    progress: 0
+    status: READY_FOR_REVIEW
+    progress: 100
+    note: FIXPHONE_DISCOVERY_001 drafted and awaiting product-owner approval.
   requirements:
     status: NOT_STARTED
     progress: 0
@@ -58,4 +59,7 @@ functional_slices: []
 scoped_gates: []
 blockers: []
 api_impacts: []
-artifacts: []
+artifacts:
+  - id: EVD-DISCOVERY-001
+    type: discovery
+    value: docs/discovery/FIXPHONE_DISCOVERY_001.md
