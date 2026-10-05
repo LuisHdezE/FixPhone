@@ -31,7 +31,7 @@ final readonly class IamController
  {
   $validated=Validator::make($request->all(),[
    'name'=>['required','string','max:120'],
-   'email'=>['required','string','email','max:255','unique:users,email'],
+   'email'=>['required','string','email','max:255'],
    'password'=>['required','string','min:10','max:255'],
    'roles'=>['required','array','min:1'],
    'roles.*'=>['required','string','distinct','max:80'],
@@ -61,6 +61,10 @@ final readonly class IamController
    );
   }catch(IdempotencyConflict){
    return ProblemDetails::response($request,409,'Conflicto de idempotencia','La clave de idempotencia ya fue usada con otra solicitud o sigue reservada.','https://fixphone.uy/problems/idempotency-conflict','idempotency_conflict');
+  }
+
+  if(($result['data']['duplicate_email']??false)===true){
+   return ProblemDetails::response($request,422,'Error de validación','El correo electrónico ya está registrado.','https://fixphone.uy/problems/http-422','http_422',['errors'=>['email'=>['El correo electrónico ya está registrado.']]]);
   }
 
   return response()->json($result['data'],$result['status']);
