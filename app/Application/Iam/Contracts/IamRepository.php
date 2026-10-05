@@ -17,4 +17,5 @@ interface IamRepository
  /** @return array<string,mixed>|null */
  public function replaceRoles(string $userId,array $roles): ?array;
  public function rolesExist(array $roles): bool;
+ public function emailExists(string $email): bool;
 }
