@@ -9,7 +9,7 @@ baseline:
   base_sha: f69e51dc99aced3885f750878b60d065da3a8216
   working_branch: blueprint/fixphone-target-definition-001
   head_sha: null
-  pull_request: null
+  pull_request: 3
 agents:
   orchestrator: COMPLETED
   analyst: COMPLETED
@@ -21,15 +21,15 @@ agents:
   qa: NOT_APPLICABLE
   security: OPTIONAL
   documentation: COMPLETED
-  auditor: REQUIRED
+  auditor: COMPLETED
 execution_order:
   - orchestrator
   - analyst
   - planner
   - documentation
   - auditor
-current_agent: auditor
-current_state: READY_FOR_AUDIT
+current_agent: null
+current_state: READY_FOR_HUMAN_DECISION
 blocked_by: []
 required_human_decisions:
   - scope_change
@@ -39,3 +39,4 @@ notes:
   - Target Definition formalizes TO-BE and completion boundaries only.
   - Requirements & Domain has not started.
   - No architecture, API, Blueprint reuse or implementation has started.
+  - Audit evidence: .blueprint/agents/evidence/FIX-F2-001-AUDIT.md
