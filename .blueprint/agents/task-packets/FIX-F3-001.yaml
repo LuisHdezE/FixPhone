@@ -1,0 +1,84 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F3-001
+title: Establish FixPhone Requirements and Domain contract
+objective: Convert the approved Target Definition into reviewable functional/non-functional requirements, business rules, use cases, acceptance criteria, domain language and traceability sufficient to evaluate Requirements Ready.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: c841c62a53fe1e0d9a9c618bba8a3d68ea958ee8
+  working_branch: blueprint/fixphone-requirements-domain-001
+  head_sha: null
+  pull_request: null
+source:
+  feature: FixPhone Requirements and Domain
+  requirements:
+    - REQUIREMENTS-001
+  business_rules:
+    - Requirements must trace to approved Discovery/Target intent.
+    - Architecture/API/schema implementation decisions remain out of scope.
+    - Mobile licensing decision is explicit because Android is enabled.
+  acceptance_criteria:
+    - AC-REQ-001
+    - AC-REQ-002
+    - AC-REQ-003
+scope:
+  in:
+    - actors and authorization intent
+    - functional requirements
+    - non-functional requirements
+    - business rules
+    - mobile licensing decision
+    - use cases
+    - acceptance criteria
+    - canonical domain language
+    - requirements traceability
+  out:
+    - interface scope baseline
+    - detailed architecture
+    - database schema
+    - endpoint inventory
+    - OpenAPI
+    - UI implementation
+    - backend implementation
+owner_agent: analyst
+required_agents:
+  - orchestrator
+  - analyst
+  - planner
+  - security
+  - documentation
+  - auditor
+optional_agents:
+  - architect
+  - database
+not_applicable_agents:
+  - backend
+  - frontend
+  - qa
+dependencies:
+  - FIX-F2-001
+implementation_constraints:
+  - do not invent provider API capabilities
+  - use provider-agnostic requirements where current external capability must be verified later
+  - preserve backend authority for security and stock
+  - do not mark requirements_ready PASS before audit and human approval
+expected_outputs:
+  - docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md
+  - .blueprint/requirements/requirements-traceability.yaml
+  - updated Blueprint status
+  - updated orchestration
+validation:
+  build: not_required
+  tests: not_required
+  visual: not_required
+  security: required
+  notes:
+    - Security review at this phase checks authorization intent and high-risk requirements, not implementation.
+risks:
+  - id: R-REQ-OVERCONSTRAINT
+    description: Requirements could accidentally freeze architecture/provider details too early.
+    probability: MEDIUM
+    impact: HIGH
+    mitigation: Keep requirements outcome-oriented and defer technical mechanism to later governed phases.
+checkpoint: All Requirements Ready checks have reviewable evidence and are approved by the product owner.
+exit_gate: requirements_ready

@@ -1,42 +1,43 @@
 schema_version: agent-protocol-proposal-1
 task:
-  id: FIX-F2-001
-  title: Define FixPhone target product
+  id: FIX-F3-001
+  title: Establish FixPhone Requirements and Domain contract
   classification: DOCUMENTATION_ONLY
 baseline:
   repository: LuisHdezE/FixPhone
   base_branch: main
-  base_sha: f69e51dc99aced3885f750878b60d065da3a8216
-  working_branch: blueprint/fixphone-target-definition-001
+  base_sha: c841c62a53fe1e0d9a9c618bba8a3d68ea958ee8
+  working_branch: blueprint/fixphone-requirements-domain-001
   head_sha: null
-  pull_request: 3
+  pull_request: 4
 agents:
   orchestrator: COMPLETED
   analyst: COMPLETED
   planner: COMPLETED
   architect: OPTIONAL
-  database: NOT_APPLICABLE
+  database: OPTIONAL
   backend: NOT_APPLICABLE
   frontend: NOT_APPLICABLE
   qa: NOT_APPLICABLE
-  security: OPTIONAL
+  security: COMPLETED
   documentation: COMPLETED
   auditor: COMPLETED
 execution_order:
   - orchestrator
   - analyst
   - planner
+  - security
   - documentation
   - auditor
 current_agent: null
 current_state: READY_FOR_HUMAN_DECISION
 blocked_by: []
 required_human_decisions:
-  - scope_change
+  - requirement_decision
   - merge_approval
 handoffs: []
 notes:
-  - Target Definition formalizes TO-BE and completion boundaries only.
-  - Requirements & Domain has not started.
-  - No architecture, API, Blueprint reuse or implementation has started.
-  - Audit evidence: .blueprint/agents/evidence/FIX-F2-001-AUDIT.md
+  - All Requirements Ready checks have reviewable evidence.
+  - requirements_ready remains READY_FOR_REVIEW pending human approval.
+  - Interface Scope Baseline and later phases remain blocked.
+  - Audit evidence: .blueprint/agents/evidence/FIX-F3-001-AUDIT.md
