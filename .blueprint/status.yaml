@@ -1,15 +1,15 @@
 blueprint_version: 0.5.4
-updated_at: '2026-10-05T12:01:00-03:00'
+updated_at: '2026-10-05T12:20:00-03:00'
 phases:
   discovery: {status: COMPLETE, progress: 100}
   target_definition: {status: COMPLETE, progress: 100}
   requirements_domain: {status: COMPLETE, progress: 100}
   interface_scope_baseline: {status: COMPLETE, progress: 100}
-  architecture_security_data:
+  architecture_security_data: {status: COMPLETE, progress: 100}
+  api_contract_design:
     status: READY_FOR_REVIEW
     progress: 100
-    note: Architecture, security, threat, data, audit and API policy artifacts drafted and awaiting human approval.
-  api_contract_design: {status: NOT_STARTED, progress: 0}
+    note: v1 operation inventory and ApiBlueprint capability review drafted and awaiting human approval.
   api_implementation: {status: NOT_STARTED, progress: 0}
   openapi_validation: {status: NOT_STARTED, progress: 0}
   postman_contract: {status: NOT_STARTED, progress: 0}
@@ -48,18 +48,25 @@ checks:
   api.auth_strategy: {status: PASS, verification: evidence, evidence_ids: [EVD-API-POL-001]}
   api.error_contract: {status: PASS, verification: evidence, evidence_ids: [EVD-API-POL-001]}
   api.versioning_policy: {status: PASS, verification: evidence, evidence_ids: [EVD-API-POL-001]}
+  api.scope_defined: {status: PASS, verification: evidence, evidence_ids: [EVD-API-CONTRACT-001]}
+  api.endpoint_inventory: {status: PASS, verification: evidence, evidence_ids: [EVD-API-CONTRACT-001]}
+  api.auth_contract: {status: PASS, verification: evidence, evidence_ids: [EVD-API-CONTRACT-001]}
+  api.permission_matrix: {status: PASS, verification: evidence, evidence_ids: [EVD-API-CONTRACT-001]}
+  api.audit_event_mapping: {status: PASS, verification: evidence, evidence_ids: [EVD-API-CONTRACT-001]}
+  api.idempotency_matrix: {status: PASS, verification: evidence, evidence_ids: [EVD-API-CONTRACT-001]}
+  api.contract_traceability: {status: PASS, verification: evidence, evidence_ids: [EVD-API-CONTRACT-001]}
 gates:
   requirements_ready: {status: PASS, evaluated_at: '2026-10-05T00:16:00-03:00', evidence_ids: [EVD-REQ-001, EVD-REQ-TRACE-001]}
-  interface_scope_ready:
-    status: PASS
-    evaluated_at: '2026-10-05T12:01:00-03:00'
-    evidence_ids: [EVD-IFACE-SCOPE-001, EVD-IFACE-TRACE-001]
-    note: Explicit human approval recorded by merge authorization for PR #5.
+  interface_scope_ready: {status: PASS, evaluated_at: '2026-10-05T12:01:00-03:00', evidence_ids: [EVD-IFACE-SCOPE-001, EVD-IFACE-TRACE-001]}
   architecture_ready:
+    status: PASS
+    evaluated_at: '2026-10-05T12:20:00-03:00'
+    evidence_ids: [EVD-ARCH-001, EVD-ADR-001, EVD-SEC-001, EVD-THREAT-001, EVD-DATA-001, EVD-AUDIT-CAT-001, EVD-AUDIT-RET-001, EVD-API-POL-001]
+    note: Explicit human approval recorded by merge authorization for PR #6.
+  api_contract_ready:
     status: READY_FOR_REVIEW
     evaluated_at: null
-    evidence_ids: [EVD-ARCH-001, EVD-ADR-001, EVD-SEC-001, EVD-THREAT-001, EVD-DATA-001, EVD-AUDIT-CAT-001, EVD-AUDIT-RET-001, EVD-API-POL-001]
-  api_contract_ready: {status: PENDING, evaluated_at: null}
+    evidence_ids: [EVD-API-CONTRACT-001, EVD-APIBP-REUSE-001]
   api_implemented: {status: PENDING, evaluated_at: null}
   openapi_valid: {status: PENDING, evaluated_at: null}
   postman_ready: {status: PENDING, evaluated_at: null}
@@ -87,3 +94,5 @@ artifacts:
   - {id: EVD-AUDIT-CAT-001, type: audit_event_catalog, value: .blueprint/architecture/audit-event-catalog.yaml}
   - {id: EVD-AUDIT-RET-001, type: audit_retention, value: docs/architecture/FIXPHONE_AUDIT_RETENTION_001.md}
   - {id: EVD-API-POL-001, type: api_architecture_policies, value: docs/architecture/FIXPHONE_API_POLICIES_001.md}
+  - {id: EVD-API-CONTRACT-001, type: api_contract, value: docs/api/FIXPHONE_API_CONTRACT_001.md}
+  - {id: EVD-APIBP-REUSE-001, type: apiblueprint_reuse_review, value: docs/api/FIXPHONE_APIBLUEPRINT_REUSE_001.md}
