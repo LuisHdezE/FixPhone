@@ -1,0 +1,45 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F7A-001
+title: Bootstrap FixPhone API foundation
+objective: Establish the executable Laravel foundation and approved cross-cutting infrastructure before implementing business endpoints.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: 4ac91a4bbea531cd2af6282a334d4f3952c966a6
+  working_branch: blueprint/fixphone-api-implementation-f7a-foundation
+scope:
+  in:
+    - Laravel bootstrap
+    - MySQL production configuration
+    - SQLite in-memory test configuration
+    - Sanctum dependency
+    - correlation ID
+    - Problem Details with stable code and correlationId
+    - durable audit port and database adapter
+    - durable idempotency port and database adapter
+    - migrations for audit and idempotency
+    - architecture fitness tests
+    - CI
+  out:
+    - authentication endpoints
+    - business endpoints
+    - complete API implementation
+    - OpenAPI validation
+    - Postman contract
+owner_agent: backend
+required_agents:
+  - orchestrator
+  - architect
+  - backend
+  - database
+  - security
+  - qa
+  - documentation
+  - auditor
+implementation_constraints:
+  - do not import ApiBlueprint demo domains
+  - MySQL is production authority
+  - Domain and Application remain framework independent
+  - api_implemented gate must remain PENDING
+checkpoint: Foundation builds/tests cleanly and preserves approved architecture.
+exit_gate: NONE
