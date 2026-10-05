@@ -1,0 +1,22 @@
+version: fixphone-requirements-001
+source:
+  discovery: docs/discovery/FIXPHONE_DISCOVERY_001.md
+  target: docs/discovery/FIXPHONE_TARGET_DEFINITION_001.md
+requirements_artifact: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md
+blueprint_checks:
+  requirements.actors_authorization:
+    evidence: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md#2-actors-and-authorization-intent
+  requirements.functional:
+    evidence: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md#3-functional-requirements
+  requirements.non_functional:
+    evidence: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md#4-non-functional-requirements
+  requirements.business_rules:
+    evidence: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md#5-business-rules
+  requirements.mobile_licensing_decision:
+    evidence: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md#6-mobile-licensing-decision
+  requirements.use_cases:
+    evidence: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md#7-use-cases
+  requirements.acceptance_criteria:
+    evidence: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md#8-acceptance-criteria
+  requirements.traceability:
+    evidence: docs/requirements/FIXPHONE_REQUIREMENTS_DOMAIN_001.md#10-traceability-matrix
