@@ -9,7 +9,7 @@ baseline:
   base_sha: 63f029a15dbfe2f507255ae03be885cd68f890ea
   working_branch: blueprint/fixphone-discovery-001
   head_sha: null
-  pull_request: null
+  pull_request: 2
 agents:
   orchestrator: COMPLETED
   analyst: COMPLETED
@@ -21,14 +21,14 @@ agents:
   qa: NOT_APPLICABLE
   security: OPTIONAL
   documentation: COMPLETED
-  auditor: REQUIRED
+  auditor: COMPLETED
 execution_order:
   - orchestrator
   - analyst
   - documentation
   - auditor
-current_agent: auditor
-current_state: READY_FOR_AUDIT
+current_agent: null
+current_state: READY_FOR_HUMAN_DECISION
 blocked_by: []
 required_human_decisions:
   - requirement_decision
@@ -38,3 +38,4 @@ notes:
   - Discovery is repository-owned but remains subject to product-owner review.
   - Target Definition and Requirements have not started.
   - No implementation or Blueprint reuse/import has started.
+  - Audit evidence: .blueprint/agents/evidence/FIX-F1-001-AUDIT.md
