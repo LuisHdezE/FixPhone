@@ -1,0 +1,69 @@
+version: fixphone-audit-001
+events:
+  - id: AUTH.LOGIN.SUCCESS
+    category: security
+    actor_required: true
+  - id: AUTH.LOGIN.FAILURE
+    category: security
+    actor_required: false
+  - id: ACCESS.ROLE_CHANGED
+    category: security
+    actor_required: true
+  - id: ACCESS.PERMISSION_CHANGED
+    category: security
+    actor_required: true
+  - id: DEVICE.RESTRICTION_STATUS_CHANGED
+    category: business
+    actor_required: true
+  - id: ROUTING.DECISION
+    category: business
+    actor_required: true
+  - id: ROUTING.OVERRIDE
+    category: business
+    actor_required: true
+  - id: INVENTORY.MOVEMENT
+    category: business
+    actor_required: true
+  - id: INVENTORY.ADJUSTMENT
+    category: business
+    actor_required: true
+  - id: ORDER.STATE_CHANGED
+    category: business
+    actor_required: true
+  - id: ORDER.CANCELLED
+    category: business
+    actor_required: true
+  - id: PAYMENT.STATE_CHANGED
+    category: financial
+    actor_required: false
+  - id: REFUND.EXECUTED
+    category: financial
+    actor_required: true
+  - id: COST.OVERRIDE
+    category: financial
+    actor_required: true
+  - id: CONSIGNMENT.SETTLED
+    category: financial
+    actor_required: true
+  - id: WARRANTY.RESOLUTION
+    category: business
+    actor_required: true
+  - id: INTEGRATION.CONFIG_CHANGED
+    category: security
+    actor_required: true
+  - id: INTEGRATION.CREDENTIAL_ROTATED
+    category: security
+    actor_required: true
+required_fields:
+  - event_id
+  - event_type
+  - occurred_at
+  - actor_type
+  - action
+  - entity_type
+  - entity_id
+  - correlation_id
+rules:
+  - Never store plaintext passwords, access tokens, secret keys, CVV or raw provider secrets.
+  - Capture before/after or structured change metadata when relevant and safe.
+  - System/provider actors are allowed for automated events.
