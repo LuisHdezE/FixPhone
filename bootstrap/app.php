@@ -1,5 +1,6 @@
 <?php
 use App\Presentation\Http\Middleware\CorrelationIdMiddleware;
+use App\Presentation\Http\Middleware\RequirePermission;
 use App\Presentation\Http\Support\ProblemDetails;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(api: __DIR__.'/../routes/api.php', commands: __DIR__.'/../routes/console.php', health: '/up')
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(CorrelationIdMiddleware::class);
+        $middleware->alias(['permission'=>RequirePermission::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(static fn (Request $request, BaseThrowable $e): bool => $request->is('api/*') || $request->expectsJson());

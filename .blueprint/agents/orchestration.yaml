@@ -1,18 +1,18 @@
 schema_version: agent-protocol-proposal-1
 task:
-  id: FIX-F7B-001
-  title: Implement FixPhone authentication vertical slice
+  id: FIX-F7C-001
+  title: Implement FixPhone RBAC and IAM
   classification: IMPLEMENTATION
 baseline:
   repository: LuisHdezE/FixPhone
   base_branch: main
-  base_sha: 82f2b1f8ea8059b6288d0c830a68167cc568425d
-  working_branch: blueprint/fixphone-api-implementation-f7b-auth
+  base_sha: 7072fc461dc1011e701de1819eddf87ab4611d66
+  working_branch: blueprint/fixphone-api-implementation-f7c-rbac-iam
   head_sha: null
-  pull_request: 9
+  pull_request: 10
 agents:
   orchestrator: COMPLETED
-  analyst: NOT_APPLICABLE
+  analyst: COMPLETED
   planner: COMPLETED
   architect: COMPLETED
   database: COMPLETED
@@ -24,6 +24,7 @@ agents:
   auditor: COMPLETED
 execution_order:
   - orchestrator
+  - analyst
   - planner
   - architect
   - database
@@ -39,8 +40,9 @@ required_human_decisions:
   - merge_approval
 handoffs: []
 notes:
-  - F7A foundation is merged in main.
-  - F7B authLogin/authLogout/authMe CI passed.
-  - Granular RBAC remains deferred to F7C.
-  - api_implemented remains PENDING.
-  - Audit evidence: .blueprint/agents/evidence/FIX-F7B-001-AUDIT.md
+  - F7C covers API-IAM-001 through API-IAM-007.
+  - users.manage is the authoritative IAM permission.
+  - CI run #7 passed before audit closure.
+  - After F7C merge, work shifts to WebBlueprint audit/template/MVP integration by explicit product decision.
+  - Remaining backend endpoint families stay recorded as implementation debt and api_implemented remains PENDING.
+  - Audit evidence: .blueprint/agents/evidence/FIX-F7C-001-AUDIT.md

@@ -14,16 +14,9 @@ final class AuthenticationEndpointsTest extends TestCase
 {
  use RefreshDatabase;
 
- public function test_active_user_can_login_read_current_profile_and_logout(): void
+ public function test_active_user_can_login_read_current_profile_and_logout_with_effective_permissions(): void
  {
-  $user=User::query()->create([
-   'id'=>(string)Str::ulid(),
-   'name'=>'Owner Test',
-   'email'=>'owner@example.test',
-   'password'=>Hash::make('secret-password'),
-   'role'=>'owner',
-   'active'=>true,
-  ]);
+  $user=$this->createUserWithRole('owner@example.test','owner',true);
 
   $login=$this->withHeader('X-Correlation-ID','auth-flow-001')
    ->postJson('/api/v1/auth/login',[
@@ -34,19 +27,19 @@ final class AuthenticationEndpointsTest extends TestCase
    ->assertOk()
    ->assertJsonPath('data.user.id',(string)$user->getKey())
    ->assertJsonPath('data.user.role','owner')
-   ->assertJsonPath('data.user.permissions',[])
+   ->assertJsonPath('data.user.roles.0','owner')
    ->assertJsonPath('data.token_type','Bearer');
+
+  $permissions=$login->json('data.user.permissions');
+  $this->assertContains('users.manage',$permissions);
+  $this->assertContains('inventory.adjust',$permissions);
 
   $token=$login->json('data.access_token');
   $this->assertIsString($token);
   $this->assertNotNull(PersonalAccessToken::findToken($token));
 
-  $this->withToken($token)
-   ->getJson('/api/v1/auth/me')
-   ->assertOk()
-   ->assertJsonPath('data.id',(string)$user->getKey())
-   ->assertJsonPath('data.email','owner@example.test')
-   ->assertJsonPath('data.permissions',[]);
+  $me=$this->withToken($token)->getJson('/api/v1/auth/me')->assertOk();
+  $this->assertContains('users.manage',$me->json('data.permissions'));
 
   $this->withHeader('X-Correlation-ID','auth-flow-logout')
    ->withToken($token)
@@ -60,14 +53,7 @@ final class AuthenticationEndpointsTest extends TestCase
 
  public function test_invalid_credentials_are_rejected_and_audited_without_plain_email(): void
  {
-  User::query()->create([
-   'id'=>(string)Str::ulid(),
-   'name'=>'Staff Test',
-   'email'=>'staff@example.test',
-   'password'=>Hash::make('correct-password'),
-   'role'=>'staff',
-   'active'=>true,
-  ]);
+  $this->createUserWithRole('staff@example.test','sales_operator',true);
 
   $this->postJson('/api/v1/auth/login',[
    'email'=>'staff@example.test',
@@ -82,14 +68,7 @@ final class AuthenticationEndpointsTest extends TestCase
 
  public function test_inactive_user_cannot_login(): void
  {
-  User::query()->create([
-   'id'=>(string)Str::ulid(),
-   'name'=>'Inactive Test',
-   'email'=>'inactive@example.test',
-   'password'=>Hash::make('secret-password'),
-   'role'=>'staff',
-   'active'=>false,
-  ]);
+  $this->createUserWithRole('inactive@example.test','sales_operator',false);
 
   $this->postJson('/api/v1/auth/login',[
    'email'=>'inactive@example.test',
@@ -111,5 +90,18 @@ final class AuthenticationEndpointsTest extends TestCase
    ->assertJsonPath('code','http_422')
    ->assertJsonPath('errors.email.0','El correo electrónico es obligatorio.')
    ->assertJsonPath('errors.password.0','La contraseña es obligatoria.');
+ }
+
+ private function createUserWithRole(string $email,string $role,bool $active): User
+ {
+  $user=User::query()->create([
+   'id'=>(string)Str::ulid(),
+   'name'=>'Auth Test',
+   'email'=>$email,
+   'password'=>Hash::make('secret-password'),
+   'active'=>$active,
+  ]);
+  DB::table('user_roles')->insert(['user_id'=>(string)$user->getKey(),'role_slug'=>$role]);
+  return $user;
  }
 }

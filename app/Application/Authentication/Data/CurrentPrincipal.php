@@ -7,7 +7,7 @@ final readonly class CurrentPrincipal
   public string $userId,
   public string $name,
   public string $email,
-  public string $role,
+  public array $roles,
   public array $permissions,
  ) {}
 
@@ -17,7 +17,8 @@ final readonly class CurrentPrincipal
    'id'=>$this->userId,
    'name'=>$this->name,
    'email'=>$this->email,
-   'role'=>$this->role,
+   'role'=>$this->roles[0]??null,
+   'roles'=>$this->roles,
    'permissions'=>$this->permissions,
   ];
  }

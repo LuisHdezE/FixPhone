@@ -9,6 +9,15 @@ events:
   - id: AUTH.LOGOUT
     category: security
     actor_required: true
+  - id: ACCESS.USER_CREATED
+    category: security
+    actor_required: true
+  - id: ACCESS.USER_UPDATED
+    category: security
+    actor_required: true
+  - id: ACCESS.USER_DEACTIVATED
+    category: security
+    actor_required: true
   - id: ACCESS.ROLE_CHANGED
     category: security
     actor_required: true
