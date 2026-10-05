@@ -1,0 +1,29 @@
+schema_version: agent-protocol-adoption-proposal-1
+
+project:
+  name: FixPhone
+  repository: LuisHdezE/FixPhone
+
+blueprint:
+  stable_version: 0.5.4
+  frozen_release_candidate: 0.5.5-dev
+
+agent_protocol:
+  enabled: true
+  version: agent-protocol-proposal-1
+  mode: opt_in
+  decision_ref: ADR-AGENT-001
+  orchestrator_required: true
+
+artifact_locations:
+  task_packets_root: .blueprint/agents/task-packets
+  handoffs_root: .blueprint/agents/handoffs
+  orchestration_state: .blueprint/agents/orchestration.yaml
+  agent_evidence_root: .blueprint/agents/evidence
+
+policies:
+  automatic_consumer_upgrade: false
+  implementer_self_certification: false
+  auditor_merge_authority: false
+  agent_state_substitutes_blueprint_status: false
+  human_merge_approval: true
