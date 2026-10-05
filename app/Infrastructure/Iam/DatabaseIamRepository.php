@@ -103,6 +103,11 @@ final readonly class DatabaseIamRepository implements IamRepository
   return count($unique)===DB::table('roles')->whereIn('slug',$unique)->count();
  }
 
+ public function emailExists(string $email): bool
+ {
+  return User::query()->where('email',mb_strtolower(trim($email)))->exists();
+ }
+
  private function project(User $user): array
  {
   $snapshot=$this->authorization->snapshot((string)$user->getKey());
