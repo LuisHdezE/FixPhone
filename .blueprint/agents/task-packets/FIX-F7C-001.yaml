@@ -1,0 +1,49 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F7C-001
+title: Implement FixPhone RBAC and IAM
+objective: Complete the approved IAM endpoint family and make backend authorization permission-driven.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: 7072fc461dc1011e701de1819eddf87ab4611d66
+  working_branch: blueprint/fixphone-api-implementation-f7c-rbac-iam
+scope:
+  in:
+    - roles and permissions persistence
+    - stable permission catalog from approved API contract
+    - base FixPhone actor roles
+    - permission middleware
+    - effective roles/permissions in auth projections
+    - usersList
+    - usersShow
+    - usersCreate with idempotency
+    - usersUpdate
+    - usersDeactivate
+    - rolesList
+    - roleAssignmentsUpdate
+    - IAM audit events
+    - authorization and IAM feature tests
+  out:
+    - customer registration/profile
+    - catalog/business endpoints
+    - custom role creation/deletion
+    - complete API implementation gate
+owner_agent: backend
+required_agents:
+  - orchestrator
+  - architect
+  - database
+  - backend
+  - security
+  - qa
+  - documentation
+  - auditor
+implementation_constraints:
+  - backend authorization is authoritative
+  - roles map to stable business permissions
+  - no UI exposure may substitute permission checks
+  - usersCreate honors Idempotency-Key contract
+  - sensitive IAM mutations are durably audited
+  - api_implemented remains PENDING
+checkpoint: all API-IAM-001 through API-IAM-007 operations pass CI and users.manage is enforced server-side.
+exit_gate: NONE
