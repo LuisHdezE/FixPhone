@@ -7,7 +7,7 @@ final readonly class AuthenticatedSession
   public string $userId,
   public string $name,
   public string $email,
-  public string $role,
+  public array $roles,
   public array $permissions,
   public string $accessToken,
  ) {}
@@ -19,7 +19,8 @@ final readonly class AuthenticatedSession
     'id'=>$this->userId,
     'name'=>$this->name,
     'email'=>$this->email,
-    'role'=>$this->role,
+    'role'=>$this->roles[0]??null,
+    'roles'=>$this->roles,
     'permissions'=>$this->permissions,
    ],
    'access_token'=>$this->accessToken,
