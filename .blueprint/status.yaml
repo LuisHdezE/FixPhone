@@ -12,8 +12,8 @@ phases:
     note: v1 operation inventory and ApiBlueprint capability review approved and merged in PR #7.
   api_implementation:
     status: IN_PROGRESS
-    progress: 10
-    note: F7A executable Laravel foundation implemented; business endpoint slices remain pending.
+    progress: 15
+    note: F7A foundation complete; F7B authentication vertical slice implemented and awaiting review.
   openapi_validation: {status: NOT_STARTED, progress: 0}
   postman_contract: {status: NOT_STARTED, progress: 0}
   api_qa: {status: NOT_STARTED, progress: 0}

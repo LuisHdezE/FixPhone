@@ -6,6 +6,9 @@ events:
   - id: AUTH.LOGIN.FAILURE
     category: security
     actor_required: false
+  - id: AUTH.LOGOUT
+    category: security
+    actor_required: true
   - id: ACCESS.ROLE_CHANGED
     category: security
     actor_required: true

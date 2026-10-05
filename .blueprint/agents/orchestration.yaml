@@ -1,15 +1,15 @@
 schema_version: agent-protocol-proposal-1
 task:
-  id: FIX-F7A-001
-  title: Bootstrap FixPhone API foundation
+  id: FIX-F7B-001
+  title: Implement FixPhone authentication vertical slice
   classification: IMPLEMENTATION
 baseline:
   repository: LuisHdezE/FixPhone
   base_branch: main
-  base_sha: 4ac91a4bbea531cd2af6282a334d4f3952c966a6
-  working_branch: blueprint/fixphone-api-implementation-f7a-foundation
+  base_sha: 82f2b1f8ea8059b6288d0c830a68167cc568425d
+  working_branch: blueprint/fixphone-api-implementation-f7b-auth
   head_sha: null
-  pull_request: 8
+  pull_request: 9
 agents:
   orchestrator: COMPLETED
   analyst: NOT_APPLICABLE
@@ -39,7 +39,8 @@ required_human_decisions:
   - merge_approval
 handoffs: []
 notes:
-  - api_contract_ready is PASS from explicit approval and merge of PR #7.
-  - F7A foundation CI passed.
+  - F7A foundation is merged in main.
+  - F7B authLogin/authLogout/authMe CI passed.
+  - Granular RBAC remains deferred to F7C.
   - api_implemented remains PENDING.
-  - Audit evidence: .blueprint/agents/evidence/FIX-F7A-001-AUDIT.md
+  - Audit evidence: .blueprint/agents/evidence/FIX-F7B-001-AUDIT.md

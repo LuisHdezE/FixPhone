@@ -1,0 +1,44 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F7B-001
+title: Implement FixPhone authentication vertical slice
+objective: Implement authLogin, authLogout and authMe with Sanctum, minimal internal identity and durable authentication audit.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: 82f2b1f8ea8059b6288d0c830a68167cc568425d
+  working_branch: blueprint/fixphone-api-implementation-f7b-auth
+scope:
+  in:
+    - users persistence baseline
+    - Sanctum personal access token persistence
+    - authLogin
+    - authLogout
+    - authMe
+    - inactive-user rejection
+    - authentication audit
+    - feature tests
+  out:
+    - customer registration
+    - granular RBAC/permissions
+    - admin user management
+    - password reset
+    - business endpoints
+    - complete API gate
+owner_agent: backend
+required_agents:
+  - orchestrator
+  - architect
+  - backend
+  - database
+  - security
+  - qa
+  - documentation
+  - auditor
+implementation_constraints:
+  - preserve Application framework independence
+  - use Sanctum tokens
+  - do not store plaintext credentials in audit
+  - permissions remain an empty contract projection until F7C RBAC
+  - api_implemented remains PENDING
+checkpoint: authLogin authLogout authMe pass CI and conform to approved API contract.
+exit_gate: NONE
