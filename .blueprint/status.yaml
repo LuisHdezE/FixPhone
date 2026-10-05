@@ -1,0 +1,61 @@
+blueprint_version: 0.5.4
+updated_at: '2026-10-04T21:48:00-03:00'
+phases:
+  discovery:
+    status: NOT_STARTED
+    progress: 0
+  requirements:
+    status: NOT_STARTED
+    progress: 0
+  architecture:
+    status: NOT_STARTED
+    progress: 0
+  api_contract:
+    status: NOT_STARTED
+    progress: 0
+  api_implementation:
+    status: NOT_STARTED
+    progress: 0
+  interface_scope_baseline:
+    status: NOT_STARTED
+    progress: 0
+  client_architecture:
+    status: NOT_STARTED
+    progress: 0
+  functional_interface_slice:
+    status: NOT_STARTED
+    progress: 0
+  integration_qa:
+    status: NOT_STARTED
+    progress: 0
+checks: {}
+gates:
+  requirements_ready:
+    status: PENDING
+    evaluated_at: null
+  interface_scope_ready:
+    status: PENDING
+    evaluated_at: null
+  architecture_ready:
+    status: PENDING
+    evaluated_at: null
+  api_contract_ready:
+    status: PENDING
+    evaluated_at: null
+  api_gate:
+    status: PENDING
+    evaluated_at: null
+  interface_inventory_ready:
+    status: PENDING
+    evaluated_at: null
+  design_system_ready:
+    status: PENDING
+    evaluated_at: null
+  release_gate:
+    status: PENDING
+    evaluated_at: null
+functional_slices: []
+scoped_gates: []
+blockers: []
+api_impacts: []
+artifacts: []
