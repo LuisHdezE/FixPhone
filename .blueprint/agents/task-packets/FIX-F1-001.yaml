@@ -1,0 +1,89 @@
+schema_version: agent-protocol-proposal-1
+task_id: FIX-F1-001
+title: Establish FixPhone product discovery
+objective: Convert product-owner decisions and prior research into a repository-owned Greenfield Discovery artifact without prematurely freezing requirements or architecture.
+baseline:
+  repository: LuisHdezE/FixPhone
+  base_branch: main
+  base_sha: 63f029a15dbfe2f507255ae03be885cd68f890ea
+  working_branch: blueprint/fixphone-discovery-001
+  head_sha: null
+  pull_request: null
+source:
+  feature: FixPhone Product Discovery
+  requirements:
+    - DISCOVERY-001
+  business_rules:
+    - SoftwareDevelopmentBlueprint 0.5.4 remains the stable authority.
+    - External research and prior projects are inputs, not normative FixPhone product truth.
+    - WebBlueprint and ApiBlueprint are selectively analyzed only after FixPhone defines what it needs.
+    - No real inventory is bulk-loaded during Discovery.
+  acceptance_criteria:
+    - AC-DISCOVERY-001
+    - AC-DISCOVERY-002
+    - AC-DISCOVERY-003
+    - AC-DISCOVERY-004
+scope:
+  in:
+    - product intent
+    - business problem
+    - macro operating journey
+    - client targets
+    - intended commerce channels
+    - capability landscape
+    - constraints
+    - risks
+    - deferred questions
+    - reuse strategy
+  out:
+    - detailed functional requirements
+    - permission matrix
+    - architecture
+    - database schema
+    - API endpoints
+    - WebBlueprint export
+    - ApiBlueprint import
+    - Laravel code
+    - React code
+    - KMP code
+owner_agent: analyst
+required_agents:
+  - orchestrator
+  - analyst
+  - documentation
+  - auditor
+optional_agents:
+  - architect
+  - security
+not_applicable_agents:
+  - planner
+  - database
+  - backend
+  - frontend
+  - qa
+dependencies:
+  - FIX-F0-001
+implementation_constraints:
+  - preserve stable versus proposal provenance
+  - do not invent requirements that the available context does not support
+  - explicitly separate fixed decisions from deferred questions
+  - do not mark Requirements Ready or later gates PASS
+expected_outputs:
+  - docs/discovery/FIXPHONE_DISCOVERY_001.md
+  - updated .blueprint/status.yaml showing Discovery in review
+  - updated orchestration state
+validation:
+  build: not_required
+  tests: not_required
+  visual: not_required
+  security: conditional
+  notes:
+    - Discovery validation is documentary, traceability-oriented and human-reviewed.
+risks:
+  - id: R-DISCOVERY-SCOPE
+    description: Discovery could silently become detailed requirements or architecture.
+    probability: MEDIUM
+    impact: HIGH
+    mitigation: Keep unresolved decisions explicit and defer prescriptive contracts to later Blueprint phases.
+checkpoint: Product owner reviews the Discovery artifact before Target Definition starts.
+exit_gate: READY_FOR_HUMAN_DECISION
