@@ -276,19 +276,9 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
                 {isSubmitting ? view.form.submittingLabel : view.form.submitLabel}
               </button>
             </form>
-
-            <p className="mt-6 text-center text-sm text-slate-600">
-              {view.form.createAccount.prompt}{' '}
-              <Link className="font-semibold text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)]" to={view.form.createAccount.href}>
-                {view.form.createAccount.label}
-              </Link>
+            <p className="mt-6 border-t border-slate-100 pt-5 text-center text-xs text-slate-500">
+              El alta de usuarios administrativos se gestiona desde FixPhone.
             </p>
-
-            <div className="mt-8 flex items-center justify-center gap-4 border-t border-slate-100 pt-5 text-xs text-slate-500">
-              <Link className="hover:text-slate-800" to={view.legal.privacyHref}>{view.legal.privacyLabel}</Link>
-              <span aria-hidden="true">•</span>
-              <Link className="hover:text-slate-800" to={view.legal.termsHref}>{view.legal.termsLabel}</Link>
-            </div>
           </div>
         </section>
       </div>
