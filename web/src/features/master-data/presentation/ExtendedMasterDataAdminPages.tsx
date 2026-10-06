@@ -53,10 +53,10 @@ function normalizeSlug(value: string) {
 
 function nextId(prefix: string, existingIds: readonly string[]) {
   let index = existingIds.length + 1;
-  let candidate = `${prefix}-demo-${index}`;
+  let candidate = `${prefix}-local-${index}`;
   while (existingIds.includes(candidate)) {
     index += 1;
-    candidate = `${prefix}-demo-${index}`;
+    candidate = `${prefix}-local-${index}`;
   }
   return candidate;
 }
@@ -76,7 +76,7 @@ function AdminNotice({ notice }: { notice: Notice }) {
 }
 
 function DemoPersistenceNote() {
-  return <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-4 text-slate-500">Modo local temporal. Los cambios se mantienen durante esta sesión y se reinician al recargar. La persistencia quedará habilitada al conectar la API.</p>;
+  return <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-4 text-slate-500">Modo local temporal. Los cambios se mantienen durante esta sesión y se reinician al recargar. El guardado permanente se habilitará al conectar el servicio de datos.</p>;
 }
 
 function ModalShell({ children, title, onClose }: { children: ReactNode; title: string; onClose: () => void }) {
@@ -188,7 +188,7 @@ function SimpleMasterDataPage({ config }: { config: SimpleMasterDataConfig }) {
       onConfirm: () => {
         setItems((current) => current.filter((candidate) => candidate.id !== item.id).map((candidate) => candidate.parentId === item.id ? { ...candidate, parentId: null } : candidate));
         setConfirmAction(null);
-        setNotice({ tone: 'warning', message: `${config.singularLabel} eliminado de la demo.` });
+        setNotice({ tone: 'warning', message: `${config.singularLabel} eliminado localmente.` });
       },
     });
   }
