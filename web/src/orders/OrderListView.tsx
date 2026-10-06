@@ -168,7 +168,7 @@ export function OrderListView({ repository = mockOrdersRepository }: OrderListVi
       </section>
 
       {state.status === 'loading' || state.status === 'idle' ? (
-        <InlineFeedback title="Cargando pedidos" message="Estamos preparando el flujo operativo de esta demo." tone="info" />
+        <InlineFeedback title="Cargando pedidos" message="Estamos preparando el flujo operativo de pedidos." tone="info" />
       ) : null}
 
       {state.status === 'error' ? (
