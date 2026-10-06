@@ -61,13 +61,13 @@
   "notices": [
     {
       "id": "no-persistence",
-      "title": "Sin persistencia",
-      "description": "Los favoritos se mantienen solo durante la sesión actual. No usa localStorage, sessionStorage ni backend."
+      "title": "Sin guardado permanente",
+      "description": "Los favoritos se mantienen solo durante la visita actual y se reinician al recargar."
     },
     {
       "id": "no-customer-mutation",
-      "title": "Sin estado de cliente",
-      "description": "Quitar o restaurar favoritos no modifica cuentas, sesiones ni preferencias persistentes."
+      "title": "Sin cambios en la cuenta",
+      "description": "Quitar o restaurar favoritos no modifica cuentas, sesiones ni preferencias guardadas."
     },
     {
       "id": "no-cart-mutation",
