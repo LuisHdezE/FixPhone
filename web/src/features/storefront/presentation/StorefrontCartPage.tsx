@@ -152,14 +152,14 @@ export function StorefrontCartPage({ provider }: StorefrontCartPageProps) {
             </div>
 
             <div className="mt-2 flex items-center justify-between bg-[var(--storefront-primary-soft)] px-3 py-2 text-[10px] font-semibold text-[var(--storefront-primary-strong)]">
-              <span>✓ Envío por zona disponible en el checkout demo</span>
+              <span>✓ Envío por zona disponible en checkout</span>
               <Link className="font-black hover:underline" to="/store/shipping">Ver zonas</Link>
             </div>
 
             {interactiveCart.lines.length === 0 ? (
               <section className="mt-3 border border-dashed border-slate-300 p-4" data-storefront-cart-empty-state>
                 <h2 className="text-[13px] font-black text-slate-950">{cart.emptyState.title}</h2>
-                <p className="mt-1 text-[10px] leading-4 text-slate-500">Quitaste todas las líneas del carrito local. Puedes restaurar los datos demo o volver al catálogo.</p>
+                <p className="mt-1 text-[10px] leading-4 text-slate-500">Quitaste todas las líneas del carrito local. Puedes restaurar el conjunto de muestra o volver al catálogo.</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
                     className="rounded bg-[var(--storefront-primary)] px-3 py-1.5 text-[10px] font-black text-[var(--storefront-on-primary)]"
@@ -167,7 +167,7 @@ export function StorefrontCartPage({ provider }: StorefrontCartPageProps) {
                     onClick={restoreCart}
                     type="button"
                   >
-                    Restaurar carrito demo
+                    Restaurar carrito de muestra
                   </button>
                   <Link className="rounded border border-slate-300 px-3 py-1.5 text-[10px] font-black text-slate-700" to={cart.emptyState.actionHref}>
                     {cart.emptyState.actionLabel}
@@ -245,7 +245,7 @@ export function StorefrontCartPage({ provider }: StorefrontCartPageProps) {
               )}
 
               <p className="mt-2 text-[9px] leading-4 text-slate-400">
-                El checkout continúa siendo demo: no cobra, reserva stock ni crea una orden.
+                El checkout continúa en modo de muestra: no cobra, reserva stock ni crea una orden.
               </p>
             </div>
           </aside>
