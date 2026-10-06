@@ -18,7 +18,7 @@ export function PageShell({ title, description, breadcrumbs, actions, children }
   return (
     <section className="mx-auto w-full max-w-[1600px]">
       <nav aria-label="Breadcrumb" className="mb-2 flex flex-wrap items-center gap-1 text-[11px] text-slate-500">
-        <Link className="transition hover:text-[var(--theme-primary)]" to="/dashboard">Inicio</Link>
+        <Link className="transition hover:text-[var(--theme-primary)]" to="/apps/inventory/dashboard">Inicio</Link>
         {breadcrumbs.map((item) => (
           <span key={`${item.to ?? 'current'}-${item.label}`} className="flex items-center gap-1">
             <span className="text-slate-300">/</span>
@@ -54,7 +54,7 @@ export function PendingViewCard() {
         <div>
           <h2 className="text-[13px] font-semibold text-slate-900">Vista preparada para construcción</h2>
           <p className="mt-1 max-w-2xl text-[12px] leading-5 text-slate-500">
-            La ruta ya forma parte del Blueprint navegable. Sus componentes se incorporarán por etapas y se reutilizarán en las vistas siguientes.
+            La ruta ya forma parte de FixPhone. Sus componentes se incorporarán por etapas y se habilitarán cuando exista flujo funcional real.
           </p>
         </div>
       </div>
