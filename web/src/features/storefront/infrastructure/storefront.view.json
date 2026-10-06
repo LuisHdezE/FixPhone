@@ -1,9 +1,9 @@
 {
   "shell": {
-    "storeName": "Elias Store Demo",
-    "storeTagline": "Repuestos y celulares usados con flujo comercial reusable.",
-    "announcement": "Storefront demo separado del panel administrativo. Sin ventas reales ni integración de pago.",
-    "logoText": "ES",
+    "storeName": "FixPhone",
+    "storeTagline": "Repuestos, celulares usados y servicio técnico con trazabilidad.",
+    "announcement": "MVP web de FixPhone. Catálogo y flujos visuales aún sin conexión a pagos ni inventario real.",
+    "logoText": "FP",
     "searchPlaceholder": "Buscar repuestos, modelos o celulares usados…",
     "primaryNav": [
       {
@@ -118,7 +118,7 @@
     "support": {
       "whatsappLabel": "Consultar por WhatsApp",
       "whatsappHref": "/store/contact",
-      "serviceArea": "Montevideo y zona metropolitana demo"
+      "serviceArea": "Montevideo y zona metropolitana"
     },
     "theme": {
       "primary": "#16a34a",
