@@ -151,8 +151,8 @@
   ],
   "recommendedDestination": "Refurbish",
   "evaluatorNotes": "Equipo apto para reacondicionamiento inicial. Confirmar cámaras antes de asignar presupuesto final.",
-  "demoNotice": "Los datos de esta ficha son de muestra. Guardar valida la interacción, pero todavía no actualiza inventario real.",
+  "demoNotice": "La decisión se valida solo durante esta visita. Todavía no cambia el destino permanente del equipo.",
   "submitLabel": "Validar decisión",
-  "successTitle": "Decisión validada",
-  "successMessage": "La decisión es válida para continuar el flujo. La persistencia se habilitará al conectar la API."
+  "successTitle": "Decisión validada temporalmente",
+  "successMessage": "La decisión queda validada para revisar el flujo. El cambio definitivo se habilitará cuando conectemos el servicio de inventario."
 }

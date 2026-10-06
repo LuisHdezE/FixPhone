@@ -106,11 +106,11 @@
         { "value": "Discard", "label": "Descartar" }
       ]
     },
-    "submitLabel": "Registrar ingreso",
+    "submitLabel": "Validar ingreso",
     "cancelLabel": "Volver a dispositivos",
-    "demoNotice": "Los datos de esta vista son de muestra. La persistencia se habilitará cuando se conecte el flujo con la API.",
-    "successTitle": "Ingreso validado",
-    "successMessage": "La captura es válida para continuar con la evaluación. Todavía no se ha persistido en el backend.",
+    "demoNotice": "Esta captura valida el flujo de ingreso de forma temporal. El dispositivo no se agrega todavía al inventario permanente.",
+    "successTitle": "Ingreso validado temporalmente",
+    "successMessage": "La captura es válida para continuar con la evaluación. El guardado definitivo se habilitará cuando conectemos el servicio de inventario.",
     "defaults": {
       "brandId": "",
       "deviceModelId": "",
