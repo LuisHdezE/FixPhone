@@ -1,0 +1,63 @@
+{
+  "eyebrow": "Garantía y devoluciones demo",
+  "title": "Condiciones claras antes y después de comprar",
+  "description": "B11 presenta políticas visuales de garantía y devolución para que el Storefront explique cobertura, exclusiones y próximos pasos sin iniciar solicitudes reales.",
+  "stateLabel": "Políticas demo · sin trámite",
+  "policies": [
+    {
+      "id": "warranty",
+      "title": "Garantía",
+      "badgeLabel": "Cobertura demo",
+      "description": "Cobertura ilustrativa para defectos asociados al producto dentro del período indicado en su ficha.",
+      "items": [
+        "Conservar comprobante de compra.",
+        "El producto debe corresponder al artículo vendido.",
+        "La evaluación técnica define si aplica cobertura."
+      ]
+    },
+    {
+      "id": "returns",
+      "title": "Devoluciones",
+      "badgeLabel": "Elegibilidad demo",
+      "description": "Flujo futuro para solicitar revisión de una devolución antes de que exista una operación real en el sistema.",
+      "items": [
+        "La solicitud deberá asociarse a una compra existente.",
+        "Se revisará estado físico y accesorios incluidos.",
+        "El resultado podrá ser aprobado, rechazado o requerir inspección."
+      ]
+    }
+  ],
+  "eligibility": {
+    "title": "Chequeo de elegibilidad",
+    "description": "Vista preparada para un chequeo futuro. En B11 no consulta órdenes ni determina elegibilidad real.",
+    "rows": [
+      { "id": "purchase", "label": "Compra identificada", "value": "Pendiente" },
+      { "id": "period", "label": "Dentro del período", "value": "Pendiente" },
+      { "id": "condition", "label": "Condición del producto", "value": "Pendiente" }
+    ],
+    "actionLabel": "Solicitar revisión pendiente"
+  },
+  "links": {
+    "contactLabel": "Consultar soporte",
+    "contactHref": "/store/contact",
+    "productsLabel": "Volver a productos",
+    "productsHref": "/store/products"
+  },
+  "notices": [
+    {
+      "id": "no-return-request",
+      "title": "Sin solicitud real",
+      "description": "Esta vista no crea devoluciones, reclamos ni tickets."
+    },
+    {
+      "id": "no-order-lookup",
+      "title": "Sin consulta de órdenes",
+      "description": "No busca compras, pagos ni historial del cliente."
+    },
+    {
+      "id": "no-inventory-mutation",
+      "title": "Sin mutación de inventario",
+      "description": "No reingresa unidades ni modifica stock."
+    }
+  ]
+}

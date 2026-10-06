@@ -1,0 +1,859 @@
+{
+  "shell": {
+    "storeName": "Elias Store Demo",
+    "storeTagline": "Repuestos y celulares usados con flujo comercial reusable.",
+    "announcement": "Storefront demo separado del panel administrativo. Sin ventas reales ni integración de pago.",
+    "logoText": "ES",
+    "searchPlaceholder": "Buscar repuestos, modelos o celulares usados…",
+    "primaryNav": [
+      {
+        "id": "home",
+        "label": "Inicio",
+        "href": "/store"
+      },
+      {
+        "id": "products",
+        "label": "Productos",
+        "href": "/store/products"
+      },
+      {
+        "id": "spare-parts",
+        "label": "Repuestos",
+        "href": "/store/spare-parts"
+      },
+      {
+        "id": "used-phones",
+        "label": "Celulares usados",
+        "href": "/store/used-phones"
+      },
+      {
+        "id": "brands",
+        "label": "Marcas",
+        "href": "/store/brands"
+      }
+    ],
+    "categoryNav": [
+      {
+        "id": "displays",
+        "label": "Displays",
+        "href": "/store/categories/displays"
+      },
+      {
+        "id": "batteries",
+        "label": "Baterías",
+        "href": "/store/categories/batteries"
+      },
+      {
+        "id": "charge-connectors",
+        "label": "Conectores",
+        "href": "/store/categories/charge-connectors"
+      },
+      {
+        "id": "accessories",
+        "label": "Accesorios",
+        "href": "/store/categories/accessories"
+      }
+    ],
+    "utilityNav": [
+      {
+        "id": "account",
+        "label": "Mi cuenta",
+        "href": "/store/account"
+      },
+      {
+        "id": "favorites",
+        "label": "Favoritos",
+        "href": "/store/favorites"
+      },
+      {
+        "id": "cart",
+        "label": "Carrito",
+        "href": "/store/cart"
+      }
+    ],
+    "footerColumns": [
+      {
+        "id": "shop",
+        "title": "Comprar",
+        "links": [
+          {
+            "id": "footer-products",
+            "label": "Productos",
+            "href": "/store/products"
+          },
+          {
+            "id": "footer-spare-parts",
+            "label": "Repuestos",
+            "href": "/store/spare-parts"
+          },
+          {
+            "id": "footer-used-phones",
+            "label": "Celulares usados",
+            "href": "/store/used-phones"
+          }
+        ]
+      },
+      {
+        "id": "support",
+        "title": "Soporte",
+        "links": [
+          {
+            "id": "footer-shipping",
+            "label": "Envíos",
+            "href": "/store/shipping"
+          },
+          {
+            "id": "footer-contact",
+            "label": "Contacto",
+            "href": "/store/contact"
+          },
+          {
+            "id": "footer-warranty",
+            "label": "Garantía demo",
+            "href": "/store/warranty"
+          }
+        ]
+      }
+    ],
+    "support": {
+      "whatsappLabel": "Consultar por WhatsApp",
+      "whatsappHref": "/store/contact",
+      "serviceArea": "Montevideo y zona metropolitana demo"
+    },
+    "theme": {
+      "primary": "#16a34a",
+      "primaryStrong": "#15803d",
+      "primarySoft": "#dcfce7",
+      "onPrimary": "#ffffff"
+    },
+    "floatingAction": {
+      "id": "whatsapp",
+      "label": "WhatsApp",
+      "ariaLabel": "Consultar por WhatsApp",
+      "href": "/store/contact",
+      "icon": "whatsapp",
+      "backgroundColor": "#25D366",
+      "foregroundColor": "#ffffff"
+    }
+  },
+  "home": {
+    "eyebrow": "Tienda online demo",
+    "title": "Storefront comercial separado del panel administrativo",
+    "description": "Base pública para navegar productos, repuestos y celulares usados sin heredar sidebar, tablas ni estética de dashboard.",
+    "primarySearchPlaceholder": "Ej. iPhone 13, batería, display OLED…",
+    "ctas": [
+      {
+        "label": "Ver productos",
+        "href": "/store/products",
+        "variant": "primary"
+      },
+      {
+        "label": "Consultar por WhatsApp",
+        "href": "/store/contact",
+        "variant": "secondary"
+      }
+    ],
+    "trustMetrics": [
+      {
+        "id": "catalog",
+        "label": "Catálogo preparado",
+        "value": "Demo"
+      },
+      {
+        "id": "checkout",
+        "label": "Checkout futuro",
+        "value": "Pendiente"
+      },
+      {
+        "id": "payments",
+        "label": "Pagos reales",
+        "value": "No integrado"
+      }
+    ],
+    "featureTiles": [
+      {
+        "id": "commercial-shell",
+        "title": "Shell comercial",
+        "description": "Header, búsqueda, categorías, cuenta, favoritos, carrito y footer público."
+      },
+      {
+        "id": "admin-separated",
+        "title": "Separado del admin",
+        "description": "La tienda no usa TemplateShell, sidebar ni layout de dashboard."
+      },
+      {
+        "id": "ready-for-catalog",
+        "title": "Listo para catálogo",
+        "description": "El siguiente bloque puede conectar productos, categorías y filtros públicos."
+      }
+    ],
+    "categorySection": {
+      "eyebrow": "Explorar por necesidad",
+      "title": "Categorías preparadas para vitrina pública",
+      "description": "B2 presenta agrupaciones comerciales sin acoplarse al demo Ecommerce legacy ni a datos de backend.",
+      "categories": [
+        {
+          "id": "cat-displays",
+          "title": "Displays y módulos",
+          "description": "Pantallas demo organizadas para futuras compatibilidades por marca y modelo.",
+          "href": "/store/categories/displays",
+          "eyebrow": "Repuestos",
+          "itemCountLabel": "12 ítems demo"
+        },
+        {
+          "id": "cat-batteries",
+          "title": "Baterías",
+          "description": "Sección pública para comparar repuesto nuevo, costo de tienda y disponibilidad.",
+          "href": "/store/categories/batteries",
+          "eyebrow": "Energía",
+          "itemCountLabel": "8 ítems demo"
+        },
+        {
+          "id": "cat-used-phones",
+          "title": "Celulares usados",
+          "description": "Tarjetas comerciales para equipos individuales sin exponer costo interno.",
+          "href": "/store/used-phones",
+          "eyebrow": "Equipos",
+          "itemCountLabel": "6 ítems demo"
+        },
+        {
+          "id": "cat-connectors",
+          "title": "Conectores de carga",
+          "description": "Preparado para compatibilidad, stock exacto y consultas asistidas.",
+          "href": "/store/categories/charge-connectors",
+          "eyebrow": "Carga",
+          "itemCountLabel": "9 ítems demo"
+        }
+      ]
+    },
+    "productSection": {
+      "eyebrow": "Destacados demo",
+      "title": "Cards comerciales listas para catálogo",
+      "description": "Estos productos son datos de presentación. No descuentan inventario, no compran y no crean órdenes.",
+      "products": [
+        {
+          "id": "product-iphone-13-display",
+          "title": "Display OLED iPhone 13",
+          "subtitle": "Módulo demo para reparación premium",
+          "priceLabel": "UYU 4.890",
+          "compareLabel": "Costo repuesto nuevo: UYU 3.950",
+          "badgeLabel": "Repuesto",
+          "href": "/store/products/iphone-13-display-oled",
+          "compatibilityLabel": "Compatible: iPhone 13",
+          "stockLabel": "Stock demo: 3",
+          "image": {
+            "src": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
+            "alt": "Smartphone usado como referencia visual para display",
+            "objectPosition": "center"
+          }
+        },
+        {
+          "id": "product-samsung-battery",
+          "title": "Batería Samsung S21",
+          "subtitle": "Repuesto demo con garantía futura configurable",
+          "priceLabel": "UYU 1.690",
+          "compareLabel": "Costo repuesto nuevo: UYU 1.150",
+          "badgeLabel": "Batería",
+          "href": "/store/products/samsung-s21-battery",
+          "compatibilityLabel": "Compatible: Galaxy S21",
+          "stockLabel": "Stock demo: 5",
+          "image": {
+            "src": "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=900&q=80",
+            "alt": "Smartphone como referencia visual para batería",
+            "objectPosition": "center"
+          }
+        },
+        {
+          "id": "product-used-iphone",
+          "title": "iPhone 12 128 GB usado",
+          "subtitle": "Equipo demo individual preparado para vitrina",
+          "priceLabel": "USD 285",
+          "badgeLabel": "Usado A",
+          "href": "/store/products/iphone-12-128-used-a",
+          "compatibilityLabel": "Color: Negro · Batería: 87%",
+          "stockLabel": "Unidad única demo",
+          "image": {
+            "src": "https://images.unsplash.com/photo-1523206489230-c012c64b2b48?auto=format&fit=crop&w=900&q=80",
+            "alt": "Teléfono móvil usado en vitrina comercial",
+            "objectPosition": "center"
+          }
+        },
+        {
+          "id": "product-charge-connector",
+          "title": "Conector de carga Xiaomi Redmi Note",
+          "subtitle": "Repuesto demo para compatibilidad futura",
+          "priceLabel": "UYU 890",
+          "compareLabel": "Costo repuesto nuevo: UYU 520",
+          "badgeLabel": "Conector",
+          "href": "/store/products/xiaomi-redmi-charge-connector",
+          "compatibilityLabel": "Compatible: Redmi Note demo",
+          "stockLabel": "Stock demo: 7",
+          "image": {
+            "src": "https://images.unsplash.com/photo-1585060544812-6b45742d762f?auto=format&fit=crop&w=900&q=80",
+            "alt": "Equipo y accesorios de carga sobre escritorio",
+            "objectPosition": "center"
+          }
+        }
+      ]
+    },
+    "promoBand": {
+      "eyebrow": "Flujo futuro",
+      "title": "La compra requerirá registro antes del checkout",
+      "description": "El Storefront queda preparado para carrito, autenticación, envío por zona y pagos, pero B2 solo muestra secciones navegables.",
+      "actionLabel": "Ver alcance pendiente",
+      "actionHref": "/store/cart"
+    },
+    "heroBanners": [
+      {
+        "id": "banner-repairs",
+        "eyebrow": "Repuestos destacados",
+        "title": "Todo para devolverle vida a tu equipo",
+        "description": "Displays, baterías y módulos preparados para una vitrina comercial más visual.",
+        "actionLabel": "Ver repuestos",
+        "actionHref": "/store/products",
+        "image": {
+          "src": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1600&q=82",
+          "alt": "Teléfono móvil sobre una superficie clara",
+          "objectPosition": "center"
+        }
+      },
+      {
+        "id": "banner-used-phones",
+        "eyebrow": "Celulares usados",
+        "title": "Equipos revisados listos para encontrar nuevo dueño",
+        "description": "Una sección visual para unidades usadas con ficha, condición y precio.",
+        "actionLabel": "Explorar equipos",
+        "actionHref": "/store/products",
+        "image": {
+          "src": "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=1600&q=82",
+          "alt": "Smartphone moderno visto de frente",
+          "objectPosition": "center"
+        }
+      },
+      {
+        "id": "banner-accessories",
+        "eyebrow": "Accesorios",
+        "title": "Productos que completan la experiencia de compra",
+        "description": "Espacio promocional reutilizable para campañas, categorías o marcas destacadas.",
+        "actionLabel": "Ver catálogo",
+        "actionHref": "/store/products",
+        "image": {
+          "src": "https://images.unsplash.com/photo-1585060544812-6b45742d762f?auto=format&fit=crop&w=1600&q=82",
+          "alt": "Accesorios tecnológicos y teléfono sobre escritorio",
+          "objectPosition": "center"
+        }
+      }
+    ]
+  },
+  "productListing": {
+    "eyebrow": "Catálogo público demo",
+    "title": "Productos preparados para navegación pública",
+    "description": "Catálogo comercial con búsqueda, filtros y ordenamiento locales en memoria. B13.3 mantiene toda la interacción detrás del provider, sin backend ni persistencia.",
+    "resultSummary": "6 productos demo visibles",
+    "searchPlaceholder": "Buscar por producto, marca, modelo o repuesto…",
+    "sortOptions": [
+      {
+        "id": "recommended",
+        "label": "Recomendados"
+      },
+      {
+        "id": "price-low",
+        "label": "Menor precio"
+      },
+      {
+        "id": "recent",
+        "label": "Más recientes"
+      }
+    ],
+    "filters": [
+      {
+        "id": "category",
+        "title": "Categoría",
+        "options": [
+          {
+            "id": "all",
+            "label": "Todas"
+          },
+          {
+            "id": "spare-parts",
+            "label": "Repuestos",
+            "helper": "Displays, baterías y conectores"
+          },
+          {
+            "id": "used-phones",
+            "label": "Celulares usados",
+            "helper": "Unidades individuales"
+          }
+        ]
+      },
+      {
+        "id": "brand-model",
+        "title": "Marca / modelo",
+        "options": [
+          {
+            "id": "all",
+            "label": "Todos"
+          },
+          {
+            "id": "iphone-13",
+            "label": "Apple · iPhone 13"
+          },
+          {
+            "id": "iphone-12",
+            "label": "Apple · iPhone 12"
+          },
+          {
+            "id": "galaxy-s21",
+            "label": "Samsung · Galaxy S21"
+          },
+          {
+            "id": "iphone-11",
+            "label": "Apple · iPhone 11"
+          },
+          {
+            "id": "galaxy-s20",
+            "label": "Samsung · Galaxy S20"
+          },
+          {
+            "id": "redmi-note",
+            "label": "Xiaomi · Redmi Note"
+          }
+        ]
+      },
+      {
+        "id": "condition",
+        "title": "Condición",
+        "options": [
+          {
+            "id": "all",
+            "label": "Todos"
+          },
+          {
+            "id": "new",
+            "label": "Nuevo"
+          },
+          {
+            "id": "used-a",
+            "label": "Usado A"
+          },
+          {
+            "id": "open-box",
+            "label": "Caja abierta"
+          },
+          {
+            "id": "used-b",
+            "label": "Usado B"
+          }
+        ]
+      },
+      {
+        "id": "price",
+        "title": "Precio demo",
+        "options": [
+          {
+            "id": "all",
+            "label": "Todos"
+          },
+          {
+            "id": "under-2000",
+            "label": "Hasta UYU 2.000"
+          },
+          {
+            "id": "over-2000",
+            "label": "Más de UYU 2.000"
+          },
+          {
+            "id": "usd",
+            "label": "USD"
+          }
+        ]
+      }
+    ],
+    "products": [
+      {
+        "id": "listing-iphone-13-display",
+        "title": "Display OLED iPhone 13",
+        "subtitle": "Módulo demo para reparación premium",
+        "priceLabel": "UYU 4.890",
+        "compareLabel": "Costo repuesto nuevo: UYU 3.950",
+        "badgeLabel": "Repuesto",
+        "href": "/store/products/iphone-13-display-oled",
+        "compatibilityLabel": "Compatible: iPhone 13",
+        "stockLabel": "Stock demo: 3",
+        "image": {
+          "src": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
+          "alt": "Smartphone usado como referencia visual para display",
+          "objectPosition": "center"
+        },
+        "discoveryFacets": {
+          "category": "spare-parts",
+          "brand-model": "iphone-13",
+          "condition": "new",
+          "price": "over-2000"
+        },
+        "discoverySortRanks": {
+          "recommended": 1,
+          "price-low": 4,
+          "recent": 6
+        }
+      },
+      {
+        "id": "listing-samsung-battery",
+        "title": "Batería Samsung S21",
+        "subtitle": "Repuesto demo con garantía futura configurable",
+        "priceLabel": "UYU 1.690",
+        "compareLabel": "Costo repuesto nuevo: UYU 1.150",
+        "badgeLabel": "Batería",
+        "href": "/store/products/samsung-s21-battery",
+        "compatibilityLabel": "Compatible: Galaxy S21",
+        "stockLabel": "Stock demo: 5",
+        "image": {
+          "src": "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=900&q=80",
+          "alt": "Smartphone como referencia visual para batería",
+          "objectPosition": "center"
+        },
+        "discoveryFacets": {
+          "category": "spare-parts",
+          "brand-model": "galaxy-s21",
+          "condition": "new",
+          "price": "under-2000"
+        },
+        "discoverySortRanks": {
+          "recommended": 2,
+          "price-low": 2,
+          "recent": 5
+        }
+      },
+      {
+        "id": "listing-iphone-12-used",
+        "title": "iPhone 12 128 GB usado",
+        "subtitle": "Equipo demo individual preparado para vitrina",
+        "priceLabel": "USD 285",
+        "badgeLabel": "Usado A",
+        "href": "/store/products/iphone-12-128-used-a",
+        "compatibilityLabel": "Color: Negro · Batería: 87%",
+        "stockLabel": "Unidad única demo",
+        "image": {
+          "src": "https://images.unsplash.com/photo-1523206489230-c012c64b2b48?auto=format&fit=crop&w=900&q=80",
+          "alt": "Teléfono móvil usado en vitrina comercial",
+          "objectPosition": "center"
+        },
+        "discoveryFacets": {
+          "category": "used-phones",
+          "brand-model": "iphone-12",
+          "condition": "used-a",
+          "price": "usd"
+        },
+        "discoverySortRanks": {
+          "recommended": 3,
+          "price-low": 6,
+          "recent": 4
+        }
+      },
+      {
+        "id": "listing-charge-connector",
+        "title": "Conector de carga Xiaomi Redmi Note",
+        "subtitle": "Repuesto demo para compatibilidad futura",
+        "priceLabel": "UYU 890",
+        "compareLabel": "Costo repuesto nuevo: UYU 520",
+        "badgeLabel": "Conector",
+        "href": "/store/products/xiaomi-redmi-charge-connector",
+        "compatibilityLabel": "Compatible: Redmi Note demo",
+        "stockLabel": "Stock demo: 7",
+        "image": {
+          "src": "https://images.unsplash.com/photo-1585060544812-6b45742d762f?auto=format&fit=crop&w=900&q=80",
+          "alt": "Equipo y accesorios de carga sobre escritorio",
+          "objectPosition": "center"
+        },
+        "discoveryFacets": {
+          "category": "spare-parts",
+          "brand-model": "redmi-note",
+          "condition": "new",
+          "price": "under-2000"
+        },
+        "discoverySortRanks": {
+          "recommended": 4,
+          "price-low": 1,
+          "recent": 3
+        }
+      },
+      {
+        "id": "listing-camera-module",
+        "title": "Módulo cámara iPhone 11",
+        "subtitle": "Pieza demo extraída y testeada",
+        "priceLabel": "UYU 2.250",
+        "compareLabel": "Costo repuesto nuevo: UYU 1.720",
+        "badgeLabel": "Cámara",
+        "href": "/store/products/iphone-11-camera-module",
+        "compatibilityLabel": "Compatible: iPhone 11",
+        "stockLabel": "Stock demo: 2",
+        "image": {
+          "src": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
+          "alt": "Dispositivo tecnológico como referencia visual de módulo",
+          "objectPosition": "center"
+        },
+        "discoveryFacets": {
+          "category": "spare-parts",
+          "brand-model": "iphone-11",
+          "condition": "new",
+          "price": "over-2000"
+        },
+        "discoverySortRanks": {
+          "recommended": 5,
+          "price-low": 3,
+          "recent": 2
+        }
+      },
+      {
+        "id": "listing-used-galaxy",
+        "title": "Samsung S20 usado",
+        "subtitle": "Equipo demo para venta asistida",
+        "priceLabel": "USD 195",
+        "badgeLabel": "Usado B",
+        "href": "/store/products/samsung-s20-used-b",
+        "compatibilityLabel": "Color: Azul · 128 GB",
+        "stockLabel": "Unidad única demo",
+        "image": {
+          "src": "https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=900&q=80",
+          "alt": "Smartphone Android en una composición comercial",
+          "objectPosition": "center"
+        },
+        "discoveryFacets": {
+          "category": "used-phones",
+          "brand-model": "galaxy-s20",
+          "condition": "used-b",
+          "price": "usd"
+        },
+        "discoverySortRanks": {
+          "recommended": 6,
+          "price-low": 5,
+          "recent": 1
+        }
+      }
+    ],
+    "emptyState": {
+      "title": "Sin resultados demo",
+      "description": "No encontramos coincidencias para la búsqueda y filtros actuales. Limpia los criterios o prueba una combinación diferente."
+    },
+    "listingNotice": {
+      "title": "Listado visual, no transaccional",
+      "description": "B13 activa búsqueda, filtros y ordenamiento locales reales. Carrito, checkout y persistencia continúan en incrementos posteriores."
+    }
+  },
+  "productDetail": {
+    "eyebrow": "Detalle público demo",
+    "backLabel": "Volver al listado",
+    "backHref": "/store/products",
+    "actionNotice": {
+      "title": "Compra futura, no activa",
+      "description": "B4 muestra la ficha comercial y prepara el lugar del flujo de consulta, carrito, registro y checkout. No agrega al carrito, no crea órdenes y no descuenta inventario."
+    },
+    "products": [
+      {
+        "slug": "iphone-13-display-oled",
+        "title": "Display OLED iPhone 13",
+        "subtitle": "Módulo demo para reparación premium",
+        "badgeLabel": "Repuesto",
+        "priceLabel": "UYU 4.890",
+        "compareLabel": "Costo repuesto nuevo: UYU 3.950",
+        "stockLabel": "Stock demo: 3",
+        "compatibilityLabel": "Compatible: iPhone 13",
+        "conditionLabel": "Condición: nuevo demo",
+        "warrantyLabel": "Garantía demo configurable",
+        "heroLabel": "Repuesto crítico",
+        "description": "Ficha pública preparada para mostrar precio de tienda, costo de repuesto nuevo, compatibilidad y stock sin exponer costos internos ni datos del dispositivo donante.",
+        "highlights": [
+          "Compatibilidad expresada como dato comercial visible.",
+          "Costo de repuesto nuevo visible según regla de tienda.",
+          "Reservado para futura consulta, carrito y checkout."
+        ],
+        "specs": [
+          {
+            "label": "Tipo",
+            "value": "Display OLED"
+          },
+          {
+            "label": "Modelo",
+            "value": "iPhone 13"
+          },
+          {
+            "label": "Stock",
+            "value": "3 unidades demo"
+          },
+          {
+            "label": "Estado",
+            "value": "Nuevo demo"
+          }
+        ],
+        "gallery": [
+          {
+            "id": "front",
+            "label": "Vista frontal",
+            "tone": "dark"
+          },
+          {
+            "id": "connector",
+            "label": "Flex y conector",
+            "tone": "warm"
+          },
+          {
+            "id": "package",
+            "label": "Empaque demo",
+            "tone": "light"
+          }
+        ],
+        "notices": [
+          {
+            "id": "no-cart",
+            "title": "Sin carrito funcional todavía",
+            "description": "La acción principal queda como placeholder visual para B4."
+          },
+          {
+            "id": "no-inventory-mutation",
+            "title": "Sin movimiento de inventario",
+            "description": "El stock mostrado es demo y no se descuenta."
+          }
+        ],
+        "relatedProductSlugs": [
+          "samsung-s21-battery",
+          "iphone-11-camera-module"
+        ]
+      },
+      {
+        "slug": "samsung-s21-battery",
+        "title": "Batería Samsung S21",
+        "subtitle": "Repuesto demo con garantía futura configurable",
+        "badgeLabel": "Batería",
+        "priceLabel": "UYU 1.690",
+        "compareLabel": "Costo repuesto nuevo: UYU 1.150",
+        "stockLabel": "Stock demo: 5",
+        "compatibilityLabel": "Compatible: Galaxy S21",
+        "conditionLabel": "Condición: nuevo demo",
+        "warrantyLabel": "Garantía demo configurable",
+        "heroLabel": "Energía y autonomía",
+        "description": "Detalle público de repuesto preparado para comunicar compatibilidad, precio y disponibilidad sin habilitar compra real.",
+        "highlights": [
+          "Preparado para filtros de marca/modelo futuros.",
+          "Precio comercial separado del costo de repuesto nuevo.",
+          "Flujo de consulta pendiente para incrementos posteriores."
+        ],
+        "specs": [
+          {
+            "label": "Tipo",
+            "value": "Batería"
+          },
+          {
+            "label": "Modelo",
+            "value": "Galaxy S21"
+          },
+          {
+            "label": "Stock",
+            "value": "5 unidades demo"
+          },
+          {
+            "label": "Estado",
+            "value": "Nuevo demo"
+          }
+        ],
+        "gallery": [
+          {
+            "id": "front",
+            "label": "Vista repuesto",
+            "tone": "dark"
+          },
+          {
+            "id": "label",
+            "label": "Etiqueta demo",
+            "tone": "warm"
+          },
+          {
+            "id": "package",
+            "label": "Empaque demo",
+            "tone": "light"
+          }
+        ],
+        "notices": [
+          {
+            "id": "no-cart",
+            "title": "Sin carrito funcional todavía",
+            "description": "La ficha no ejecuta compra ni reserva."
+          }
+        ],
+        "relatedProductSlugs": [
+          "iphone-13-display-oled",
+          "samsung-s20-used-b"
+        ]
+      },
+      {
+        "slug": "iphone-12-128-used-a",
+        "title": "iPhone 12 128 GB usado",
+        "subtitle": "Equipo demo individual preparado para vitrina",
+        "badgeLabel": "Usado A",
+        "priceLabel": "USD 285",
+        "stockLabel": "Unidad única demo",
+        "compatibilityLabel": "Color: Negro · Batería: 87%",
+        "conditionLabel": "Condición: usado A demo",
+        "warrantyLabel": "Garantía demo configurable",
+        "heroLabel": "Equipo individual",
+        "description": "Ficha de celular usado preparada para mostrar atributos comerciales sin exponer costo de adquisición ni trazabilidad interna.",
+        "highlights": [
+          "Unidad individual, no producto genérico.",
+          "Información comercial pública sin costo interno.",
+          "Preparado para consulta asistida y compra futura."
+        ],
+        "specs": [
+          {
+            "label": "Modelo",
+            "value": "iPhone 12"
+          },
+          {
+            "label": "Almacenamiento",
+            "value": "128 GB"
+          },
+          {
+            "label": "Color",
+            "value": "Negro"
+          },
+          {
+            "label": "Batería",
+            "value": "87% demo"
+          }
+        ],
+        "gallery": [
+          {
+            "id": "front",
+            "label": "Frente",
+            "tone": "dark"
+          },
+          {
+            "id": "back",
+            "label": "Dorso",
+            "tone": "warm"
+          },
+          {
+            "id": "detail",
+            "label": "Detalle estado",
+            "tone": "light"
+          }
+        ],
+        "notices": [
+          {
+            "id": "no-cost",
+            "title": "Costo interno oculto",
+            "description": "La tienda pública no expone adquisición, margen ni datos del origen."
+          }
+        ],
+        "relatedProductSlugs": [
+          "iphone-13-display-oled",
+          "samsung-s20-used-b"
+        ]
+      }
+    ],
+    "notFound": {
+      "title": "Producto demo no encontrado",
+      "description": "El slug solicitado no existe en el catálogo demo de Storefront.",
+      "actionLabel": "Volver a productos",
+      "actionHref": "/store/products"
+    }
+  }
+}
