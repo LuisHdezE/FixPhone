@@ -7,19 +7,29 @@ import { TrendChartCard } from '@/components/data-display/TrendChartCard';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { PageShell } from '@/shell/PageShell';
 import type { InventoryDemoProvider } from '../application/inventory.contracts';
-import type { InventoryQueueItemDto } from '../application/inventory.dto';
+import type { InventoryDashboardDto, InventoryQueueItemDto } from '../application/inventory.dto';
 
-const queueColumns: readonly DataTableColumn<InventoryQueueItemDto>[] = [
+function filterLabel(filter: { options: readonly { value: string; label: string }[] }, value: string) {
+  return filter.options.find((option) => option.value === value)?.label ?? value;
+}
+
+function buildQueueColumns(filters: InventoryDashboardDto['queueFilters']): readonly DataTableColumn<InventoryQueueItemDto>[] {
+  const statusFilter = filters.find((filter) => filter.id === 'status');
+  const priorityFilter = filters.find((filter) => filter.id === 'priority');
+
+  return [
   { id: 'id', header: 'ID', cell: (item) => <span className="font-mono text-xs font-semibold text-slate-500">{item.id}</span>, sortable: true, sortValue: (item) => item.id, searchValue: (item) => item.id },
   { id: 'device', header: 'Dispositivo', cell: (item) => <span className="font-medium text-slate-900">{item.deviceLabel}</span>, sortable: true, sortValue: (item) => item.deviceLabel, searchValue: (item) => item.deviceLabel },
   { id: 'context', header: 'Contexto', cell: (item) => item.context, searchValue: (item) => item.context },
-  { id: 'status', header: 'Estado', cell: (item) => <StatusBadge label={item.status} tone={item.statusTone} />, sortable: true, sortValue: (item) => item.status, searchValue: (item) => item.status },
-  { id: 'priority', header: 'Prioridad', cell: (item) => item.priority, sortable: true, sortValue: (item) => item.priority, searchValue: (item) => item.priority },
+  { id: 'status', header: 'Estado', cell: (item) => <StatusBadge label={statusFilter ? filterLabel(statusFilter, item.status) : item.status} tone={item.statusTone} />, sortable: true, sortValue: (item) => item.status, searchValue: (item) => `${item.status} ${statusFilter ? filterLabel(statusFilter, item.status) : ''}` },
+  { id: 'priority', header: 'Prioridad', cell: (item) => priorityFilter ? filterLabel(priorityFilter, item.priority) : item.priority, sortable: true, sortValue: (item) => item.priority, searchValue: (item) => `${item.priority} ${priorityFilter ? filterLabel(priorityFilter, item.priority) : ''}` },
   { id: 'action', header: 'Próxima acción', align: 'right', cell: (item) => <span className="font-semibold text-brand-600">{item.actionLabel}</span>, searchValue: (item) => item.actionLabel },
-];
+  ];
+}
 
 export function InventoryDashboardPage({ provider }: { provider: InventoryDemoProvider }) {
   const dashboard = provider.getDashboard();
+  const queueColumns = buildQueueColumns(dashboard.queueFilters);
 
   return <PageShell breadcrumbs={dashboard.breadcrumbs.map((label) => ({ label }))} description={dashboard.description} title={dashboard.title}>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-inventory-metrics>
@@ -72,7 +82,6 @@ export function InventoryDashboardPage({ provider }: { provider: InventoryDemoPr
             searchLabel="Buscar en la cola"
             searchPlaceholder="ID, dispositivo, estado o acción…"
             searchable
-            selectable
           />
         </div>
       </SurfaceCard>
