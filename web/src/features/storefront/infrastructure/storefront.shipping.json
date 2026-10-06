@@ -58,17 +58,17 @@
   "notices": [
     {
       "id": "no-address-persistence",
-      "title": "Sin persistencia de dirección",
-      "description": "No guarda dirección en localStorage, sessionStorage ni backend."
+      "title": "Sin guardado de dirección",
+      "description": "La dirección aún no se conserva al recargar la tienda."
     },
     {
       "id": "no-carrier",
-      "title": "Sin transportista",
-      "description": "No consulta agencias, cadetería ni APIs logísticas."
+      "title": "Sin transportista conectado",
+      "description": "Todavía no consulta agencias ni cadetería para confirmar cobertura real."
     },
     {
       "id": "no-order-mutation",
-      "title": "Sin mutación de pedido",
+      "title": "Sin cambio en el pedido",
       "description": "Elegir una zona no crea pedidos ni modifica el total real del checkout."
     }
   ]
