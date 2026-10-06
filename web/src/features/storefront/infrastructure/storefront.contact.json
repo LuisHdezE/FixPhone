@@ -55,17 +55,17 @@
   },
   "notices": [
     {
-      "id": "no-messaging-api",
-      "title": "Sin API de mensajería",
-      "description": "No envía mensajes ni abre conversaciones externas en esta versión."
+      "id": "no-messaging",
+      "title": "Sin mensajería conectada",
+      "description": "Todavía no envía mensajes ni abre conversaciones externas desde esta pantalla."
     },
     {
       "id": "no-form-submit",
       "title": "Sin formulario enviado",
-      "description": "No recopila ni persiste datos de contacto del cliente."
+      "description": "No recopila ni guarda datos de contacto del cliente."
     },
     {
-      "id": "provider-driven",
+      "id": "centralized-content",
       "title": "Contenido centralizado",
       "description": "Canales, horarios y cobertura se administran desde una única fuente de configuración."
     }

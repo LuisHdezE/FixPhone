@@ -1,11 +1,11 @@
 {
   "eyebrow": "Cuenta de cliente",
-  "description": "La cuenta de cliente usa una sesión local temporal que desaparece al recargar. La autenticación real se conectará posteriormente.",
+  "description": "La cuenta de cliente usa una sesión temporal que desaparece al recargar. La autenticación real se conectará posteriormente.",
   "returnToCheckoutLabel": "Volver al checkout",
   "returnToCheckoutHref": "/store/checkout",
   "signIn": {
     "title": "Inicia sesión para continuar",
-    "description": "Ingresa un correo y una contraseña para crear una sesión local no persistente.",
+    "description": "Ingresa un correo y una contraseña para continuar durante esta visita.",
     "alternateLabel": "¿Primera compra? Crear cuenta",
     "alternateHref": "/store/account/register",
     "submitLabel": "Iniciar sesión",
@@ -15,20 +15,20 @@
         "label": "Correo electrónico",
         "type": "email",
         "placeholder": "cliente@ejemplo.com",
-        "helper": "Se valida en el navegador y no se persiste."
+        "helper": "Se valida en esta pantalla y no se guarda al recargar."
       },
       {
         "id": "password",
         "label": "Contraseña",
         "type": "password",
         "placeholder": "••••••••",
-        "helper": "Solo se usa para validar este formulario local; nunca se guarda en la sesión."
+        "helper": "Solo se usa para validar este formulario temporal."
       }
     ]
   },
   "register": {
     "title": "Crea tu cuenta de cliente",
-    "description": "Crea una identidad temporal para continuar el flujo de compra sin registrar un usuario persistente.",
+    "description": "Crea una identidad temporal para continuar el flujo de compra sin registrar un usuario definitivo.",
     "alternateLabel": "¿Ya tienes cuenta? Iniciar sesión",
     "alternateHref": "/store/account/sign-in",
     "submitLabel": "Crear cuenta temporal",
@@ -38,28 +38,28 @@
         "label": "Nombre",
         "type": "text",
         "placeholder": "Nombre y apellido",
-        "helper": "Se usa como nombre visible durante esta sesión."
+        "helper": "Se usa como nombre visible durante esta visita."
       },
       {
         "id": "email",
         "label": "Correo electrónico",
         "type": "email",
         "placeholder": "cliente@ejemplo.com",
-        "helper": "Identificador temporal de la sesión local."
+        "helper": "Identificador temporal para continuar el checkout."
       },
       {
         "id": "phone",
         "label": "Teléfono",
         "type": "tel",
         "placeholder": "+598 ...",
-        "helper": "Opcional y no persistente en esta versión."
+        "helper": "Opcional y no guardado en esta versión."
       },
       {
         "id": "password",
         "label": "Contraseña",
         "type": "password",
         "placeholder": "••••••••",
-        "helper": "Solo valida el formulario; no se almacena."
+        "helper": "Solo valida el formulario temporal; no se almacena."
       }
     ]
   },
@@ -67,22 +67,22 @@
     {
       "id": "storefront-only",
       "title": "Cuenta separada del administrador",
-      "description": "Este flujo pertenece al cliente de la tienda y no reutiliza las pantallas administrativas de authentication/*."
+      "description": "Este flujo pertenece al cliente de la tienda y no reutiliza el acceso administrativo."
     },
     {
       "id": "memory-session",
-      "title": "Sesión solo en memoria",
-      "description": "La versión actual crea estado de cliente en React sin tokens, cookies ni autenticación de servidor."
+      "title": "Sesión temporal",
+      "description": "La identidad se mantiene únicamente mientras la tienda permanezca cargada."
     },
     {
       "id": "no-persistence",
-      "title": "Sin persistencia",
-      "description": "No usa localStorage, sessionStorage ni backend para conservar la sesión."
+      "title": "Sin guardado permanente",
+      "description": "La sesión no se conserva después de recargar o cerrar la tienda."
     }
   ],
   "session": {
     "signedInTitle": "Sesión de cliente activa",
-    "signedInDescription": "Esta identidad existe únicamente en memoria del navegador mientras la aplicación permanezca cargada.",
+    "signedInDescription": "Esta identidad existe únicamente mientras la tienda permanezca cargada.",
     "signOutLabel": "Cerrar sesión"
   }
 }

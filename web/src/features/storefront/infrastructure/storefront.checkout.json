@@ -6,7 +6,7 @@
   "authGate": {
     "eyebrow": "Paso obligatorio",
     "title": "Identifícate para comprar",
-    "description": "Inicia sesión o crea una cuenta temporal para desbloquear este gate visual. La sesión vive solo en memoria React.",
+    "description": "Inicia sesión o crea una cuenta temporal para continuar. La sesión se mantiene solo durante esta visita.",
     "requiredLabel": "Autenticación o registro requerido",
     "signInLabel": "Iniciar sesión",
     "signUpLabel": "Crear cuenta",
@@ -14,8 +14,8 @@
     "signUpHref": "/store/account/register",
     "authenticatedEyebrow": "Cliente identificado",
     "authenticatedTitle": "Sesión de cliente activa",
-    "authenticatedDescription": "El gate de identidad está resuelto para esta sesión local. Aún no se confirma la compra ni se procesa un pago.",
-    "authenticatedLabel": "Identidad local validada"
+    "authenticatedDescription": "El paso de identidad está resuelto para esta visita. Aún no se confirma la compra ni se procesa un pago.",
+    "authenticatedLabel": "Identidad validada localmente"
   },
   "orderSummary": {
     "title": "Resumen de compra",
@@ -74,19 +74,19 @@
         "id": "mercado-pago",
         "title": "Mercado Pago",
         "description": "Integración futura mediante checkout seguro.",
-        "statusLabel": "Placeholder"
+        "statusLabel": "Pendiente"
       },
       {
         "id": "card",
         "title": "Tarjeta",
         "description": "Pago con tarjeta mediante proveedor futuro.",
-        "statusLabel": "Placeholder"
+        "statusLabel": "Pendiente"
       },
       {
         "id": "whatsapp",
         "title": "Coordinar por WhatsApp",
         "description": "Canal futuro para coordinar la compra asistida.",
-        "statusLabel": "Placeholder"
+        "statusLabel": "Pendiente"
       }
     ]
   },
@@ -98,13 +98,13 @@
     },
     {
       "id": "no-inventory",
-      "title": "Sin mutación de inventario",
+      "title": "Sin reserva de stock",
       "description": "No reserva stock ni descuenta unidades."
     },
     {
       "id": "no-persistence",
-      "title": "Sin persistencia de cliente",
-      "description": "No usa localStorage, sessionStorage ni backend para guardar datos del checkout."
+      "title": "Sin guardado de cliente",
+      "description": "Los datos del checkout no se guardan todavía al recargar la tienda."
     }
   ]
 }

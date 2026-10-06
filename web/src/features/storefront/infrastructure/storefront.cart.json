@@ -1,11 +1,11 @@
 {
-  "eyebrow": "Carrito público demo",
+  "eyebrow": "Carrito público",
   "title": "Carrito listo para interacción local",
-  "description": "B14 activa cantidades, eliminación, vaciado y totales derivados en memoria. No persiste cambios, no reserva inventario y no crea órdenes.",
+  "description": "Ajusta cantidades, elimina productos y revisa totales de muestra. El carrito todavía no persiste cambios, no reserva inventario y no crea órdenes.",
   "cartStateLabel": "Interacción local no persistente",
   "emptyState": {
-    "title": "Tu carrito demo está vacío",
-    "description": "Cuando el flujo de agregar productos exista, este espacio mostrará las líneas reales. Por ahora es un estado visual reutilizable.",
+    "title": "Tu carrito está vacío",
+    "description": "Cuando el flujo de agregar productos esté conectado, este espacio mostrará las líneas reales. Por ahora puedes restaurar el conjunto de muestra o volver al catálogo.",
     "actionLabel": "Ver productos",
     "actionHref": "/store/products"
   },
@@ -13,13 +13,13 @@
     {
       "id": "cart-line-display",
       "title": "Display OLED iPhone 13",
-      "subtitle": "Módulo demo para reparación premium",
+      "subtitle": "Módulo para reparación premium",
       "href": "/store/products/iphone-13-display-oled",
       "badgeLabel": "Repuesto",
-      "quantityLabel": "Cantidad demo: 1",
+      "quantityLabel": "Cantidad: 1",
       "unitPriceLabel": "UYU 4.890",
       "lineTotalLabel": "UYU 4.890",
-      "stockLabel": "Stock demo: 3",
+      "stockLabel": "Stock de muestra: 3",
       "compatibilityLabel": "Compatible: iPhone 13",
       "initialQuantity": 1,
       "maxQuantity": 3,
@@ -29,13 +29,13 @@
     {
       "id": "cart-line-battery",
       "title": "Batería Samsung S21",
-      "subtitle": "Repuesto demo con garantía futura configurable",
+      "subtitle": "Repuesto de reemplazo",
       "href": "/store/products/samsung-s21-battery",
       "badgeLabel": "Batería",
-      "quantityLabel": "Cantidad demo: 1",
+      "quantityLabel": "Cantidad: 1",
       "unitPriceLabel": "UYU 1.690",
       "lineTotalLabel": "UYU 1.690",
-      "stockLabel": "Stock demo: 5",
+      "stockLabel": "Stock de muestra: 5",
       "compatibilityLabel": "Compatible: Galaxy S21",
       "initialQuantity": 1,
       "maxQuantity": 5,
@@ -48,7 +48,7 @@
     "items": [
       {
         "id": "subtotal",
-        "label": "Subtotal demo",
+        "label": "Subtotal de muestra",
         "value": "UYU 6.580",
         "tone": "default"
       },
@@ -65,11 +65,11 @@
         "tone": "muted"
       }
     ],
-    "totalLabel": "Total demo visible",
+    "totalLabel": "Total visible de muestra",
     "totalValue": "UYU 6.580",
     "checkoutLabel": "Continuar al checkout",
     "checkoutDisabledLabel": "Continuar al checkout",
-    "checkoutPreviewLabel": "Revisar checkout demo",
+    "checkoutPreviewLabel": "Revisar checkout",
     "checkoutPreviewHref": "/store/checkout"
   },
   "notices": [
@@ -81,7 +81,7 @@
     {
       "id": "no-checkout",
       "title": "Checkout visible, compra aún no transaccional",
-      "description": "B14 permite continuar a la vista de checkout, pero todavía no autentica, cobra, reserva stock ni crea una orden."
+      "description": "Puedes continuar a la vista de checkout, pero todavía no cobra, reserva stock ni crea una orden."
     },
     {
       "id": "no-inventory-mutation",
