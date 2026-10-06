@@ -1,0 +1,78 @@
+{
+  "branding": {
+    "mark": "WB",
+    "name": "WebBlueprint",
+    "logoUrl": null,
+    "contextLabel": "Acceso seguro"
+  },
+  "hero": {
+    "eyebrow": "Tu espacio de trabajo",
+    "title": "Todo tu trabajo, en un solo lugar.",
+    "description": "Accede a tu cuenta para continuar con una experiencia clara, segura y preparada para crecer con tu aplicación.",
+    "highlights": [
+      {
+        "id": "secure-access",
+        "title": "Acceso protegido",
+        "description": "La interfaz queda preparada para conectarse a un proveedor de identidad real sin acoplar la vista a la infraestructura."
+      },
+      {
+        "id": "responsive",
+        "title": "Diseño adaptable",
+        "description": "La experiencia mantiene jerarquía, legibilidad y foco tanto en móvil como en escritorio."
+      },
+      {
+        "id": "theme-ready",
+        "title": "Lista para tu marca",
+        "description": "Colores, identidad y contenido permanecen desacoplados de la presentación para facilitar personalización y exportación."
+      }
+    ]
+  },
+  "form": {
+    "eyebrow": "Bienvenido de nuevo",
+    "title": "Iniciar sesión",
+    "description": "Introduce tus credenciales para continuar.",
+    "email": {
+      "label": "Correo electrónico",
+      "placeholder": "nombre@empresa.com",
+      "autocomplete": "email"
+    },
+    "password": {
+      "label": "Contraseña",
+      "placeholder": "Introduce tu contraseña",
+      "autocomplete": "current-password",
+      "showLabel": "Mostrar contraseña",
+      "hideLabel": "Ocultar contraseña"
+    },
+    "rememberMeLabel": "Recordarme en este dispositivo",
+    "forgotPassword": {
+      "label": "¿Olvidaste tu contraseña?",
+      "href": "/authentication/password-reset"
+    },
+    "submitLabel": "Iniciar sesión",
+    "submittingLabel": "Verificando acceso...",
+    "createAccount": {
+      "prompt": "¿Aún no tienes una cuenta?",
+      "label": "Crear cuenta",
+      "href": "/authentication/sign-up"
+    },
+    "validation": {
+      "emailRequired": "El correo electrónico es obligatorio.",
+      "emailInvalid": "Introduce un correo electrónico válido.",
+      "passwordRequired": "La contraseña es obligatoria.",
+      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+      "passwordMinLength": 8
+    },
+    "feedback": {
+      "successTitle": "Acceso correcto",
+      "successMessage": "La autenticación simulada se completó correctamente.",
+      "invalidCredentials": "El correo o la contraseña no son válidos.",
+      "unavailable": "No se pudo completar el acceso en este momento. Inténtalo nuevamente."
+    }
+  },
+  "legal": {
+    "privacyLabel": "Privacidad",
+    "privacyHref": "/pages/privacy-policy",
+    "termsLabel": "Términos",
+    "termsHref": "/pages/terms-of-service"
+  }
+}
