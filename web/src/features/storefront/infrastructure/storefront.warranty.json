@@ -47,7 +47,7 @@
     {
       "id": "no-return-request",
       "title": "Sin solicitud real",
-      "description": "Esta vista no crea devoluciones, reclamos ni tickets."
+      "description": "Esta vista todavía no crea devoluciones ni reclamos."
     },
     {
       "id": "no-order-lookup",
@@ -55,8 +55,8 @@
       "description": "No busca compras, pagos ni historial del cliente."
     },
     {
-      "id": "no-inventory-mutation",
-      "title": "Sin mutación de inventario",
+      "id": "no-inventory-change",
+      "title": "Sin cambio de inventario",
       "description": "No reingresa unidades ni modifica stock."
     }
   ]
