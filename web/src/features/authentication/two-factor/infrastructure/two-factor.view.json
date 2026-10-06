@@ -1,7 +1,7 @@
 {
   "branding": {
-    "mark": "WB",
-    "name": "WebBlueprint",
+    "mark": "FP",
+    "name": "FixPhone",
     "logoUrl": null,
     "contextLabel": "Verificación en dos pasos"
   },
@@ -38,7 +38,7 @@
     },
     "codeLength": 6,
     "codeHint": "Introduce los 6 dígitos, incluidos los ceros iniciales.",
-    "demoNotice": "Modo demostración: usa cualquier código de 6 dígitos. No se verificará una identidad ni se abrirá una sesión real.",
+    "demoNotice": "Modo local temporal: usa cualquier código de 6 dígitos. La verificación real se habilitará al conectar la autenticación con la API.",
     "submitLabel": "Verificar código",
     "submittingLabel": "Verificando...",
     "backToSignIn": {
@@ -51,8 +51,8 @@
       "codeInvalid": "El código debe contener exactamente 6 dígitos."
     },
     "feedback": {
-      "successTitle": "Demostración completada",
-      "successMessage": "El flujo de verificación finalizó. No se ha iniciado una sesión real.",
+      "successTitle": "Código validado",
+      "successMessage": "El código cumple la validación local. La sesión real se habilitará al conectar la API.",
       "invalidCode": "El código no es válido. Compruébalo e inténtalo de nuevo.",
       "expiredCode": "El código ha caducado. Usa el código actual de tu aplicación.",
       "unavailable": "No se pudo verificar el código. Inténtalo nuevamente."
