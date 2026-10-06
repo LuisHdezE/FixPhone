@@ -1,12 +1,12 @@
 {
-  "eyebrow": "Checkout público demo",
+  "eyebrow": "Checkout",
   "title": "Revisa la compra antes de continuar",
-  "description": "B16 conecta el gate de identidad con una sesión demo local. Los pagos, inventario y creación de orden continúan fuera de alcance.",
-  "stateLabel": "Checkout visual · sin transacción",
+  "description": "Revisa tu identidad, entrega y opciones de pago antes de confirmar. La compra real todavía no genera órdenes ni procesa pagos.",
+  "stateLabel": "Compra en modo de muestra",
   "authGate": {
     "eyebrow": "Paso obligatorio",
     "title": "Identifícate para comprar",
-    "description": "Inicia sesión o crea una cuenta demo para desbloquear este gate visual. La sesión vive solo en memoria React.",
+    "description": "Inicia sesión o crea una cuenta temporal para desbloquear este gate visual. La sesión vive solo en memoria React.",
     "requiredLabel": "Autenticación o registro requerido",
     "signInLabel": "Iniciar sesión",
     "signUpLabel": "Crear cuenta",
@@ -14,11 +14,11 @@
     "signUpHref": "/store/account/register",
     "authenticatedEyebrow": "Cliente identificado",
     "authenticatedTitle": "Sesión de cliente activa",
-    "authenticatedDescription": "El gate de identidad está resuelto para esta sesión demo. Aún no se confirma la compra ni se procesa un pago.",
-    "authenticatedLabel": "Identidad demo validada"
+    "authenticatedDescription": "El gate de identidad está resuelto para esta sesión local. Aún no se confirma la compra ni se procesa un pago.",
+    "authenticatedLabel": "Identidad local validada"
   },
   "orderSummary": {
-    "title": "Resumen de compra demo",
+    "title": "Resumen de compra",
     "lines": [
       {
         "id": "display",
@@ -36,18 +36,18 @@
         "value": "Pendiente"
       }
     ],
-    "totalLabel": "Total demo sin envío",
+    "totalLabel": "Total de muestra sin envío",
     "totalValue": "UYU 6.580"
   },
   "shipping": {
     "title": "Entrega y envío",
-    "description": "Consulta una zona demo para visualizar cómo impactará el costo de entrega.",
-    "statusLabel": "Tarifas demo disponibles",
+    "description": "Consulta una zona de muestra para visualizar cómo impactará el costo de entrega.",
+    "statusLabel": "Tarifas de muestra disponibles",
     "fields": [
       {
         "id": "department",
         "label": "Departamento",
-        "value": "Montevideo (demo)",
+        "value": "Montevideo",
         "helper": "Dato visual, no editable."
       },
       {
@@ -60,7 +60,7 @@
         "id": "delivery",
         "label": "Modalidad",
         "value": "Envío o retiro",
-        "helper": "Sin selección funcional en B6."
+        "helper": "Selección todavía no conectada al pedido real."
       }
     ],
     "actionLabel": "Ver zonas y costos",
@@ -68,7 +68,7 @@
   },
   "payment": {
     "title": "Método de pago",
-    "description": "Los métodos aparecen para reservar el espacio visual del flujo. Ninguno procesa pagos en B6.",
+    "description": "Los métodos aparecen para reservar el espacio visual del flujo. Ninguno procesa pagos reales en esta versión.",
     "options": [
       {
         "id": "mercado-pago",
