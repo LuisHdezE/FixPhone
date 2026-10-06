@@ -3,7 +3,7 @@ import type { OrderFilter, OrderSummary, OrdersRepository } from '@/orders/order
 const orders: readonly OrderSummary[] = [
   {
     id: 'order-1058',
-    number: '#PS-1058',
+    number: '#FP-1058',
     customerName: 'Camila Silva',
     placedAtLabel: 'Hoy · 10:42',
     itemCount: 3,
@@ -12,7 +12,7 @@ const orders: readonly OrderSummary[] = [
   },
   {
     id: 'order-1057',
-    number: '#PS-1057',
+    number: '#FP-1057',
     customerName: 'Martín Rodríguez',
     placedAtLabel: 'Hoy · 09:18',
     itemCount: 1,
@@ -21,7 +21,7 @@ const orders: readonly OrderSummary[] = [
   },
   {
     id: 'order-1056',
-    number: '#PS-1056',
+    number: '#FP-1056',
     customerName: 'Lucía Fernández',
     placedAtLabel: 'Ayer · 18:35',
     itemCount: 4,
@@ -30,7 +30,7 @@ const orders: readonly OrderSummary[] = [
   },
   {
     id: 'order-1055',
-    number: '#PS-1055',
+    number: '#FP-1055',
     customerName: 'Diego Pereira',
     placedAtLabel: 'Ayer · 16:10',
     itemCount: 2,
@@ -39,7 +39,7 @@ const orders: readonly OrderSummary[] = [
   },
   {
     id: 'order-1054',
-    number: '#PS-1054',
+    number: '#FP-1054',
     customerName: 'Sofía Ramos',
     placedAtLabel: 'Ayer · 12:22',
     itemCount: 1,
@@ -48,7 +48,7 @@ const orders: readonly OrderSummary[] = [
   },
   {
     id: 'order-1053',
-    number: '#PS-1053',
+    number: '#FP-1053',
     customerName: 'Valentina Acosta',
     placedAtLabel: '20 sep · 17:04',
     itemCount: 5,
@@ -57,7 +57,7 @@ const orders: readonly OrderSummary[] = [
   },
   {
     id: 'order-1052',
-    number: '#PS-1052',
+    number: '#FP-1052',
     customerName: 'Nicolás Gómez',
     placedAtLabel: '20 sep · 13:47',
     itemCount: 2,
@@ -66,7 +66,7 @@ const orders: readonly OrderSummary[] = [
   },
   {
     id: 'order-1051',
-    number: '#PS-1051',
+    number: '#FP-1051',
     customerName: 'Mariana López',
     placedAtLabel: '19 sep · 19:30',
     itemCount: 3,
@@ -75,7 +75,7 @@ const orders: readonly OrderSummary[] = [
   },
   {
     id: 'order-1050',
-    number: '#PS-1050',
+    number: '#FP-1050',
     customerName: 'Federico Sosa',
     placedAtLabel: '19 sep · 11:08',
     itemCount: 1,

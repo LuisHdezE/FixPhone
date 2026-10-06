@@ -202,11 +202,6 @@ export function PasswordResetPage({ contentProvider, gateway }: PasswordResetPag
               </Link>
             </p>
 
-            <div className="mt-4 flex items-center justify-center gap-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
-              <Link className="hover:text-slate-800" to={view.legal.privacyHref}>{view.legal.privacyLabel}</Link>
-              <span aria-hidden="true">•</span>
-              <Link className="hover:text-slate-800" to={view.legal.termsHref}>{view.legal.termsLabel}</Link>
-            </div>
           </div>
         </section>
       </div>

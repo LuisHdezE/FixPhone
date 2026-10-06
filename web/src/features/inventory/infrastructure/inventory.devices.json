@@ -108,9 +108,9 @@
     },
     "submitLabel": "Registrar ingreso",
     "cancelLabel": "Volver a dispositivos",
-    "demoNotice": "Vista demo: el registro valida la interacción y consume marca/modelo/atributos desde Datos Maestros, pero no persiste datos en un backend.",
-    "successTitle": "Ingreso preparado",
-    "successMessage": "El dispositivo quedó preparado para continuar con su evaluación dentro del flujo demo.",
+    "demoNotice": "Los datos de esta vista son de muestra. La persistencia se habilitará cuando se conecte el flujo con la API.",
+    "successTitle": "Ingreso validado",
+    "successMessage": "La captura es válida para continuar con la evaluación. Todavía no se ha persistido en el backend.",
     "defaults": {
       "brandId": "",
       "deviceModelId": "",

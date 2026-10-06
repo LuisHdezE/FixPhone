@@ -9,8 +9,7 @@ export type ThemeColorId =
   | 'rose'
   | 'teal'
   | 'cyan'
-  | 'red'
-  | 'volketas';
+  | 'red';
 
 export interface ThemePreset {
   id: ThemeColorId;
@@ -131,25 +130,6 @@ export const themePresets: readonly ThemePreset[] = [
     primaryMuted: '#fee2e2',
     primaryBorder: '#fca5a5',
     onPrimary: '#ffffff',
-  },
-  {
-    id: 'volketas',
-    label: 'Volketas',
-    primary: '#0b2f4f',
-    primaryHover: '#082640',
-    primaryActive: '#061e33',
-    primarySoft: '#eef5fb',
-    primaryMuted: '#dceaf5',
-    primaryBorder: '#9fb9cf',
-    onPrimary: '#ffffff',
-    accent: '#f97316',
-    accentHover: '#ea580c',
-    accentSoft: '#fff7ed',
-    navigationBackground: '#0b2f4f',
-    navigationText: '#e6eef5',
-    navigationMuted: '#9fb4c7',
-    navigationBorder: '#163f62',
-    navigationActiveBackground: '#143d5f',
   },
 ];
 

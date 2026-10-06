@@ -1,7 +1,7 @@
 {
   "branding": {
-    "mark": "WB",
-    "name": "WebBlueprint",
+    "mark": "FP",
+    "name": "FixPhone",
     "logoUrl": null,
     "contextLabel": "Acceso seguro"
   },
@@ -13,7 +13,7 @@
       {
         "id": "secure-access",
         "title": "Acceso protegido",
-        "description": "La interfaz queda preparada para conectarse a un proveedor de identidad real sin acoplar la vista a la infraestructura."
+        "description": "La interfaz queda preparada para conectarse a un servicio de autenticación real sin acoplar la vista a la infraestructura."
       },
       {
         "id": "responsive",
@@ -23,7 +23,7 @@
       {
         "id": "theme-ready",
         "title": "Lista para tu marca",
-        "description": "Colores, identidad y contenido permanecen desacoplados de la presentación para facilitar personalización y exportación."
+        "description": "Colores, identidad y contenido permanecen desacoplados de la presentación para facilitar evolución del producto."
       }
     ]
   },
@@ -64,7 +64,7 @@
     },
     "feedback": {
       "successTitle": "Acceso correcto",
-      "successMessage": "La autenticación simulada se completó correctamente.",
+      "successMessage": "Las credenciales fueron validadas en el modo local actual.",
       "invalidCredentials": "El correo o la contraseña no son válidos.",
       "unavailable": "No se pudo completar el acceso en este momento. Inténtalo nuevamente."
     }

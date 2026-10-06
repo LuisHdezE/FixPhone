@@ -1,14 +1,14 @@
 {
-  "eyebrow": "Envíos demo",
+  "eyebrow": "Envíos",
   "title": "Consulta el costo según tu zona",
-  "description": "B8 define un catálogo visual de zonas y costos para que el checkout pueda mostrar cómo variará el envío. No guarda direcciones ni crea entregas reales.",
-  "stateLabel": "Tarifas demo · sin reserva",
+  "description": "Consulta zonas y costos de muestra para anticipar el envío. Las direcciones y entregas reales todavía no se guardan.",
+  "stateLabel": "Tarifas de muestra",
   "returnToCheckoutLabel": "Volver al checkout",
   "returnToCheckoutHref": "/store/checkout",
   "pickup": {
     "id": "pickup",
     "title": "Retiro en tienda",
-    "description": "Modalidad demo sin costo de envío.",
+    "description": "Retiro en tienda sin costo de envío.",
     "priceLabel": "Sin costo",
     "etaLabel": "Coordinación pendiente"
   },
@@ -18,7 +18,7 @@
       "name": "Montevideo · Centro",
       "description": "Centro, Cordón, Palermo, Parque Rodó y zonas próximas.",
       "priceLabel": "UYU 180",
-      "etaLabel": "Entrega demo en 24–48 h",
+      "etaLabel": "Entrega estimada en 24–48 h",
       "coverageLabel": "Zona A"
     },
     {
@@ -26,7 +26,7 @@
       "name": "Montevideo · Metropolitana",
       "description": "Barrios periféricos y área metropolitana inmediata.",
       "priceLabel": "UYU 250",
-      "etaLabel": "Entrega demo en 24–72 h",
+      "etaLabel": "Entrega estimada en 24–72 h",
       "coverageLabel": "Zona B"
     },
     {
@@ -34,7 +34,7 @@
       "name": "Canelones · Sur",
       "description": "Las Piedras, La Paz, Ciudad de la Costa y corredor cercano.",
       "priceLabel": "UYU 320",
-      "etaLabel": "Entrega demo en 48–72 h",
+      "etaLabel": "Entrega estimada en 48–72 h",
       "coverageLabel": "Zona C"
     },
     {
@@ -42,13 +42,13 @@
       "name": "Interior del país",
       "description": "Tarifa ilustrativa para envíos fuera del área metropolitana.",
       "priceLabel": "UYU 450",
-      "etaLabel": "Entrega demo en 2–5 días",
+      "etaLabel": "Entrega estimada en 2–5 días",
       "coverageLabel": "Zona D"
     }
   ],
   "addressPreview": {
     "title": "Dirección de entrega",
-    "description": "Campos visuales preparados para un flujo futuro. En B8 permanecen deshabilitados.",
+    "description": "Los campos se habilitarán cuando la dirección pueda guardarse en el checkout real.",
     "fields": [
       { "id": "street", "label": "Calle y número", "placeholder": "Ej. Av. Italia 1234" },
       { "id": "city", "label": "Ciudad / localidad", "placeholder": "Ej. Montevideo" },

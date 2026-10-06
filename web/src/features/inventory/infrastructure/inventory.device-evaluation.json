@@ -151,8 +151,8 @@
   ],
   "recommendedDestination": "Refurbish",
   "evaluatorNotes": "Equipo apto para reacondicionamiento inicial. Confirmar cámaras antes de asignar presupuesto final.",
-  "demoNotice": "Vista demo: la decisión queda simulada para validar el flujo, no actualiza inventario real.",
-  "submitLabel": "Guardar decisión demo",
-  "successTitle": "Evaluación preparada",
-  "successMessage": "La decisión quedó simulada y lista para el siguiente paso del flujo demo."
+  "demoNotice": "Los datos de esta ficha son de muestra. Guardar valida la interacción, pero todavía no actualiza inventario real.",
+  "submitLabel": "Validar decisión",
+  "successTitle": "Decisión validada",
+  "successMessage": "La decisión es válida para continuar el flujo. La persistencia se habilitará al conectar la API."
 }

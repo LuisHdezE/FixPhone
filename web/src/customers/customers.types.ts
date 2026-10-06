@@ -6,7 +6,6 @@ export type CustomerSummary = {
   name: string;
   email: string;
   phone: string;
-  petCount: number;
   orderCount: number;
   lastOrderLabel: string;
   lifetimeValueLabel: string;

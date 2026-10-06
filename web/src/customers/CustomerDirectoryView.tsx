@@ -55,7 +55,7 @@ const customerColumns: readonly DataTableColumn<CustomerSummary>[] = [
     cell: (customer) => (
       <div>
         <p className="font-medium text-slate-700">{customer.phone}</p>
-        <p className="mt-1 text-[11px] text-slate-400">{customer.petCount} {customer.petCount === 1 ? 'mascota' : 'mascotas'}</p>
+        <p className="mt-1 text-[11px] text-slate-400">Contacto telefónico / WhatsApp</p>
       </div>
     ),
   },
@@ -180,7 +180,7 @@ export function CustomerDirectoryView({ repository = mockCustomersRepository }: 
       </section>
 
       {state.status === 'loading' || state.status === 'idle' ? (
-        <InlineFeedback title="Cargando clientes" message="Estamos preparando el directorio comercial de esta demo." tone="info" />
+        <InlineFeedback title="Cargando clientes" message="Estamos preparando el directorio comercial." tone="info" />
       ) : null}
 
       {state.status === 'error' ? (

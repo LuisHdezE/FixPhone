@@ -10,21 +10,21 @@
 }
 
 :root {
-  --theme-primary: #176b2c;
-  --theme-primary-hover: #125823;
-  --theme-primary-active: #0d461b;
-  --theme-primary-soft: #edf7ef;
-  --theme-primary-muted: #dbeee0;
-  --theme-primary-border: #a7cfb1;
+  --theme-primary: #1d4ed8;
+  --theme-primary-hover: #1e40af;
+  --theme-primary-active: #1e3a8a;
+  --theme-primary-soft: #eff6ff;
+  --theme-primary-muted: #dbeafe;
+  --theme-primary-border: #93c5fd;
   --theme-on-primary: #ffffff;
-  --theme-accent: #176b2c;
-  --theme-accent-hover: #125823;
-  --theme-accent-soft: #edf7ef;
+  --theme-accent: #1d4ed8;
+  --theme-accent-hover: #1e40af;
+  --theme-accent-soft: #eff6ff;
   --theme-navigation-background: #ffffff;
   --theme-navigation-text: #475569;
   --theme-navigation-muted: #94a3b8;
   --theme-navigation-border: #e2e8f0;
-  --theme-navigation-active-background: #edf7ef;
+  --theme-navigation-active-background: #eff6ff;
 
   --surface-page: #f5f7f6;
   --surface-card: #ffffff;

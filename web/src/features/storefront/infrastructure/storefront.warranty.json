@@ -1,14 +1,14 @@
 {
-  "eyebrow": "Garantía y devoluciones demo",
+  "eyebrow": "Garantía y devoluciones",
   "title": "Condiciones claras antes y después de comprar",
-  "description": "B11 presenta políticas visuales de garantía y devolución para que el Storefront explique cobertura, exclusiones y próximos pasos sin iniciar solicitudes reales.",
-  "stateLabel": "Políticas demo · sin trámite",
+  "description": "Consulta las condiciones provisionales de garantía y devolución. Las solicitudes reales todavía no se tramitan desde la tienda.",
+  "stateLabel": "Políticas provisionales",
   "policies": [
     {
       "id": "warranty",
       "title": "Garantía",
-      "badgeLabel": "Cobertura demo",
-      "description": "Cobertura ilustrativa para defectos asociados al producto dentro del período indicado en su ficha.",
+      "badgeLabel": "Cobertura provisional",
+      "description": "Cobertura provisional para defectos asociados al producto dentro del período indicado en su ficha.",
       "items": [
         "Conservar comprobante de compra.",
         "El producto debe corresponder al artículo vendido.",
@@ -18,7 +18,7 @@
     {
       "id": "returns",
       "title": "Devoluciones",
-      "badgeLabel": "Elegibilidad demo",
+      "badgeLabel": "Elegibilidad provisional",
       "description": "Flujo futuro para solicitar revisión de una devolución antes de que exista una operación real en el sistema.",
       "items": [
         "La solicitud deberá asociarse a una compra existente.",
@@ -29,7 +29,7 @@
   ],
   "eligibility": {
     "title": "Chequeo de elegibilidad",
-    "description": "Vista preparada para un chequeo futuro. En B11 no consulta órdenes ni determina elegibilidad real.",
+    "description": "Vista preparada para un chequeo futuro. Todavía no consulta órdenes ni determina elegibilidad real.",
     "rows": [
       { "id": "purchase", "label": "Compra identificada", "value": "Pendiente" },
       { "id": "period", "label": "Dentro del período", "value": "Pendiente" },

@@ -80,10 +80,10 @@ export function StorefrontShippingPage({ provider }: { provider: StorefrontProvi
           </div>
 
           <aside className="h-fit rounded-xl border border-black/10 bg-white p-3 shadow-sm lg:sticky lg:top-24" data-storefront-shipping-summary>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--storefront-primary-strong)]">Cómo funciona B8</p>
-            <p className="mt-3 text-sm font-black text-slate-950">Tarifa visible, sin transacción</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--storefront-primary-strong)]">Estado del envío</p>
+            <p className="mt-3 text-sm font-black text-slate-950">Tarifa visible en modo de muestra</p>
             <p className="mt-2 text-[11px] leading-4 text-slate-600">
-              Las zonas exponen importes demo para diseñar el flujo. El checkout real decidirá y persistirá el método de entrega en una fase posterior.
+              Las zonas muestran importes de referencia. El método de entrega quedará asociado al pedido cuando el checkout se conecte a la API.
             </p>
             <Link className="mt-4 flex w-full items-center justify-center rounded-full bg-[var(--storefront-primary)] px-4 py-2 text-[11px] font-black text-[var(--storefront-on-primary)]" to={shipping.returnToCheckoutHref}>
               {shipping.returnToCheckoutLabel}
