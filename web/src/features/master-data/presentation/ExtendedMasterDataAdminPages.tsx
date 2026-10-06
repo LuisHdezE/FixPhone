@@ -76,7 +76,7 @@ function AdminNotice({ notice }: { notice: Notice }) {
 }
 
 function DemoPersistenceNote() {
-  return <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-4 text-slate-500">CRUD demo en memoria. Los cambios se reinician al recargar; no hay backend, base de datos ni persistencia falsa.</p>;
+  return <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-4 text-slate-500">Modo local temporal. Los cambios se mantienen durante esta sesión y se reinician al recargar. La persistencia quedará habilitada al conectar la API.</p>;
 }
 
 function ModalShell({ children, title, onClose }: { children: ReactNode; title: string; onClose: () => void }) {
@@ -162,19 +162,19 @@ function SimpleMasterDataPage({ config }: { config: SimpleMasterDataConfig }) {
     const saved: SimpleMasterDataItem = { id, name, slug, value, description: form.description.trim(), parentId, active: form.active, sortOrder: form.sortOrder };
     setItems((current) => form.id ? current.map((item) => item.id === id ? saved : item) : [...current, saved]);
     setForm(null);
-    setNotice({ tone: 'success', message: form.id ? `${config.singularLabel} actualizado en la demo.` : `${config.singularLabel} creado en la demo.` });
+    setNotice({ tone: 'success', message: form.id ? `${config.singularLabel} actualizado localmente.` : `${config.singularLabel} creado localmente.` });
   }
 
   function requestToggle(item: SimpleMasterDataItem) {
     setConfirmAction({
       title: item.active ? `Desactivar ${config.singularLabel.toLocaleLowerCase()}` : `Activar ${config.singularLabel.toLocaleLowerCase()}`,
-      message: `${item.active ? 'Desactivar' : 'Activar'} ${item.name} solo afectará esta demo en memoria.`,
+      message: `${item.active ? 'Desactivar' : 'Activar'} ${item.name} solo afectará esta sesión local.`,
       confirmLabel: item.active ? 'Desactivar' : 'Activar',
       tone: 'warning',
       onConfirm: () => {
         setItems((current) => current.map((candidate) => candidate.id === item.id ? { ...candidate, active: !candidate.active } : candidate));
         setConfirmAction(null);
-        setNotice({ tone: 'warning', message: item.active ? `${config.singularLabel} desactivado en la demo.` : `${config.singularLabel} activado en la demo.` });
+        setNotice({ tone: 'warning', message: item.active ? `${config.singularLabel} desactivado localmente.` : `${config.singularLabel} activado localmente.` });
       },
     });
   }
@@ -182,7 +182,7 @@ function SimpleMasterDataPage({ config }: { config: SimpleMasterDataConfig }) {
   function requestDelete(item: SimpleMasterDataItem) {
     setConfirmAction({
       title: `Eliminar ${config.singularLabel.toLocaleLowerCase()}`,
-      message: `Eliminar ${item.name} de la demo no afectará datos reales.`,
+      message: `Eliminar ${item.name} de esta sesión no afectará datos reales.`,
       confirmLabel: 'Eliminar',
       tone: 'danger',
       onConfirm: () => {
