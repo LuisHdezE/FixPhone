@@ -1,11 +1,11 @@
 {
   "eyebrow": "Cuenta de cliente",
-  "description": "B16 activa una sesión demo exclusiva del Storefront. La identidad vive solo en memoria React y desaparece al recargar.",
+  "description": "La cuenta de cliente usa una sesión local temporal que desaparece al recargar. La autenticación real se conectará posteriormente.",
   "returnToCheckoutLabel": "Volver al checkout",
   "returnToCheckoutHref": "/store/checkout",
   "signIn": {
     "title": "Inicia sesión para continuar",
-    "description": "Ingresa un correo y una contraseña demo para crear una sesión local no persistente.",
+    "description": "Ingresa un correo y una contraseña para crear una sesión local no persistente.",
     "alternateLabel": "¿Primera compra? Crear cuenta",
     "alternateHref": "/store/account/register",
     "submitLabel": "Iniciar sesión",
@@ -22,16 +22,16 @@
         "label": "Contraseña",
         "type": "password",
         "placeholder": "••••••••",
-        "helper": "Solo se usa para validar este formulario demo; nunca se guarda en la sesión."
+        "helper": "Solo se usa para validar este formulario local; nunca se guarda en la sesión."
       }
     ]
   },
   "register": {
     "title": "Crea tu cuenta de cliente",
-    "description": "Crea una identidad demo para continuar el flujo de compra sin registrar un usuario real.",
+    "description": "Crea una identidad temporal para continuar el flujo de compra sin registrar un usuario persistente.",
     "alternateLabel": "¿Ya tienes cuenta? Iniciar sesión",
     "alternateHref": "/store/account/sign-in",
-    "submitLabel": "Crear cuenta demo",
+    "submitLabel": "Crear cuenta temporal",
     "fields": [
       {
         "id": "name",
@@ -45,14 +45,14 @@
         "label": "Correo electrónico",
         "type": "email",
         "placeholder": "cliente@ejemplo.com",
-        "helper": "Identificador demo de la sesión local."
+        "helper": "Identificador temporal de la sesión local."
       },
       {
         "id": "phone",
         "label": "Teléfono",
         "type": "tel",
         "placeholder": "+598 ...",
-        "helper": "Opcional en esta demo y no persistente."
+        "helper": "Opcional y no persistente en esta versión."
       },
       {
         "id": "password",
@@ -72,7 +72,7 @@
     {
       "id": "memory-session",
       "title": "Sesión solo en memoria",
-      "description": "B16 crea estado de cliente en React sin tokens, cookies ni autenticación de servidor."
+      "description": "La versión actual crea estado de cliente en React sin tokens, cookies ni autenticación de servidor."
     },
     {
       "id": "no-persistence",
@@ -83,6 +83,6 @@
   "session": {
     "signedInTitle": "Sesión de cliente activa",
     "signedInDescription": "Esta identidad existe únicamente en memoria del navegador mientras la aplicación permanezca cargada.",
-    "signOutLabel": "Cerrar sesión demo"
+    "signOutLabel": "Cerrar sesión"
   }
 }
