@@ -37,7 +37,16 @@ export function FixPhoneAdminShell() {
     <div className="min-h-dvh bg-[var(--surface-page)] text-slate-800">
       <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center justify-between border-b border-slate-200 bg-white px-3 shadow-sm">
         <div className="flex items-center gap-2">
-          <button className="rounded-md border border-slate-200 px-2 py-1 text-xs md:hidden" onClick={() => setMobileOpen(true)} type="button">Menú</button>
+          <button
+            aria-controls="fixphone-mobile-navigation"
+            aria-expanded={mobileOpen}
+            aria-label="Abrir navegación principal"
+            className="rounded-md border border-slate-200 px-2 py-1 text-xs md:hidden"
+            onClick={() => setMobileOpen(true)}
+            type="button"
+          >
+            Menú
+          </button>
           <Link className="flex items-center gap-2" to="/apps/inventory/dashboard">
             <span className="grid size-7 place-items-center rounded-lg bg-[var(--theme-primary)] text-[11px] font-black text-white">FP</span>
             <span className="text-sm font-black tracking-tight">FixPhone</span>
@@ -55,10 +64,16 @@ export function FixPhoneAdminShell() {
 
       {mobileOpen ? (
         <div className="fixed inset-0 z-[60] bg-slate-950/30 md:hidden" onClick={() => setMobileOpen(false)}>
-          <aside className="h-full w-[286px] overflow-y-auto bg-white p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+          <aside
+            aria-label="Navegación principal"
+            className="h-full w-[286px] overflow-y-auto bg-white p-4 shadow-2xl"
+            id="fixphone-mobile-navigation"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+          >
             <div className="mb-4 flex items-center justify-between">
               <strong>FixPhone</strong>
-              <button className="text-xs text-slate-500" onClick={() => setMobileOpen(false)} type="button">Cerrar</button>
+              <button aria-label="Cerrar navegación principal" className="text-xs text-slate-500" onClick={() => setMobileOpen(false)} type="button">Cerrar</button>
             </div>
             {navigation}
           </aside>
