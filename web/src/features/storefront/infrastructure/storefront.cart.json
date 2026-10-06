@@ -1,0 +1,92 @@
+{
+  "eyebrow": "Carrito público demo",
+  "title": "Carrito listo para interacción local",
+  "description": "B14 activa cantidades, eliminación, vaciado y totales derivados en memoria. No persiste cambios, no reserva inventario y no crea órdenes.",
+  "cartStateLabel": "Interacción local no persistente",
+  "emptyState": {
+    "title": "Tu carrito demo está vacío",
+    "description": "Cuando el flujo de agregar productos exista, este espacio mostrará las líneas reales. Por ahora es un estado visual reutilizable.",
+    "actionLabel": "Ver productos",
+    "actionHref": "/store/products"
+  },
+  "lines": [
+    {
+      "id": "cart-line-display",
+      "title": "Display OLED iPhone 13",
+      "subtitle": "Módulo demo para reparación premium",
+      "href": "/store/products/iphone-13-display-oled",
+      "badgeLabel": "Repuesto",
+      "quantityLabel": "Cantidad demo: 1",
+      "unitPriceLabel": "UYU 4.890",
+      "lineTotalLabel": "UYU 4.890",
+      "stockLabel": "Stock demo: 3",
+      "compatibilityLabel": "Compatible: iPhone 13",
+      "initialQuantity": 1,
+      "maxQuantity": 3,
+      "currencyCode": "UYU",
+      "unitPriceMinor": 489000
+    },
+    {
+      "id": "cart-line-battery",
+      "title": "Batería Samsung S21",
+      "subtitle": "Repuesto demo con garantía futura configurable",
+      "href": "/store/products/samsung-s21-battery",
+      "badgeLabel": "Batería",
+      "quantityLabel": "Cantidad demo: 1",
+      "unitPriceLabel": "UYU 1.690",
+      "lineTotalLabel": "UYU 1.690",
+      "stockLabel": "Stock demo: 5",
+      "compatibilityLabel": "Compatible: Galaxy S21",
+      "initialQuantity": 1,
+      "maxQuantity": 5,
+      "currencyCode": "UYU",
+      "unitPriceMinor": 169000
+    }
+  ],
+  "summary": {
+    "title": "Resumen actual",
+    "items": [
+      {
+        "id": "subtotal",
+        "label": "Subtotal demo",
+        "value": "UYU 6.580",
+        "tone": "default"
+      },
+      {
+        "id": "shipping",
+        "label": "Envío por zona",
+        "value": "Pendiente",
+        "tone": "muted"
+      },
+      {
+        "id": "registration",
+        "label": "Registro requerido",
+        "value": "Antes del checkout",
+        "tone": "muted"
+      }
+    ],
+    "totalLabel": "Total demo visible",
+    "totalValue": "UYU 6.580",
+    "checkoutLabel": "Continuar al checkout",
+    "checkoutDisabledLabel": "Continuar al checkout",
+    "checkoutPreviewLabel": "Revisar checkout demo",
+    "checkoutPreviewHref": "/store/checkout"
+  },
+  "notices": [
+    {
+      "id": "no-persistence",
+      "title": "Sin persistencia todavía",
+      "description": "Las cantidades y eliminaciones viven solo en memoria React. No se guardan en localStorage, sessionStorage ni backend."
+    },
+    {
+      "id": "no-checkout",
+      "title": "Checkout visible, compra aún no transaccional",
+      "description": "B14 permite continuar a la vista de checkout, pero todavía no autentica, cobra, reserva stock ni crea una orden."
+    },
+    {
+      "id": "no-inventory-mutation",
+      "title": "Sin movimiento de inventario",
+      "description": "El carrito visual no reserva stock, no descuenta unidades y no crea ventas."
+    }
+  ]
+}

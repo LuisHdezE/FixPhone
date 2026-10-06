@@ -1,0 +1,158 @@
+{
+  "title": "Evaluación de dispositivo",
+  "description": "Ficha técnica para revisar un equipo ingresado, estimar su valor recuperable y decidir el siguiente destino operativo.",
+  "breadcrumbs": [
+    "Aplicaciones",
+    "Inventario",
+    "Dispositivos",
+    "Evaluación"
+  ],
+  "backLabel": "Volver a dispositivos",
+  "device": {
+    "id": "DEV-0291",
+    "manufacturer": "Apple",
+    "model": "iPhone 12",
+    "serialOrImei": "3567••••1842",
+    "storage": "128 GB",
+    "color": "Negro",
+    "powersOn": "Yes",
+    "physicalCondition": "Good",
+    "accountLock": "Clear",
+    "acquisitionSource": "Compra directa",
+    "acquisitionCost": "USD 155",
+    "destination": "Pending Evaluation",
+    "destinationTone": "warning"
+  },
+  "summaryTitle": "Resumen operativo",
+  "metrics": [
+    {
+      "id": "recoverable-value",
+      "label": "Valor recuperable estimado",
+      "value": "USD 238",
+      "note": "Repuestos + posible equipo reacondicionado",
+      "tone": "success"
+    },
+    {
+      "id": "refurb-cost",
+      "label": "Costo estimado de reacondicionamiento",
+      "value": "USD 42",
+      "note": "Pantalla no requiere cambio",
+      "tone": "info"
+    },
+    {
+      "id": "risk",
+      "label": "Riesgo técnico",
+      "value": "Medio",
+      "note": "Batería degradada y cámaras pendientes",
+      "tone": "warning"
+    }
+  ],
+  "identitySectionTitle": "Identidad y adquisición",
+  "visualSectionTitle": "Revisión visual",
+  "functionalSectionTitle": "Pruebas funcionales",
+  "commercialSectionTitle": "Lectura comercial",
+  "decisionSectionTitle": "Decisión operativa",
+  "fields": {
+    "acquisitionSource": "Origen",
+    "acquisitionCost": "Costo",
+    "serialOrImei": "IMEI / Serie",
+    "accountLock": "Bloqueo de cuenta",
+    "physicalCondition": "Condición física",
+    "powersOn": "Enciende",
+    "estimatedRecoverableValue": "Valor recuperable",
+    "estimatedPartsValue": "Valor estimado en piezas",
+    "estimatedRefurbCost": "Costo de reacondicionamiento",
+    "recommendedDestination": "Destino recomendado",
+    "evaluatorNotes": "Notas de evaluación"
+  },
+  "visualChecks": [
+    {
+      "id": "frame",
+      "label": "Chasis y marco",
+      "value": "Marcas leves",
+      "tone": "info"
+    },
+    {
+      "id": "screen",
+      "label": "Pantalla",
+      "value": "Funcional, sin manchas",
+      "tone": "success"
+    },
+    {
+      "id": "back-glass",
+      "label": "Tapa trasera",
+      "value": "Fisura superficial",
+      "tone": "warning"
+    },
+    {
+      "id": "water",
+      "label": "Indicadores de humedad",
+      "value": "Sin evidencia visible",
+      "tone": "success"
+    }
+  ],
+  "functionalChecks": [
+    {
+      "id": "power",
+      "label": "Encendido y carga",
+      "value": "Enciende y carga",
+      "tone": "success"
+    },
+    {
+      "id": "battery",
+      "label": "Batería",
+      "value": "Salud baja",
+      "tone": "warning"
+    },
+    {
+      "id": "cameras",
+      "label": "Cámaras",
+      "value": "Pendiente de prueba completa",
+      "tone": "neutral"
+    },
+    {
+      "id": "biometrics",
+      "label": "Face ID / biometría",
+      "value": "Funcional",
+      "tone": "success"
+    }
+  ],
+  "commercial": {
+    "estimatedRecoverableValue": "USD 238",
+    "estimatedPartsValue": "USD 146",
+    "estimatedRefurbCost": "USD 42",
+    "profitabilitySignal": "Reacondicionar si cámaras pasan prueba final; si fallan, pasar a donante."
+  },
+  "decisions": [
+    {
+      "destination": "Refurbish",
+      "label": "Reacondicionar",
+      "description": "Conviene intentar recuperación completa antes de desmontar.",
+      "tone": "success"
+    },
+    {
+      "destination": "Donor",
+      "label": "Donante",
+      "description": "Úsalo si fallan cámaras o placa durante prueba final.",
+      "tone": "info"
+    },
+    {
+      "destination": "Hold",
+      "label": "En espera",
+      "description": "Reservar si falta repuesto o validación externa.",
+      "tone": "neutral"
+    },
+    {
+      "destination": "Discard",
+      "label": "Descartar",
+      "description": "Solo si la evaluación final confirma daño no recuperable.",
+      "tone": "warning"
+    }
+  ],
+  "recommendedDestination": "Refurbish",
+  "evaluatorNotes": "Equipo apto para reacondicionamiento inicial. Confirmar cámaras antes de asignar presupuesto final.",
+  "demoNotice": "Vista demo: la decisión queda simulada para validar el flujo, no actualiza inventario real.",
+  "submitLabel": "Guardar decisión demo",
+  "successTitle": "Evaluación preparada",
+  "successMessage": "La decisión quedó simulada y lista para el siguiente paso del flujo demo."
+}

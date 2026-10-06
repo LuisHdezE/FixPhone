@@ -1,0 +1,78 @@
+{
+  "eyebrow": "Favoritos",
+  "title": "Tus productos guardados",
+  "description": "B15 activa quitar, vaciar y restaurar favoritos en memoria. La selección todavía no persiste entre recargas ni sesiones.",
+  "stateLabel": "Interacción local no persistente",
+  "emptyState": {
+    "title": "Tu lista de favoritos está vacía",
+    "description": "Puedes restaurar el conjunto demo o volver al catálogo para seguir explorando productos.",
+    "actionLabel": "Explorar productos",
+    "actionHref": "/store/products"
+  },
+  "products": [
+    {
+      "id": "favorite-display",
+      "title": "Display OLED iPhone 13",
+      "subtitle": "Módulo demo para reparación premium",
+      "priceLabel": "UYU 4.890",
+      "compareLabel": "Costo repuesto nuevo: UYU 3.250",
+      "badgeLabel": "Repuesto",
+      "href": "/store/products/iphone-13-display-oled",
+      "compatibilityLabel": "Compatible: iPhone 13",
+      "stockLabel": "Stock demo: 3",
+      "image": {
+        "src": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
+        "alt": "Smartphone usado como referencia visual para display",
+        "objectPosition": "center"
+      }
+    },
+    {
+      "id": "favorite-battery",
+      "title": "Batería Samsung S21",
+      "subtitle": "Batería demo de reemplazo",
+      "priceLabel": "UYU 1.690",
+      "compareLabel": "Costo repuesto nuevo: UYU 980",
+      "badgeLabel": "Batería",
+      "href": "/store/products",
+      "compatibilityLabel": "Compatible: Samsung S21",
+      "stockLabel": "Stock demo: 5",
+      "image": {
+        "src": "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=900&q=80",
+        "alt": "Smartphone como referencia visual para batería",
+        "objectPosition": "center"
+      }
+    },
+    {
+      "id": "favorite-used-phone",
+      "title": "iPhone 12 usado",
+      "subtitle": "Equipo demo revisado",
+      "priceLabel": "UYU 18.900",
+      "badgeLabel": "Usado",
+      "href": "/store/products",
+      "compatibilityLabel": "Condición demo: Muy bueno",
+      "stockLabel": "Unidad única demo",
+      "image": {
+        "src": "https://images.unsplash.com/photo-1523206489230-c012c64b2b48?auto=format&fit=crop&w=900&q=80",
+        "alt": "Teléfono móvil usado en vitrina comercial",
+        "objectPosition": "center"
+      }
+    }
+  ],
+  "notices": [
+    {
+      "id": "no-persistence",
+      "title": "Sin persistencia",
+      "description": "B15 mantiene favoritos solo en memoria React. No usa localStorage, sessionStorage ni backend."
+    },
+    {
+      "id": "no-customer-mutation",
+      "title": "Sin estado de cliente",
+      "description": "Quitar o restaurar favoritos no modifica cuentas, sesiones ni preferencias persistentes."
+    },
+    {
+      "id": "no-cart-mutation",
+      "title": "Sin carrito automático",
+      "description": "Los favoritos no agregan productos al carrito ni alteran inventario."
+    }
+  ]
+}

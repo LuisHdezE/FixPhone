@@ -1,0 +1,125 @@
+{
+  "list": {
+    "title": "Dispositivos",
+    "description": "Registro operativo de equipos ingresados al inventario y su destino actual.",
+    "breadcrumbs": ["Aplicaciones", "Inventario", "Dispositivos"],
+    "newDeviceLabel": "Registrar dispositivo",
+    "tableCaption": "Dispositivos registrados en inventario",
+    "searchLabel": "Buscar dispositivos",
+    "searchPlaceholder": "ID, marca, modelo, IMEI/serie u origen…",
+    "emptyMessage": "No hay dispositivos para mostrar.",
+    "columns": {
+      "id": "ID",
+      "device": "Dispositivo",
+      "identity": "IMEI / Serie",
+      "condition": "Condición",
+      "source": "Origen",
+      "cost": "Costo",
+      "destination": "Destino"
+    },
+    "filters": {
+      "destinationLabel": "Destino",
+      "allDestinationsLabel": "Todos los destinos",
+      "destinationOptions": [
+        { "value": "Pending Evaluation", "label": "Pendiente evaluación" },
+        { "value": "Donor", "label": "Donante" },
+        { "value": "Refurbish", "label": "Reacondicionar" },
+        { "value": "Hold", "label": "En espera" },
+        { "value": "Discard", "label": "Descartar" }
+      ],
+      "conditionLabel": "Condición física",
+      "allConditionsLabel": "Todas las condiciones",
+      "conditionOptions": [
+        { "value": "Excellent", "label": "Excelente" },
+        { "value": "Good", "label": "Buena" },
+        { "value": "Fair", "label": "Regular" },
+        { "value": "Poor", "label": "Mala" },
+        { "value": "Damaged", "label": "Dañado" }
+      ]
+    },
+    "devices": [
+      { "id": "DEV-0291", "manufacturer": "Apple", "model": "iPhone 12", "serialOrImei": "3567••••1842", "storage": "128 GB", "color": "Negro", "powersOn": "Yes", "physicalCondition": "Good", "accountLock": "Clear", "acquisitionSource": "Compra directa", "acquisitionCost": "USD 155", "destination": "Pending Evaluation", "destinationTone": "warning" },
+      { "id": "DEV-0290", "manufacturer": "Samsung", "model": "Galaxy S21", "serialOrImei": "3521••••7308", "storage": "128 GB", "color": "Gris", "powersOn": "No", "physicalCondition": "Fair", "accountLock": "Unknown", "acquisitionSource": "Lote mayorista", "acquisitionCost": "USD 92", "destination": "Donor", "destinationTone": "info" },
+      { "id": "DEV-0289", "manufacturer": "Xiaomi", "model": "Redmi Note 11", "serialOrImei": "8643••••2194", "storage": "128 GB", "color": "Azul", "powersOn": "Yes", "physicalCondition": "Good", "accountLock": "Clear", "acquisitionSource": "Compra directa", "acquisitionCost": "USD 68", "destination": "Refurbish", "destinationTone": "success" },
+      { "id": "DEV-0288", "manufacturer": "Apple", "model": "iPhone XR", "serialOrImei": "3530••••9451", "storage": "64 GB", "color": "Rojo", "powersOn": "No", "physicalCondition": "Poor", "accountLock": "Unknown", "acquisitionSource": "Lote taller", "acquisitionCost": "USD 54", "destination": "Donor", "destinationTone": "info" },
+      { "id": "DEV-0287", "manufacturer": "Motorola", "model": "Moto G52", "serialOrImei": "3598••••3107", "storage": "128 GB", "color": "Blanco", "powersOn": "Yes", "physicalCondition": "Excellent", "accountLock": "Clear", "acquisitionSource": "Canje", "acquisitionCost": "USD 74", "destination": "Pending Evaluation", "destinationTone": "warning" },
+      { "id": "DEV-0286", "manufacturer": "Samsung", "model": "Galaxy A52", "serialOrImei": "3514••••6683", "storage": "128 GB", "color": "Negro", "powersOn": "Yes", "physicalCondition": "Fair", "accountLock": "Clear", "acquisitionSource": "Compra directa", "acquisitionCost": "USD 82", "destination": "Refurbish", "destinationTone": "success" },
+      { "id": "DEV-0285", "manufacturer": "Apple", "model": "iPhone 8", "serialOrImei": "3561••••4026", "storage": "64 GB", "color": "Dorado", "powersOn": "No", "physicalCondition": "Damaged", "accountLock": "Unknown", "acquisitionSource": "Lote taller", "acquisitionCost": "USD 29", "destination": "Donor", "destinationTone": "info" },
+      { "id": "DEV-0284", "manufacturer": "Samsung", "model": "Galaxy A32", "serialOrImei": "3509••••7815", "storage": "128 GB", "color": "Violeta", "powersOn": "Yes", "physicalCondition": "Good", "accountLock": "Locked", "acquisitionSource": "Canje", "acquisitionCost": "USD 61", "destination": "Hold", "destinationTone": "neutral" },
+      { "id": "DEV-0283", "manufacturer": "Xiaomi", "model": "Poco X3 NFC", "serialOrImei": "8675••••1164", "storage": "128 GB", "color": "Azul", "powersOn": "No", "physicalCondition": "Poor", "accountLock": "Unknown", "acquisitionSource": "Lote mayorista", "acquisitionCost": "USD 47", "destination": "Donor", "destinationTone": "info" },
+      { "id": "DEV-0282", "manufacturer": "Apple", "model": "iPhone 11", "serialOrImei": "3529••••5530", "storage": "128 GB", "color": "Verde", "powersOn": "Yes", "physicalCondition": "Good", "accountLock": "Clear", "acquisitionSource": "Compra directa", "acquisitionCost": "USD 137", "destination": "Refurbish", "destinationTone": "success" },
+      { "id": "DEV-0281", "manufacturer": "Samsung", "model": "Galaxy A52", "serialOrImei": "3534••••9082", "storage": "128 GB", "color": "Azul", "powersOn": "Yes", "physicalCondition": "Fair", "accountLock": "Clear", "acquisitionSource": "Compra directa", "acquisitionCost": "USD 79", "destination": "Pending Evaluation", "destinationTone": "warning" },
+      { "id": "DEV-0280", "manufacturer": "Huawei", "model": "P30 Lite", "serialOrImei": "8612••••7743", "storage": "128 GB", "color": "Negro", "powersOn": "No", "physicalCondition": "Damaged", "accountLock": "Unknown", "acquisitionSource": "Lote taller", "acquisitionCost": "USD 22", "destination": "Discard", "destinationTone": "neutral" }
+    ]
+  },
+  "intake": {
+    "title": "Registrar dispositivo",
+    "description": "Captura rápida para ingresar un equipo al inventario y definir su siguiente destino.",
+    "breadcrumbs": ["Aplicaciones", "Inventario", "Dispositivos", "Nuevo"],
+    "introTitle": "Ingreso rápido",
+    "introDescription": "Registra primero lo necesario para identificar y enrutar el equipo. Marca, modelo, almacenamiento, color y condición salen de Datos Maestros para evitar textos duplicados.",
+    "identitySectionTitle": "Identidad del equipo",
+    "conditionSectionTitle": "Condición inicial",
+    "acquisitionSectionTitle": "Adquisición",
+    "routingSectionTitle": "Destino operativo",
+    "fields": {
+      "brandId": "Marca",
+      "deviceModelId": "Modelo",
+      "serialOrImei": "IMEI / Número de serie",
+      "storageCapacityId": "Almacenamiento",
+      "colorId": "Color",
+      "powersOn": "¿Enciende?",
+      "conditionId": "Condición",
+      "accountLock": "Bloqueo de cuenta",
+      "acquisitionSource": "Origen de adquisición",
+      "acquisitionCost": "Costo de adquisición",
+      "destination": "Destino inicial",
+      "notes": "Notas de ingreso"
+    },
+    "placeholders": {
+      "brandId": "Selecciona una marca",
+      "deviceModelId": "Selecciona primero una marca",
+      "serialOrImei": "IMEI o serie",
+      "storageCapacityId": "Selecciona almacenamiento",
+      "colorId": "Selecciona color",
+      "conditionId": "Selecciona condición",
+      "acquisitionSource": "Ej. Compra directa",
+      "acquisitionCost": "Ej. USD 120",
+      "notes": "Observaciones visibles, accesorios recibidos o contexto del ingreso"
+    },
+    "options": {
+      "powersOn": [
+        { "value": "Unknown", "label": "Sin verificar" },
+        { "value": "Yes", "label": "Sí" },
+        { "value": "No", "label": "No" }
+      ],
+      "accountLock": [
+        { "value": "Unknown", "label": "Sin verificar" },
+        { "value": "Clear", "label": "Sin bloqueo" },
+        { "value": "Locked", "label": "Bloqueado" }
+      ],
+      "destination": [
+        { "value": "Pending Evaluation", "label": "Pendiente evaluación" },
+        { "value": "Donor", "label": "Donante" },
+        { "value": "Refurbish", "label": "Reacondicionar" },
+        { "value": "Hold", "label": "En espera" },
+        { "value": "Discard", "label": "Descartar" }
+      ]
+    },
+    "submitLabel": "Registrar ingreso",
+    "cancelLabel": "Volver a dispositivos",
+    "demoNotice": "Vista demo: el registro valida la interacción y consume marca/modelo/atributos desde Datos Maestros, pero no persiste datos en un backend.",
+    "successTitle": "Ingreso preparado",
+    "successMessage": "El dispositivo quedó preparado para continuar con su evaluación dentro del flujo demo.",
+    "defaults": {
+      "brandId": "",
+      "deviceModelId": "",
+      "storageCapacityId": "",
+      "colorId": "",
+      "conditionId": "",
+      "powersOn": "Unknown",
+      "accountLock": "Unknown",
+      "destination": "Pending Evaluation"
+    }
+  }
+}

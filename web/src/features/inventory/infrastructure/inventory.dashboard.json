@@ -1,0 +1,378 @@
+{
+  "title": "Inventario",
+  "description": "Estado operativo del inventario físico y próximas acciones.",
+  "breadcrumbs": [
+    "Aplicaciones",
+    "Inventario",
+    "Dashboard"
+  ],
+  "attentionTitle": "Qué necesita atención ahora",
+  "attentionDescription": "Cola operativa priorizada para continuar el flujo desde ingreso hasta inventario disponible.",
+  "metrics": [
+    {
+      "id": "registered-devices",
+      "label": "Dispositivos registrados",
+      "value": 248,
+      "note": "Inventario físico identificado",
+      "tone": "neutral",
+      "icon": "device"
+    },
+    {
+      "id": "pending-evaluation",
+      "label": "Pendientes de evaluación",
+      "value": 31,
+      "note": "12 con prioridad alta",
+      "tone": "warning",
+      "icon": "help"
+    },
+    {
+      "id": "donor-devices",
+      "label": "Equipos donantes",
+      "value": 86,
+      "note": "Fuente de repuestos recuperables",
+      "tone": "neutral",
+      "icon": "device"
+    },
+    {
+      "id": "waiting-dismantling",
+      "label": "Esperando desarme",
+      "value": 18,
+      "note": "Siguiente cola operacional",
+      "tone": "warning",
+      "icon": "wrench"
+    },
+    {
+      "id": "extracted-parts",
+      "label": "Repuestos extraídos",
+      "value": 642,
+      "note": "Unidades físicas registradas",
+      "tone": "positive",
+      "icon": "package"
+    },
+    {
+      "id": "awaiting-testing",
+      "label": "Pendientes de prueba",
+      "value": 57,
+      "note": "Aún no elegibles para venta",
+      "tone": "warning",
+      "icon": "settings"
+    },
+    {
+      "id": "sale-ready-parts",
+      "label": "Listos para venta",
+      "value": 214,
+      "note": "Probados y clasificados",
+      "tone": "positive",
+      "icon": "check-circle"
+    },
+    {
+      "id": "refurbished-devices",
+      "label": "Reacondicionados",
+      "value": 23,
+      "note": "14 disponibles para venta",
+      "tone": "positive",
+      "icon": "wrench"
+    }
+  ],
+  "queue": [
+    {
+      "id": "DON-0142",
+      "deviceLabel": "iPhone 12 · 128 GB",
+      "context": "Evaluación completada · destino donante",
+      "actionLabel": "Iniciar desarme",
+      "status": "Waiting",
+      "statusTone": "warning",
+      "priority": "High"
+    },
+    {
+      "id": "DEV-0281",
+      "deviceLabel": "Samsung Galaxy A52 · 128 GB",
+      "context": "Ingreso reciente · condición pendiente",
+      "actionLabel": "Evaluar dispositivo",
+      "status": "Pending Evaluation",
+      "statusTone": "info",
+      "priority": "High"
+    },
+    {
+      "id": "DON-0138",
+      "deviceLabel": "iPhone XR · 64 GB",
+      "context": "Desarme iniciado · componentes pendientes",
+      "actionLabel": "Continuar desarme",
+      "status": "Partially Dismantled",
+      "statusTone": "warning",
+      "priority": "Normal"
+    },
+    {
+      "id": "REF-0023",
+      "deviceLabel": "iPhone 11 · 128 GB",
+      "context": "Ruta de reacondicionamiento asignada",
+      "actionLabel": "Continuar reacondicionamiento",
+      "status": "Refurbish",
+      "statusTone": "success",
+      "priority": "Normal"
+    },
+    {
+      "id": "DEV-0274",
+      "deviceLabel": "Xiaomi Redmi Note 11 128 GB",
+      "context": "Ingreso pendiente de diagnóstico inicial",
+      "actionLabel": "Evaluar dispositivo",
+      "status": "Pending Evaluation",
+      "statusTone": "warning",
+      "priority": "Normal"
+    },
+    {
+      "id": "DON-0135",
+      "deviceLabel": "Samsung Galaxy S20 FE 128 GB",
+      "context": "Donante clasificado y listo para banco",
+      "actionLabel": "Iniciar desarme",
+      "status": "Waiting",
+      "statusTone": "info",
+      "priority": "High"
+    },
+    {
+      "id": "DON-0131",
+      "deviceLabel": "iPhone 8 64 GB",
+      "context": "Pantalla extraída; faltan cámaras y vibrador",
+      "actionLabel": "Continuar desarme",
+      "status": "Partially Dismantled",
+      "statusTone": "info",
+      "priority": "Normal"
+    },
+    {
+      "id": "REF-0021",
+      "deviceLabel": "Samsung Galaxy S21 128 GB",
+      "context": "Pruebas finales pendientes antes de inventario",
+      "actionLabel": "Continuar reacondicionamiento",
+      "status": "Refurbish",
+      "statusTone": "success",
+      "priority": "Normal"
+    }
+  ],
+  "queueFilters": [
+    {
+      "id": "status",
+      "label": "Estado",
+      "allLabel": "Todos los estados",
+      "options": [
+        {
+          "value": "Pending Evaluation",
+          "label": "Pendiente evaluación"
+        },
+        {
+          "value": "Waiting",
+          "label": "Esperando"
+        },
+        {
+          "value": "Partially Dismantled",
+          "label": "Desarme parcial"
+        },
+        {
+          "value": "Refurbish",
+          "label": "Reacondicionar"
+        }
+      ]
+    },
+    {
+      "id": "priority",
+      "label": "Prioridad",
+      "allLabel": "Todas las prioridades",
+      "options": [
+        {
+          "value": "High",
+          "label": "Alta"
+        },
+        {
+          "value": "Normal",
+          "label": "Normal"
+        }
+      ]
+    }
+  ],
+  "analytics": {
+    "trend": {
+      "title": "Flujo de inventario",
+      "description": "Movimiento operativo de los últimos siete días.",
+      "periodLabel": "Últimos 7 días",
+      "series": [
+        {
+          "id": "intake",
+          "label": "Ingresados",
+          "tone": "brand",
+          "points": [
+            {
+              "label": "Lun",
+              "value": 8
+            },
+            {
+              "label": "Mar",
+              "value": 11
+            },
+            {
+              "label": "Mié",
+              "value": 9
+            },
+            {
+              "label": "Jue",
+              "value": 14
+            },
+            {
+              "label": "Vie",
+              "value": 12
+            },
+            {
+              "label": "Sáb",
+              "value": 16
+            },
+            {
+              "label": "Dom",
+              "value": 13
+            }
+          ]
+        },
+        {
+          "id": "extracted",
+          "label": "Repuestos extraídos",
+          "tone": "info",
+          "points": [
+            {
+              "label": "Lun",
+              "value": 18
+            },
+            {
+              "label": "Mar",
+              "value": 22
+            },
+            {
+              "label": "Mié",
+              "value": 19
+            },
+            {
+              "label": "Jue",
+              "value": 27
+            },
+            {
+              "label": "Vie",
+              "value": 24
+            },
+            {
+              "label": "Sáb",
+              "value": 31
+            },
+            {
+              "label": "Dom",
+              "value": 29
+            }
+          ]
+        },
+        {
+          "id": "ready",
+          "label": "Listos para venta",
+          "tone": "success",
+          "points": [
+            {
+              "label": "Lun",
+              "value": 7
+            },
+            {
+              "label": "Mar",
+              "value": 9
+            },
+            {
+              "label": "Mié",
+              "value": 10
+            },
+            {
+              "label": "Jue",
+              "value": 12
+            },
+            {
+              "label": "Vie",
+              "value": 11
+            },
+            {
+              "label": "Sáb",
+              "value": 15
+            },
+            {
+              "label": "Dom",
+              "value": 17
+            }
+          ]
+        }
+      ]
+    },
+    "distribution": {
+      "title": "Distribución operativa",
+      "description": "Dispositivos activos por destino o cola de trabajo.",
+      "centerLabel": "Activos",
+      "segments": [
+        {
+          "id": "pending",
+          "label": "Pendientes de evaluación",
+          "value": 31,
+          "tone": "warning"
+        },
+        {
+          "id": "donor",
+          "label": "Equipos donantes",
+          "value": 86,
+          "tone": "brand"
+        },
+        {
+          "id": "dismantling",
+          "label": "Esperando desarme",
+          "value": 18,
+          "tone": "info"
+        },
+        {
+          "id": "refurbish",
+          "label": "Reacondicionamiento",
+          "value": 23,
+          "tone": "success"
+        },
+        {
+          "id": "hold",
+          "label": "En espera",
+          "value": 12,
+          "tone": "neutral"
+        }
+      ]
+    },
+    "funnel": {
+      "title": "Embudo operativo",
+      "description": "Cohorte de los últimos 30 días desde ingreso hasta inventario listo.",
+      "stages": [
+        {
+          "id": "intake",
+          "label": "Ingresados",
+          "value": 74,
+          "note": "Base de la cohorte"
+        },
+        {
+          "id": "evaluated",
+          "label": "Evaluados",
+          "value": 61,
+          "note": "82% del ingreso"
+        },
+        {
+          "id": "processed",
+          "label": "Procesados",
+          "value": 49,
+          "note": "Desarme o reacondicionamiento"
+        },
+        {
+          "id": "tested",
+          "label": "Probados",
+          "value": 38,
+          "note": "Componentes y equipos verificados"
+        },
+        {
+          "id": "ready",
+          "label": "Listos",
+          "value": 31,
+          "note": "Elegibles para inventario comercial"
+        }
+      ]
+    }
+  }
+}

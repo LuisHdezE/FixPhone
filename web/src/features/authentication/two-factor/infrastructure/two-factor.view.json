@@ -1,0 +1,67 @@
+{
+  "branding": {
+    "mark": "WB",
+    "name": "WebBlueprint",
+    "logoUrl": null,
+    "contextLabel": "Verificación en dos pasos"
+  },
+  "hero": {
+    "eyebrow": "Un paso más para continuar",
+    "title": "Confirma que eres tú.",
+    "description": "Un código temporal añade una comprobación adicional al iniciar sesión. Mantén el control de tu acceso.",
+    "highlights": [
+      {
+        "id": "temporary",
+        "title": "Código temporal",
+        "description": "Consulta el código vigente en tu aplicación de autenticación."
+      },
+      {
+        "id": "private",
+        "title": "Solo para ti",
+        "description": "No compartas tus códigos de verificación con otras personas."
+      },
+      {
+        "id": "simple",
+        "title": "Acceso sencillo",
+        "description": "Escribe o pega el código completo en un único campo."
+      }
+    ]
+  },
+  "form": {
+    "eyebrow": "Verificación 2FA",
+    "title": "Verifica tu acceso",
+    "description": "Introduce el código de tu aplicación de autenticación.",
+    "code": {
+      "label": "Código de verificación",
+      "placeholder": "000000",
+      "autocomplete": "one-time-code"
+    },
+    "codeLength": 6,
+    "codeHint": "Introduce los 6 dígitos, incluidos los ceros iniciales.",
+    "demoNotice": "Modo demostración: usa cualquier código de 6 dígitos. No se verificará una identidad ni se abrirá una sesión real.",
+    "submitLabel": "Verificar código",
+    "submittingLabel": "Verificando...",
+    "backToSignIn": {
+      "prompt": "¿Necesitas volver?",
+      "label": "Iniciar sesión",
+      "href": "/authentication/sign-in"
+    },
+    "validation": {
+      "codeRequired": "Introduce el código de verificación.",
+      "codeInvalid": "El código debe contener exactamente 6 dígitos."
+    },
+    "feedback": {
+      "successTitle": "Demostración completada",
+      "successMessage": "El flujo de verificación finalizó. No se ha iniciado una sesión real.",
+      "invalidCode": "El código no es válido. Compruébalo e inténtalo de nuevo.",
+      "expiredCode": "El código ha caducado. Usa el código actual de tu aplicación.",
+      "unavailable": "No se pudo verificar el código. Inténtalo nuevamente."
+    }
+  },
+  "legal": {
+    "privacyLabel": "Privacidad",
+    "privacyHref": "/pages/privacy-policy",
+    "termsLabel": "Términos",
+    "termsHref": "/pages/terms-of-service"
+  }
+}

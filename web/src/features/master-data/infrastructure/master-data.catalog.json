@@ -1,0 +1,74 @@
+{
+  "brands": [
+    { "id": "brand-apple", "name": "Apple", "slug": "apple", "logo": null, "active": true, "sortOrder": 10 },
+    { "id": "brand-samsung", "name": "Samsung", "slug": "samsung", "logo": null, "active": true, "sortOrder": 20 },
+    { "id": "brand-xiaomi", "name": "Xiaomi", "slug": "xiaomi", "logo": null, "active": true, "sortOrder": 30 },
+    { "id": "brand-motorola", "name": "Motorola", "slug": "motorola", "logo": null, "active": true, "sortOrder": 40 },
+    { "id": "brand-huawei", "name": "Huawei", "slug": "huawei", "logo": null, "active": true, "sortOrder": 50 }
+  ],
+  "deviceModels": [
+    { "id": "model-iphone-11", "brandId": "brand-apple", "name": "iPhone 11", "slug": "iphone-11", "modelCode": "A2221", "active": true, "sortOrder": 110 },
+    { "id": "model-iphone-12", "brandId": "brand-apple", "name": "iPhone 12", "slug": "iphone-12", "modelCode": "A2403", "active": true, "sortOrder": 120 },
+    { "id": "model-iphone-12-pro", "brandId": "brand-apple", "name": "iPhone 12 Pro", "slug": "iphone-12-pro", "modelCode": "A2407", "active": true, "sortOrder": 130 },
+    { "id": "model-iphone-13", "brandId": "brand-apple", "name": "iPhone 13", "slug": "iphone-13", "modelCode": "A2633", "active": true, "sortOrder": 140 },
+    { "id": "model-galaxy-a52", "brandId": "brand-samsung", "name": "Galaxy A52", "slug": "galaxy-a52", "modelCode": "SM-A525F", "active": true, "sortOrder": 210 },
+    { "id": "model-galaxy-s21", "brandId": "brand-samsung", "name": "Galaxy S21", "slug": "galaxy-s21", "modelCode": "SM-G991B", "active": true, "sortOrder": 220 },
+    { "id": "model-galaxy-a54", "brandId": "brand-samsung", "name": "Galaxy A54", "slug": "galaxy-a54", "modelCode": "SM-A546B", "active": true, "sortOrder": 230 },
+    { "id": "model-redmi-note-11", "brandId": "brand-xiaomi", "name": "Redmi Note 11", "slug": "redmi-note-11", "modelCode": "2201117TG", "active": true, "sortOrder": 310 },
+    { "id": "model-poco-x3-nfc", "brandId": "brand-xiaomi", "name": "Poco X3 NFC", "slug": "poco-x3-nfc", "modelCode": "M2007J20CG", "active": true, "sortOrder": 320 },
+    { "id": "model-moto-g52", "brandId": "brand-motorola", "name": "Moto G52", "slug": "moto-g52", "modelCode": "XT2221", "active": true, "sortOrder": 410 },
+    { "id": "model-p30-lite", "brandId": "brand-huawei", "name": "P30 Lite", "slug": "p30-lite", "modelCode": "MAR-LX3A", "active": true, "sortOrder": 510 }
+  ],
+  "categories": [
+    { "id": "cat-spare-parts", "parentId": null, "name": "Repuestos", "slug": "repuestos", "description": "Componentes y piezas para reparación de celulares.", "imageOrIcon": "package", "active": true, "showInStorefront": true, "sortOrder": 10 },
+    { "id": "cat-spare-parts-batteries", "parentId": "cat-spare-parts", "name": "Baterías", "slug": "baterias", "description": "Baterías nuevas, usadas o recuperadas según disponibilidad.", "imageOrIcon": "battery", "active": true, "showInStorefront": true, "sortOrder": 20 },
+    { "id": "cat-spare-parts-batteries-apple", "parentId": "cat-spare-parts-batteries", "name": "Baterías Apple", "slug": "baterias-apple", "description": "Baterías compatibles con modelos Apple.", "imageOrIcon": "battery", "active": true, "showInStorefront": true, "sortOrder": 21 },
+    { "id": "cat-spare-parts-displays", "parentId": "cat-spare-parts", "name": "Displays", "slug": "displays", "description": "Pantallas y módulos de display.", "imageOrIcon": "device", "active": true, "showInStorefront": true, "sortOrder": 30 },
+    { "id": "cat-spare-parts-charge-connectors", "parentId": "cat-spare-parts", "name": "Conectores de carga", "slug": "conectores-carga", "description": "Flex y conectores de carga por modelo.", "imageOrIcon": "plug", "active": true, "showInStorefront": true, "sortOrder": 40 },
+    { "id": "cat-phones", "parentId": null, "name": "Celulares", "slug": "celulares", "description": "Celulares para venta pública.", "imageOrIcon": "device", "active": true, "showInStorefront": true, "sortOrder": 100 },
+    { "id": "cat-phones-used", "parentId": "cat-phones", "name": "Usados", "slug": "celulares-usados", "description": "Equipos usados individualizados y evaluados.", "imageOrIcon": "device", "active": true, "showInStorefront": true, "sortOrder": 110 },
+    { "id": "cat-phones-refurbished", "parentId": "cat-phones", "name": "Reacondicionados", "slug": "celulares-reacondicionados", "description": "Equipos reacondicionados listos para venta.", "imageOrIcon": "check-circle", "active": true, "showInStorefront": true, "sortOrder": 120 },
+    { "id": "cat-accessories", "parentId": null, "name": "Accesorios", "slug": "accesorios", "description": "Accesorios de telefonía y protección.", "imageOrIcon": "sparkles", "active": true, "showInStorefront": true, "sortOrder": 200 },
+    { "id": "cat-accessories-chargers", "parentId": "cat-accessories", "name": "Cargadores", "slug": "cargadores", "description": "Cargadores y adaptadores.", "imageOrIcon": "plug", "active": true, "showInStorefront": true, "sortOrder": 210 }
+  ],
+  "colors": [
+    { "id": "color-black", "name": "Negro", "slug": "negro", "hex": "#111827", "active": true, "sortOrder": 10 },
+    { "id": "color-white", "name": "Blanco", "slug": "blanco", "hex": "#F8FAFC", "active": true, "sortOrder": 20 },
+    { "id": "color-blue", "name": "Azul", "slug": "azul", "hex": "#2563EB", "active": true, "sortOrder": 30 },
+    { "id": "color-red", "name": "Rojo", "slug": "rojo", "hex": "#DC2626", "active": true, "sortOrder": 40 },
+    { "id": "color-gold", "name": "Dorado", "slug": "dorado", "hex": "#D97706", "active": true, "sortOrder": 50 },
+    { "id": "color-gray", "name": "Gris", "slug": "gris", "hex": "#64748B", "active": true, "sortOrder": 60 }
+  ],
+  "storageCapacities": [
+    { "id": "storage-32gb", "label": "32 GB", "valueGb": 32, "active": true, "sortOrder": 10 },
+    { "id": "storage-64gb", "label": "64 GB", "valueGb": 64, "active": true, "sortOrder": 20 },
+    { "id": "storage-128gb", "label": "128 GB", "valueGb": 128, "active": true, "sortOrder": 30 },
+    { "id": "storage-256gb", "label": "256 GB", "valueGb": 256, "active": true, "sortOrder": 40 },
+    { "id": "storage-512gb", "label": "512 GB", "valueGb": 512, "active": true, "sortOrder": 50 }
+  ],
+  "ramCapacities": [
+    { "id": "ram-2gb", "label": "2 GB", "valueGb": 2, "active": true, "sortOrder": 10 },
+    { "id": "ram-3gb", "label": "3 GB", "valueGb": 3, "active": true, "sortOrder": 20 },
+    { "id": "ram-4gb", "label": "4 GB", "valueGb": 4, "active": true, "sortOrder": 30 },
+    { "id": "ram-6gb", "label": "6 GB", "valueGb": 6, "active": true, "sortOrder": 40 },
+    { "id": "ram-8gb", "label": "8 GB", "valueGb": 8, "active": true, "sortOrder": 50 },
+    { "id": "ram-12gb", "label": "12 GB", "valueGb": 12, "active": true, "sortOrder": 60 }
+  ],
+  "conditions": [
+    { "id": "condition-new", "name": "Nuevo", "slug": "nuevo", "description": "Producto sin uso previo.", "grade": "N", "active": true, "sortOrder": 10 },
+    { "id": "condition-open-box", "name": "Caja abierta", "slug": "caja-abierta", "description": "Producto abierto o exhibido, sin uso operativo relevante.", "grade": "OB", "active": true, "sortOrder": 20 },
+    { "id": "condition-used-a", "name": "Usado A", "slug": "usado-a", "description": "Equipo usado en muy buen estado estético y funcional.", "grade": "A", "active": true, "sortOrder": 30 },
+    { "id": "condition-used-b", "name": "Usado B", "slug": "usado-b", "description": "Equipo usado con marcas visibles, funcional.", "grade": "B", "active": true, "sortOrder": 40 },
+    { "id": "condition-for-parts", "name": "Para repuesto", "slug": "para-repuesto", "description": "Unidad destinada a extracción de piezas o diagnóstico.", "grade": "PARTS", "active": true, "sortOrder": 50 }
+  ],
+  "sparePartTypes": [
+    { "id": "part-display", "parentId": null, "name": "Display", "slug": "display", "active": true, "sortOrder": 10 },
+    { "id": "part-display-oled", "parentId": "part-display", "name": "Display OLED", "slug": "display-oled", "active": true, "sortOrder": 11 },
+    { "id": "part-display-lcd", "parentId": "part-display", "name": "Display LCD", "slug": "display-lcd", "active": true, "sortOrder": 12 },
+    { "id": "part-battery", "parentId": null, "name": "Batería", "slug": "bateria", "active": true, "sortOrder": 20 },
+    { "id": "part-charge-port", "parentId": null, "name": "Conector de carga", "slug": "conector-carga", "active": true, "sortOrder": 30 },
+    { "id": "part-camera", "parentId": null, "name": "Cámara", "slug": "camara", "active": true, "sortOrder": 40 },
+    { "id": "part-speaker", "parentId": null, "name": "Parlante", "slug": "parlante", "active": true, "sortOrder": 50 },
+    { "id": "part-board", "parentId": null, "name": "Placa", "slug": "placa", "active": true, "sortOrder": 60 }
+  ]
+}

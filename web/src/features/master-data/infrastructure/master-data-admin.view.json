@@ -1,0 +1,51 @@
+{
+  "brands": {
+    "kind": "brands",
+    "title": "Marcas",
+    "description": "Catálogo canónico de marcas usadas por inventario, catálogo administrativo y futura tienda online.",
+    "breadcrumbs": ["Administración", "Master Data", "Marcas"],
+    "searchLabel": "Buscar marca",
+    "searchPlaceholder": "Buscar por nombre, slug o id…",
+    "emptyMessage": "No hay marcas para mostrar.",
+    "columns": [
+      { "id": "name", "header": "Marca" },
+      { "id": "slug", "header": "Slug" },
+      { "id": "models", "header": "Modelos" },
+      { "id": "status", "header": "Estado" },
+      { "id": "sortOrder", "header": "Orden" }
+    ]
+  },
+  "deviceModels": {
+    "kind": "deviceModels",
+    "title": "Modelos de dispositivo",
+    "description": "Modelos normalizados vinculados a marcas canónicas para evitar texto libre en inventario y catálogo.",
+    "breadcrumbs": ["Administración", "Master Data", "Modelos"],
+    "searchLabel": "Buscar modelo",
+    "searchPlaceholder": "Buscar por modelo, marca, código o slug…",
+    "emptyMessage": "No hay modelos para mostrar.",
+    "columns": [
+      { "id": "name", "header": "Modelo" },
+      { "id": "brand", "header": "Marca" },
+      { "id": "code", "header": "Código" },
+      { "id": "slug", "header": "Slug" },
+      { "id": "status", "header": "Estado" },
+      { "id": "sortOrder", "header": "Orden" }
+    ]
+  },
+  "categories": {
+    "kind": "categories",
+    "title": "Categorías",
+    "description": "Jerarquía canónica de categorías para catálogo administrativo, repuestos, dispositivos usados y storefront.",
+    "breadcrumbs": ["Administración", "Master Data", "Categorías"],
+    "searchLabel": "Buscar categoría",
+    "searchPlaceholder": "Buscar por categoría, padre, slug o descripción…",
+    "emptyMessage": "No hay categorías para mostrar.",
+    "columns": [
+      { "id": "name", "header": "Categoría" },
+      { "id": "parent", "header": "Padre" },
+      { "id": "storefront", "header": "Storefront" },
+      { "id": "status", "header": "Estado" },
+      { "id": "sortOrder", "header": "Orden" }
+    ]
+  }
+}
