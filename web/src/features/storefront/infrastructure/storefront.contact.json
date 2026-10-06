@@ -1,0 +1,73 @@
+{
+  "eyebrow": "Contacto demo",
+  "title": "Hablemos antes de confirmar tu compra",
+  "description": "B10 crea el destino público de contacto del Storefront. Centraliza WhatsApp, horarios y cobertura sin conectar todavía mensajería real ni formularios de backend.",
+  "stateLabel": "Contacto visual · sin mensajería",
+  "channels": [
+    {
+      "id": "whatsapp",
+      "title": "WhatsApp",
+      "description": "Canal principal previsto para consultas de productos, compatibilidad, disponibilidad y coordinación.",
+      "actionLabel": "WhatsApp pendiente",
+      "actionHref": "/store/contact",
+      "statusLabel": "Sin número configurado"
+    },
+    {
+      "id": "email",
+      "title": "Correo",
+      "description": "Canal futuro para consultas que requieran adjuntar información o mantener seguimiento.",
+      "actionLabel": "Correo pendiente",
+      "actionHref": "/store/contact",
+      "statusLabel": "Sin buzón configurado"
+    }
+  ],
+  "service": {
+    "title": "Atención y cobertura",
+    "serviceAreaLabel": "Montevideo y zona metropolitana demo",
+    "hours": [
+      { "id": "weekdays", "label": "Lunes a viernes", "value": "09:00–18:00" },
+      { "id": "saturday", "label": "Sábado", "value": "10:00–14:00" },
+      { "id": "sunday", "label": "Domingo", "value": "Sin atención demo" }
+    ]
+  },
+  "topics": [
+    {
+      "id": "compatibility",
+      "title": "Compatibilidad",
+      "description": "Confirma modelo, variante y compatibilidad antes de comprar un repuesto."
+    },
+    {
+      "id": "stock",
+      "title": "Stock y estado",
+      "description": "Consulta disponibilidad, condición y detalles comerciales del producto."
+    },
+    {
+      "id": "shipping",
+      "title": "Envíos",
+      "description": "Revisa zonas, costos demo y opciones de retiro antes del checkout."
+    }
+  ],
+  "links": {
+    "productsLabel": "Explorar productos",
+    "productsHref": "/store/products",
+    "shippingLabel": "Ver zonas de envío",
+    "shippingHref": "/store/shipping"
+  },
+  "notices": [
+    {
+      "id": "no-messaging-api",
+      "title": "Sin API de mensajería",
+      "description": "No envía mensajes ni abre conversaciones externas en B10."
+    },
+    {
+      "id": "no-form-submit",
+      "title": "Sin formulario enviado",
+      "description": "No recopila ni persiste datos de contacto del cliente."
+    },
+    {
+      "id": "provider-driven",
+      "title": "Contenido provider-driven",
+      "description": "Canales, horarios y cobertura provienen del provider del Storefront."
+    }
+  ]
+}

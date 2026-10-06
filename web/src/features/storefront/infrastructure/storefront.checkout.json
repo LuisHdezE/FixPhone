@@ -1,0 +1,110 @@
+{
+  "eyebrow": "Checkout público demo",
+  "title": "Revisa la compra antes de continuar",
+  "description": "B16 conecta el gate de identidad con una sesión demo local. Los pagos, inventario y creación de orden continúan fuera de alcance.",
+  "stateLabel": "Checkout visual · sin transacción",
+  "authGate": {
+    "eyebrow": "Paso obligatorio",
+    "title": "Identifícate para comprar",
+    "description": "Inicia sesión o crea una cuenta demo para desbloquear este gate visual. La sesión vive solo en memoria React.",
+    "requiredLabel": "Autenticación o registro requerido",
+    "signInLabel": "Iniciar sesión",
+    "signUpLabel": "Crear cuenta",
+    "signInHref": "/store/account/sign-in",
+    "signUpHref": "/store/account/register",
+    "authenticatedEyebrow": "Cliente identificado",
+    "authenticatedTitle": "Sesión de cliente activa",
+    "authenticatedDescription": "El gate de identidad está resuelto para esta sesión demo. Aún no se confirma la compra ni se procesa un pago.",
+    "authenticatedLabel": "Identidad demo validada"
+  },
+  "orderSummary": {
+    "title": "Resumen de compra demo",
+    "lines": [
+      {
+        "id": "display",
+        "label": "Display OLED iPhone 13 · 1 ud.",
+        "value": "UYU 4.890"
+      },
+      {
+        "id": "battery",
+        "label": "Batería Samsung S21 · 1 ud.",
+        "value": "UYU 1.690"
+      },
+      {
+        "id": "shipping",
+        "label": "Envío según zona",
+        "value": "Pendiente"
+      }
+    ],
+    "totalLabel": "Total demo sin envío",
+    "totalValue": "UYU 6.580"
+  },
+  "shipping": {
+    "title": "Entrega y envío",
+    "description": "Consulta una zona demo para visualizar cómo impactará el costo de entrega.",
+    "statusLabel": "Tarifas demo disponibles",
+    "fields": [
+      {
+        "id": "department",
+        "label": "Departamento",
+        "value": "Montevideo (demo)",
+        "helper": "Dato visual, no editable."
+      },
+      {
+        "id": "zone",
+        "label": "Zona de entrega",
+        "value": "A definir",
+        "helper": "El costo dependerá de la zona."
+      },
+      {
+        "id": "delivery",
+        "label": "Modalidad",
+        "value": "Envío o retiro",
+        "helper": "Sin selección funcional en B6."
+      }
+    ],
+    "actionLabel": "Ver zonas y costos",
+    "actionHref": "/store/shipping"
+  },
+  "payment": {
+    "title": "Método de pago",
+    "description": "Los métodos aparecen para reservar el espacio visual del flujo. Ninguno procesa pagos en B6.",
+    "options": [
+      {
+        "id": "mercado-pago",
+        "title": "Mercado Pago",
+        "description": "Integración futura mediante checkout seguro.",
+        "statusLabel": "Placeholder"
+      },
+      {
+        "id": "card",
+        "title": "Tarjeta",
+        "description": "Pago con tarjeta mediante proveedor futuro.",
+        "statusLabel": "Placeholder"
+      },
+      {
+        "id": "whatsapp",
+        "title": "Coordinar por WhatsApp",
+        "description": "Canal futuro para coordinar la compra asistida.",
+        "statusLabel": "Placeholder"
+      }
+    ]
+  },
+  "notices": [
+    {
+      "id": "no-order",
+      "title": "Sin creación de orden",
+      "description": "Esta pantalla no confirma compras ni genera pedidos."
+    },
+    {
+      "id": "no-inventory",
+      "title": "Sin mutación de inventario",
+      "description": "No reserva stock ni descuenta unidades."
+    },
+    {
+      "id": "no-persistence",
+      "title": "Sin persistencia de cliente",
+      "description": "No usa localStorage, sessionStorage ni backend para guardar datos del checkout."
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "navigation": [
+    { "id": "spare-parts", "label": "Repuestos", "href": "/store/spare-parts" },
+    { "id": "used-phones", "label": "Celulares usados", "href": "/store/used-phones" },
+    { "id": "brands", "label": "Marcas", "href": "/store/brands" },
+    { "id": "displays", "label": "Displays", "href": "/store/categories/displays" },
+    { "id": "batteries", "label": "Baterías", "href": "/store/categories/batteries" },
+    { "id": "charge-connectors", "label": "Conectores", "href": "/store/categories/charge-connectors" },
+    { "id": "accessories", "label": "Accesorios", "href": "/store/categories/accessories" }
+  ],
+  "routes": [
+    {
+      "key": "spare-parts",
+      "eyebrow": "Catálogo · Repuestos",
+      "title": "Repuestos para reparación y recuperación de equipos",
+      "description": "Vitrina pública para displays, baterías, conectores y módulos. B12 completa la ruta comercial reutilizando el mismo catálogo y las mismas cards.",
+      "resultSummary": "4 repuestos demo",
+      "badgeLabel": "Ruta pública completada",
+      "productIds": ["listing-iphone-13-display", "listing-samsung-battery", "listing-charge-connector", "listing-camera-module"]
+    },
+    {
+      "key": "used-phones",
+      "eyebrow": "Catálogo · Celulares usados",
+      "title": "Equipos usados preparados para vitrina pública",
+      "description": "Unidades demo con condición, precio y stock visible. La ruta comparte componentes con el catálogo general y no crea una segunda implementación.",
+      "resultSummary": "2 equipos usados demo",
+      "badgeLabel": "Unidades individuales",
+      "productIds": ["listing-iphone-12-used", "listing-used-galaxy"]
+    },
+    {
+      "key": "brands",
+      "eyebrow": "Catálogo · Marcas",
+      "title": "Explora el catálogo por marca y familia de equipo",
+      "description": "Vista comercial de Apple, Samsung y Xiaomi construida sobre los productos del provider. La segmentación real llegará cuando exista catálogo conectado.",
+      "resultSummary": "6 productos de 3 marcas demo",
+      "badgeLabel": "Apple · Samsung · Xiaomi",
+      "productIds": ["listing-iphone-13-display", "listing-samsung-battery", "listing-iphone-12-used", "listing-charge-connector", "listing-camera-module", "listing-used-galaxy"]
+    },
+    {
+      "key": "category:displays",
+      "eyebrow": "Categoría · Displays",
+      "title": "Displays y módulos de pantalla",
+      "description": "Ruta de categoría preparada para compatibilidad por modelo, condición y disponibilidad sin filtrar todavía contra backend.",
+      "resultSummary": "1 display demo",
+      "badgeLabel": "Categoría dinámica",
+      "productIds": ["listing-iphone-13-display"]
+    },
+    {
+      "key": "category:batteries",
+      "eyebrow": "Categoría · Baterías",
+      "title": "Baterías para reemplazo",
+      "description": "Selección demo de baterías con precio de tienda, referencia del repuesto nuevo y compatibilidad visible.",
+      "resultSummary": "1 batería demo",
+      "badgeLabel": "Categoría dinámica",
+      "productIds": ["listing-samsung-battery"]
+    },
+    {
+      "key": "category:charge-connectors",
+      "eyebrow": "Categoría · Conectores",
+      "title": "Conectores y módulos de carga",
+      "description": "Categoría pública demo para repuestos de carga, preparada para filtros reales de marca y modelo en una fase posterior.",
+      "resultSummary": "1 conector demo",
+      "badgeLabel": "Categoría dinámica",
+      "productIds": ["listing-charge-connector"]
+    },
+    {
+      "key": "category:accessories",
+      "eyebrow": "Categoría · Accesorios y módulos",
+      "title": "Accesorios y módulos complementarios",
+      "description": "Espacio público para piezas complementarias. En B12 reutiliza el módulo de cámara demo como muestra del patrón de categoría.",
+      "resultSummary": "1 módulo demo",
+      "badgeLabel": "Categoría dinámica",
+      "productIds": ["listing-camera-module"]
+    }
+  ],
+  "notFound": {
+    "title": "Categoría demo no disponible",
+    "description": "La ruta existe, pero este slug todavía no tiene una variante de catálogo configurada.",
+    "actionLabel": "Volver al catálogo",
+    "actionHref": "/store/products"
+  },
+  "notice": {
+    "title": "Catálogo reutilizado, no duplicado",
+    "description": "B12 completa rutas públicas usando el provider y StorefrontProductCard. No aplica filtros de backend ni crea inventario paralelo."
+  }
+}
