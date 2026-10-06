@@ -65,10 +65,13 @@ export function StorefrontShell({ provider }: { provider: StorefrontProvider }) 
             <label className="relative block" aria-label="Buscar en la tienda">
               <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400">⌕</span>
               <input
-                className="h-8 w-full rounded-full border border-black/10 bg-white px-8 text-[11px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--storefront-primary)] focus:ring-4 focus:ring-[var(--storefront-primary-soft)]"
+                aria-describedby="storefront-global-search-help"
+                className="h-8 w-full cursor-not-allowed rounded-full border border-black/10 bg-white/70 px-8 text-[11px] font-medium text-slate-500 outline-none placeholder:text-slate-400"
+                disabled
                 placeholder={shell.searchPlaceholder}
                 type="search"
               />
+              <span id="storefront-global-search-help" className="sr-only">La búsqueda global se habilitará cuando el catálogo se conecte al inventario real.</span>
             </label>
 
             <nav className="hidden items-center justify-end gap-2 lg:flex" aria-label="Acciones de tienda">
