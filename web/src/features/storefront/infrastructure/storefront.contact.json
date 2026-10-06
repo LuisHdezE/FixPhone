@@ -1,8 +1,8 @@
 {
-  "eyebrow": "Contacto demo",
+  "eyebrow": "Contacto",
   "title": "Hablemos antes de confirmar tu compra",
-  "description": "B10 crea el destino público de contacto del Storefront. Centraliza WhatsApp, horarios y cobertura sin conectar todavía mensajería real ni formularios de backend.",
-  "stateLabel": "Contacto visual · sin mensajería",
+  "description": "Consulta canales, horarios y cobertura de atención. La mensajería externa todavía no está conectada.",
+  "stateLabel": "Canales en preparación",
   "channels": [
     {
       "id": "whatsapp",
@@ -23,11 +23,11 @@
   ],
   "service": {
     "title": "Atención y cobertura",
-    "serviceAreaLabel": "Montevideo y zona metropolitana demo",
+    "serviceAreaLabel": "Montevideo y zona metropolitana",
     "hours": [
       { "id": "weekdays", "label": "Lunes a viernes", "value": "09:00–18:00" },
       { "id": "saturday", "label": "Sábado", "value": "10:00–14:00" },
-      { "id": "sunday", "label": "Domingo", "value": "Sin atención demo" }
+      { "id": "sunday", "label": "Domingo", "value": "Sin atención" }
     ]
   },
   "topics": [
@@ -44,7 +44,7 @@
     {
       "id": "shipping",
       "title": "Envíos",
-      "description": "Revisa zonas, costos demo y opciones de retiro antes del checkout."
+      "description": "Revisa zonas, costos estimados y opciones de retiro antes del checkout."
     }
   ],
   "links": {
@@ -57,7 +57,7 @@
     {
       "id": "no-messaging-api",
       "title": "Sin API de mensajería",
-      "description": "No envía mensajes ni abre conversaciones externas en B10."
+      "description": "No envía mensajes ni abre conversaciones externas en esta versión."
     },
     {
       "id": "no-form-submit",
@@ -66,8 +66,8 @@
     },
     {
       "id": "provider-driven",
-      "title": "Contenido provider-driven",
-      "description": "Canales, horarios y cobertura provienen del provider del Storefront."
+      "title": "Contenido centralizado",
+      "description": "Canales, horarios y cobertura se administran desde una única fuente de configuración."
     }
   ]
 }
