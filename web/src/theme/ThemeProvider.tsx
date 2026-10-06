@@ -3,7 +3,7 @@ import type { PropsWithChildren } from 'react';
 import { ThemeContext, themePresets } from '@/theme/themeContext';
 import type { ThemeColorId, ThemeContextValue } from '@/theme/themeContext';
 
-const STORAGE_KEY = 'webblueprint-theme-color';
+const STORAGE_KEY = 'fixphone-theme-color';
 
 function isThemeColorId(value: string | null): value is ThemeColorId {
   return themePresets.some((preset) => preset.id === value);
@@ -11,11 +11,11 @@ function isThemeColorId(value: string | null): value is ThemeColorId {
 
 function readInitialTheme(): ThemeColorId {
   if (typeof window === 'undefined') {
-    return 'forest';
+    return 'blue';
   }
 
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  return isThemeColorId(stored) ? stored : 'forest';
+  return isThemeColorId(stored) ? stored : 'blue';
 }
 
 export function ThemeProvider({ children }: PropsWithChildren) {
