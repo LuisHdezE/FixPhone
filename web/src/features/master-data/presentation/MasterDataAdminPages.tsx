@@ -38,7 +38,7 @@ function AdminNotice({ notice }: { notice: Notice }) {
   return <div className={`rounded-md border px-3 py-2 text-xs ${notice.tone === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`} role="status">{notice.message}</div>;
 }
 
-function DemoPersistenceNote() {
+function LocalPersistenceNote() {
   return <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-4 text-slate-500">Modo local temporal. Los cambios se mantienen durante esta sesión y se reinician al recargar. El guardado permanente se habilitará al conectar el servicio de datos.</p>;
 }
 
@@ -128,7 +128,7 @@ export function MasterDataBrandsPage({ masterDataProvider, viewProvider }: Maste
 
   return <PageShell actions={<PrimaryAction onClick={newBrand}>Nueva marca</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
     <div className="grid gap-3" data-master-data-brands>
-      <DemoPersistenceNote /><AdminNotice notice={notice} />
+      <LocalPersistenceNote /><AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(brand) => brand.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={brands} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
       {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={saveBrand} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar marca' : 'Nueva marca'}>
         <TextField id="brand-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
@@ -180,7 +180,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider }:
 
   return <PageShell actions={<PrimaryAction onClick={newModel}>Nuevo modelo</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
     <div className="grid gap-3" data-master-data-device-models>
-      <DemoPersistenceNote /><AdminNotice notice={notice} />
+      <LocalPersistenceNote /><AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(model) => model.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={models} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
       {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={saveModel} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar modelo' : 'Nuevo modelo'}>
         <SelectField id="model-brand" label="Marca" onChange={(value) => setForm((current) => current ? { ...current, brandId: value } : current)} options={brands.map((brand) => ({ value: brand.id, label: brand.name }))} value={form.brandId} />
@@ -231,7 +231,7 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider }: M
 
   return <PageShell actions={<PrimaryAction onClick={newCategory}>Nueva categoría</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
     <div className="grid gap-3" data-master-data-categories>
-      <DemoPersistenceNote /><AdminNotice notice={notice} />
+      <LocalPersistenceNote /><AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(category) => category.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={categories} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
       {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={saveCategory} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar categoría' : 'Nueva categoría'}>
         <SelectField id="category-parent" label="Padre" onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={[{ value: '', label: 'Raíz' }, ...categories.filter((category) => category.id !== form.id).map((category) => ({ value: category.id, label: category.name }))]} value={form.parentId ?? ''} />
