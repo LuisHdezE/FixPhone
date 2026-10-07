@@ -39,7 +39,7 @@ function AdminNotice({ notice }: { notice: Notice }) {
 }
 
 function DemoPersistenceNote() {
-  return <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-4 text-slate-500">Modo local temporal. Los cambios se mantienen durante esta sesión y se reinician al recargar. La persistencia quedará habilitada al conectar la API.</p>;
+  return <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-4 text-slate-500">Modo local temporal. Los cambios se mantienen durante esta sesión y se reinician al recargar. El guardado permanente se habilitará al conectar el servicio de datos.</p>;
 }
 
 function ModalShell({ children, title, onClose }: { children: ReactNode; title: string; onClose: () => void }) {
@@ -115,7 +115,7 @@ export function MasterDataBrandsPage({ masterDataProvider, viewProvider }: Maste
     setForm(null); setNotice({ tone: 'success', message: form.id ? 'Marca actualizada localmente.' : 'Marca creada localmente.' });
   }
   function requestToggleBrand(brand: MasterDataBrandDto) { setConfirmAction({ title: brand.active ? 'Desactivar marca' : 'Activar marca', message: `${brand.active ? 'Desactivar' : 'Activar'} ${brand.name} solo afectará esta sesión local.`, confirmLabel: brand.active ? 'Desactivar' : 'Activar', tone: 'warning', onConfirm: () => { setBrands((current) => current.map((item) => item.id === brand.id ? { ...item, active: !item.active } : item)); setConfirmAction(null); setNotice({ tone: 'warning', message: brand.active ? 'Marca desactivada localmente.' : 'Marca activada localmente.' }); } }); }
-  function requestDeleteBrand(brand: MasterDataBrandDto) { setConfirmAction({ title: 'Eliminar marca', message: `Eliminar ${brand.name} de esta sesión no afectará datos reales.`, confirmLabel: 'Eliminar', tone: 'danger', onConfirm: () => { setBrands((current) => current.filter((item) => item.id !== brand.id)); setConfirmAction(null); setNotice({ tone: 'warning', message: 'Marca eliminada de la demo.' }); } }); }
+  function requestDeleteBrand(brand: MasterDataBrandDto) { setConfirmAction({ title: 'Eliminar marca', message: `Eliminar ${brand.name} de esta sesión no afectará datos reales.`, confirmLabel: 'Eliminar', tone: 'danger', onConfirm: () => { setBrands((current) => current.filter((item) => item.id !== brand.id)); setConfirmAction(null); setNotice({ tone: 'warning', message: 'Marca eliminada localmente.' }); } }); }
 
   const columns: readonly DataTableColumn<MasterDataBrandDto>[] = [
     { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'Marca', cell: (brand) => <div><strong className="text-slate-900">{brand.name}</strong><div className="text-xs text-slate-400">{brand.id}</div></div>, sortable: true, sortValue: (brand) => brand.name, searchValue: (brand) => textSearch([brand.name, brand.slug, brand.id]) },
@@ -166,7 +166,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider }:
     setForm(null); setNotice({ tone: 'success', message: form.id ? 'Modelo actualizado localmente.' : 'Modelo creado localmente.' });
   }
   function requestToggleModel(model: MasterDataDeviceModelDto) { setConfirmAction({ title: model.active ? 'Desactivar modelo' : 'Activar modelo', message: `${model.active ? 'Desactivar' : 'Activar'} ${model.name} solo afectará esta sesión local.`, confirmLabel: model.active ? 'Desactivar' : 'Activar', tone: 'warning', onConfirm: () => { setModels((current) => current.map((item) => item.id === model.id ? { ...item, active: !item.active } : item)); setConfirmAction(null); setNotice({ tone: 'warning', message: model.active ? 'Modelo desactivado localmente.' : 'Modelo activado localmente.' }); } }); }
-  function requestDeleteModel(model: MasterDataDeviceModelDto) { setConfirmAction({ title: 'Eliminar modelo', message: `Eliminar ${model.name} de esta sesión no afectará datos reales.`, confirmLabel: 'Eliminar', tone: 'danger', onConfirm: () => { setModels((current) => current.filter((item) => item.id !== model.id)); setConfirmAction(null); setNotice({ tone: 'warning', message: 'Modelo eliminado de la demo.' }); } }); }
+  function requestDeleteModel(model: MasterDataDeviceModelDto) { setConfirmAction({ title: 'Eliminar modelo', message: `Eliminar ${model.name} de esta sesión no afectará datos reales.`, confirmLabel: 'Eliminar', tone: 'danger', onConfirm: () => { setModels((current) => current.filter((item) => item.id !== model.id)); setConfirmAction(null); setNotice({ tone: 'warning', message: 'Modelo eliminado localmente.' }); } }); }
 
   const columns: readonly DataTableColumn<MasterDataDeviceModelDto>[] = [
     { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'Modelo', cell: (model) => <div><strong className="text-slate-900">{model.name}</strong><div className="text-xs text-slate-400">{model.id}</div></div>, sortable: true, sortValue: (model) => model.name, searchValue: (model) => textSearch([model.name, model.slug, model.id]) },
@@ -212,13 +212,13 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider }: M
     if (!name || !slug) { setError('Nombre y slug son obligatorios.'); return; }
     if (form.id && parentId === form.id) { setError('Una categoría no puede ser padre de sí misma.'); return; }
     if (categories.some((category) => category.slug === slug && category.id !== form.id)) { setError('Ya existe una categoría con ese slug.'); return; }
-    const id = form.id ?? nextId('cat-demo', categories.map((category) => category.id));
+    const id = form.id ?? nextId('cat-local', categories.map((category) => category.id));
     const saved: MasterDataCategoryDto = { id, parentId, name, slug, description: form.description.trim(), imageOrIcon: form.imageOrIcon?.trim() || null, active: form.active, showInStorefront: form.showInStorefront, sortOrder: form.sortOrder };
     setCategories((current) => form.id ? current.map((category) => category.id === id ? saved : category) : [...current, saved]);
     setForm(null); setNotice({ tone: 'success', message: form.id ? 'Categoría actualizada localmente.' : 'Categoría creada localmente.' });
   }
   function requestToggleCategory(category: MasterDataCategoryDto) { setConfirmAction({ title: category.active ? 'Desactivar categoría' : 'Activar categoría', message: `${category.active ? 'Desactivar' : 'Activar'} ${category.name} solo afectará esta sesión local.`, confirmLabel: category.active ? 'Desactivar' : 'Activar', tone: 'warning', onConfirm: () => { setCategories((current) => current.map((item) => item.id === category.id ? { ...item, active: !item.active } : item)); setConfirmAction(null); setNotice({ tone: 'warning', message: category.active ? 'Categoría desactivada localmente.' : 'Categoría activada localmente.' }); } }); }
-  function requestDeleteCategory(category: MasterDataCategoryDto) { setConfirmAction({ title: 'Eliminar categoría', message: `Eliminar ${category.name} dejará sus hijas como raíz dentro de esta sesión local.`, confirmLabel: 'Eliminar', tone: 'danger', onConfirm: () => { setCategories((current) => current.filter((item) => item.id !== category.id).map((item) => item.parentId === category.id ? { ...item, parentId: null } : item)); setConfirmAction(null); setNotice({ tone: 'warning', message: 'Categoría eliminada de la demo. Sus hijas quedaron como raíz en memoria.' }); } }); }
+  function requestDeleteCategory(category: MasterDataCategoryDto) { setConfirmAction({ title: 'Eliminar categoría', message: `Eliminar ${category.name} dejará sus hijas como raíz dentro de esta sesión local.`, confirmLabel: 'Eliminar', tone: 'danger', onConfirm: () => { setCategories((current) => current.filter((item) => item.id !== category.id).map((item) => item.parentId === category.id ? { ...item, parentId: null } : item)); setConfirmAction(null); setNotice({ tone: 'warning', message: 'Categoría eliminada localmente. Sus hijas quedaron como raíz durante esta sesión.' }); } }); }
 
   const columns: readonly DataTableColumn<MasterDataCategoryDto>[] = [
     { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'Categoría', cell: (category) => <div><strong className="text-slate-900">{category.name}</strong><div className="max-w-md text-xs text-slate-400">{category.description}</div></div>, sortable: true, sortValue: (category) => category.name, searchValue: (category) => textSearch([category.name, category.slug, category.description, category.id]) },
