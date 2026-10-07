@@ -151,7 +151,7 @@
   ],
   "recommendedDestination": "Refurbish",
   "evaluatorNotes": "Equipo apto para reacondicionamiento inicial. Confirmar cámaras antes de asignar presupuesto final.",
-  "demoNotice": "La decisión se valida solo durante esta visita. Todavía no cambia el destino permanente del equipo.",
+  "localNotice": "La decisión se valida solo durante esta visita. Todavía no cambia el destino permanente del equipo.",
   "submitLabel": "Validar decisión",
   "successTitle": "Decisión validada temporalmente",
   "successMessage": "La decisión queda validada para revisar el flujo. El cambio definitivo se habilitará cuando conectemos el servicio de inventario."
