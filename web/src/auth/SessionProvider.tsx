@@ -14,7 +14,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         const normalizedName = displayName.trim();
 
         if (!normalizedName) {
-          throw new Error('A display name is required to start the demo session.');
+          throw new Error('A display name is required to start the local session.');
         }
 
         setUser({ id: 'mock-user', displayName: normalizedName });
