@@ -106,7 +106,7 @@ export function InventoryDeviceEvaluationPage({ provider }: { provider: Inventor
                   <p className="mt-2 text-sm leading-6 text-slate-600">{selectedDecision.description}</p>
                 </div> : null}
                 <TextAreaField id="device-evaluation-notes" label={view.fields.evaluatorNotes} onChange={(value) => { setNotes(value); setSubmitted(false); }} rows={5} value={notes} />
-                <p className="text-xs leading-5 text-slate-500">{view.demoNotice}</p>
+                <p className="text-xs leading-5 text-slate-500">{view.localNotice}</p>
                 <button className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700" type="submit">{view.submitLabel}</button>
               </div>
             </SurfaceCard>

@@ -152,7 +152,7 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
           <p className="mt-2 text-sm leading-6 text-slate-600">{view.introDescription}</p>
         </SurfaceCard>
         <SurfaceCard>
-          <p className="text-sm leading-6 text-slate-500">{view.demoNotice}</p>
+          <p className="text-sm leading-6 text-slate-500">{view.localNotice}</p>
         </SurfaceCard>
         {submitted ? <SurfaceCard>
           <div role="status" data-device-intake-success>

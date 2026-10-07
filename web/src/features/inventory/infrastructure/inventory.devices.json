@@ -108,7 +108,7 @@
     },
     "submitLabel": "Validar ingreso",
     "cancelLabel": "Volver a dispositivos",
-    "demoNotice": "Esta captura valida el flujo de ingreso de forma temporal. El dispositivo no se agrega todavía al inventario permanente.",
+    "localNotice": "Esta captura valida el flujo de ingreso de forma temporal. El dispositivo no se agrega todavía al inventario permanente.",
     "successTitle": "Ingreso validado temporalmente",
     "successMessage": "La captura es válida para continuar con la evaluación. El guardado definitivo se habilitará cuando conectemos el servicio de inventario.",
     "defaults": {

@@ -107,7 +107,7 @@ export interface InventoryDeviceIntakeViewDto {
   };
   submitLabel: string;
   cancelLabel: string;
-  demoNotice: string;
+  localNotice: string;
   successTitle: string;
   successMessage: string;
 }
@@ -171,7 +171,7 @@ export interface InventoryDeviceEvaluationViewDto {
   decisions: readonly DeviceEvaluationDecisionDto[];
   recommendedDestination: DeviceDestination;
   evaluatorNotes: string;
-  demoNotice: string;
+  localNotice: string;
   submitLabel: string;
   successTitle: string;
   successMessage: string;
