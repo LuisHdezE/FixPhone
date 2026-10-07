@@ -56,7 +56,7 @@ export function StorefrontFavoritesPage({ provider }: { provider: StorefrontProv
                   onClick={restoreInitialFavorites}
                   type="button"
                 >
-                  Restaurar favoritos demo
+                  Restaurar favoritos de referencia
                 </button>
                 <Link
                   className="inline-flex w-fit rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-black text-slate-700"

@@ -78,7 +78,7 @@ export class JsonStorefrontProvider implements StorefrontProvider {
       || !view.warranty?.policies.length
       || !view.warranty.eligibility.rows.length
     ) {
-      throw new Error('Storefront demo data is incomplete.');
+      throw new Error('Storefront reference data is incomplete.');
     }
     return view;
   }

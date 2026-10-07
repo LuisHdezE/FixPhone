@@ -14,7 +14,7 @@
       "eyebrow": "Catálogo · Repuestos",
       "title": "Repuestos para reparación y recuperación de equipos",
       "description": "Vitrina pública para displays, baterías, conectores y módulos. B12 completa la ruta comercial reutilizando el mismo catálogo y las mismas cards.",
-      "resultSummary": "4 repuestos demo",
+      "resultSummary": "4 repuestos de referencia",
       "badgeLabel": "Ruta pública completada",
       "productIds": ["listing-iphone-13-display", "listing-samsung-battery", "listing-charge-connector", "listing-camera-module"]
     },
@@ -22,8 +22,8 @@
       "key": "used-phones",
       "eyebrow": "Catálogo · Celulares usados",
       "title": "Equipos usados preparados para vitrina pública",
-      "description": "Unidades demo con condición, precio y stock visible. La ruta comparte componentes con el catálogo general y no crea una segunda implementación.",
-      "resultSummary": "2 equipos usados demo",
+      "description": "Unidades de referencia con condición, precio y stock visible. La ruta comparte componentes con el catálogo general y no crea una segunda implementación.",
+      "resultSummary": "2 equipos usados de referencia",
       "badgeLabel": "Unidades individuales",
       "productIds": ["listing-iphone-12-used", "listing-used-galaxy"]
     },
@@ -32,7 +32,7 @@
       "eyebrow": "Catálogo · Marcas",
       "title": "Explora el catálogo por marca y familia de equipo",
       "description": "Vista comercial de Apple, Samsung y Xiaomi construida sobre los productos del provider. La segmentación real llegará cuando exista catálogo conectado.",
-      "resultSummary": "6 productos de 3 marcas demo",
+      "resultSummary": "6 productos de 3 marcas",
       "badgeLabel": "Apple · Samsung · Xiaomi",
       "productIds": ["listing-iphone-13-display", "listing-samsung-battery", "listing-iphone-12-used", "listing-charge-connector", "listing-camera-module", "listing-used-galaxy"]
     },
@@ -41,7 +41,7 @@
       "eyebrow": "Categoría · Displays",
       "title": "Displays y módulos de pantalla",
       "description": "Ruta de categoría preparada para compatibilidad por modelo, condición y disponibilidad sin filtrar todavía contra backend.",
-      "resultSummary": "1 display demo",
+      "resultSummary": "1 display de referencia",
       "badgeLabel": "Categoría dinámica",
       "productIds": ["listing-iphone-13-display"]
     },
@@ -49,8 +49,8 @@
       "key": "category:batteries",
       "eyebrow": "Categoría · Baterías",
       "title": "Baterías para reemplazo",
-      "description": "Selección demo de baterías con precio de tienda, referencia del repuesto nuevo y compatibilidad visible.",
-      "resultSummary": "1 batería demo",
+      "description": "Selección de baterías con precio de tienda, referencia del repuesto nuevo y compatibilidad visible.",
+      "resultSummary": "1 batería de referencia",
       "badgeLabel": "Categoría dinámica",
       "productIds": ["listing-samsung-battery"]
     },
@@ -58,8 +58,8 @@
       "key": "category:charge-connectors",
       "eyebrow": "Categoría · Conectores",
       "title": "Conectores y módulos de carga",
-      "description": "Categoría pública demo para repuestos de carga, preparada para filtros reales de marca y modelo en una fase posterior.",
-      "resultSummary": "1 conector demo",
+      "description": "Categoría pública para repuestos de carga, preparada para filtros reales de marca y modelo en una fase posterior.",
+      "resultSummary": "1 conector de referencia",
       "badgeLabel": "Categoría dinámica",
       "productIds": ["listing-charge-connector"]
     },
@@ -67,14 +67,14 @@
       "key": "category:accessories",
       "eyebrow": "Categoría · Accesorios y módulos",
       "title": "Accesorios y módulos complementarios",
-      "description": "Espacio público para piezas complementarias. En B12 reutiliza el módulo de cámara demo como muestra del patrón de categoría.",
-      "resultSummary": "1 módulo demo",
+      "description": "Espacio público para piezas complementarias. En B12 reutiliza el módulo de cámara como referencia del patrón de categoría.",
+      "resultSummary": "1 módulo de referencia",
       "badgeLabel": "Categoría dinámica",
       "productIds": ["listing-camera-module"]
     }
   ],
   "notFound": {
-    "title": "Categoría demo no disponible",
+    "title": "Categoría no disponible",
     "description": "La ruta existe, pero este slug todavía no tiene una variante de catálogo configurada.",
     "actionLabel": "Volver al catálogo",
     "actionHref": "/store/products"

@@ -32,7 +32,7 @@ export function createStorefrontCustomerSession(
   const errors: Record<string, string> = {};
 
   if (!isValidEmail(email)) errors.email = 'Ingresa un correo válido.';
-  if (password.length < 4) errors.password = 'Usa al menos 4 caracteres en esta demo.';
+  if (password.length < 4) errors.password = 'Usa al menos 4 caracteres.';
   if (mode === 'register' && name.length < 2) errors.name = 'Ingresa tu nombre.';
   if (mode === 'register' && phone && phone.length < 6) errors.phone = 'Revisa el teléfono ingresado.';
 

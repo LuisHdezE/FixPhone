@@ -36,12 +36,12 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">{product.heroLabel}</p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-slate-950">{product.badgeLabel}</p>
-                <p className="mt-2 max-w-xs text-[11px] leading-4 text-slate-600">Imagen demo preparada para galería comercial futura</p>
+                <p className="mt-2 max-w-xs text-[11px] leading-4 text-slate-600">Imagen preparada para galería comercial futura</p>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3" aria-label="Galería demo del producto">
+          <div className="grid gap-2 sm:grid-cols-3" aria-label="Galería del producto">
             {product.gallery.map((item) => (
               <div key={item.id} className={`rounded-xl border border-black/10 p-3 text-xs font-black shadow-sm ${galleryClassName(item.tone)}`}>
                 {item.label}
@@ -100,7 +100,7 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
         </article>
 
         <aside className="rounded-xl border border-black/10 bg-white p-3 shadow-sm">
-          <h2 className="text-base font-black text-slate-950">Ficha técnica demo</h2>
+          <h2 className="text-base font-black text-slate-950">Ficha técnica</h2>
           <dl className="mt-3 grid gap-2">
             {product.specs.map((spec) => (
               <div key={spec.label} className="flex items-start justify-between gap-3 rounded-xl bg-[#f7f2ea] p-2.5">
