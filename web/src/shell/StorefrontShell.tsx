@@ -123,7 +123,7 @@ export function StorefrontShell({ provider }: { provider: StorefrontProvider }) 
                 <p className="text-[11px] text-white/80">{shell.support.serviceArea}</p>
               </div>
             </div>
-            <Link className="mt-3 inline-flex rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[var(--storefront-primary-strong)] transition hover:bg-[var(--storefront-primary-soft)]" to={shell.support.whatsappHref}>
+            <Link className="mt-3 inline-flex rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[var(--storefront-primary-strong)] transition hover:bg-[var(--storefront-primary-soft)]" to={shell.support.whatsappHref} target="_blank" rel="noopener noreferrer">
               {shell.support.whatsappLabel}
             </Link>
           </div>
@@ -150,6 +150,8 @@ export function StorefrontShell({ provider }: { provider: StorefrontProvider }) 
         className="fixed bottom-5 right-5 z-[60] grid size-12 place-items-center rounded-full shadow-xl ring-4 ring-white/80 transition hover:scale-105"
         data-storefront-floating-action
         style={{ backgroundColor: shell.floatingAction.backgroundColor, color: shell.floatingAction.foregroundColor }}
+        rel="noopener noreferrer"
+        target="_blank"
         title={shell.floatingAction.label}
         to={shell.floatingAction.href}
       >

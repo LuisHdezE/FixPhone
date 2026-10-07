@@ -117,7 +117,7 @@
     ],
     "support": {
       "whatsappLabel": "Consultar por WhatsApp",
-      "whatsappHref": "/store/contact",
+      "whatsappHref": "https://wa.me/59800000000",
       "serviceArea": "Montevideo y zona metropolitana"
     },
     "theme": {
@@ -130,7 +130,7 @@
       "id": "whatsapp",
       "label": "WhatsApp",
       "ariaLabel": "Consultar por WhatsApp",
-      "href": "/store/contact",
+      "href": "https://wa.me/59800000000",
       "icon": "whatsapp",
       "backgroundColor": "#25D366",
       "foregroundColor": "#ffffff"
@@ -149,7 +149,7 @@
       },
       {
         "label": "Consultar por WhatsApp",
-        "href": "/store/contact",
+        "href": "https://wa.me/59800000000",
         "variant": "secondary"
       }
     ],

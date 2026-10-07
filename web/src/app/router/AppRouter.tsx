@@ -1,4 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router';
+import { ApiStorefrontProvider } from '@/features/storefront/infrastructure/ApiStorefrontProvider';
 import { JsonPasswordResetContentProvider } from '@/features/authentication/password-reset/infrastructure/JsonPasswordResetContentProvider';
 import { MockPasswordResetGateway } from '@/features/authentication/password-reset/infrastructure/MockPasswordResetGateway';
 import { PasswordResetPage } from '@/features/authentication/password-reset/presentation/PasswordResetPage';
@@ -11,7 +13,7 @@ import { TwoFactorPage } from '@/features/authentication/two-factor/presentation
 import { JsonInventoryDemoProvider } from '@/features/inventory/infrastructure/JsonInventoryDemoProvider';
 import { InventoryDashboardPage } from '@/features/inventory/presentation/InventoryDashboardPage';
 import { InventoryDeviceEvaluationPage } from '@/features/inventory/presentation/InventoryDeviceEvaluationPage';
-import { InventoryDeviceIntakePage } from '@/features/inventory/presentation/InventoryDeviceIntakePage';
+import { InventoryProductCreatePage } from '@/features/inventory/presentation/InventoryProductCreatePage';
 import { InventoryDevicesPage } from '@/features/inventory/presentation/InventoryDevicesPage';
 import { JsonMasterDataAdminViewProvider } from '@/features/master-data/infrastructure/JsonMasterDataAdminViewProvider';
 import { JsonMasterDataProvider } from '@/features/master-data/infrastructure/JsonMasterDataProvider';
@@ -47,9 +49,35 @@ const twoFactorGateway = new MockTwoFactorGateway();
 const inventoryDemoProvider = new JsonInventoryDemoProvider();
 const masterDataProvider = new JsonMasterDataProvider();
 const masterDataAdminViewProvider = new JsonMasterDataAdminViewProvider();
-const storefrontProvider = new JsonStorefrontProvider();
+const defaultStorefrontProvider = new JsonStorefrontProvider();
 
 export function AppRouter() {
+  const [storefrontProvider, setStorefrontProvider] = useState<any>(defaultStorefrontProvider);
+  const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    fetch('/api/v1/store/products')
+      .then(res => {
+        if (!res.ok) throw new Error('No se pudo conectar con el catálogo en vivo.');
+        return res.json();
+      })
+      .then(products => setStorefrontProvider(new ApiStorefrontProvider(products)))
+      .catch(e => setError(e.message));
+  }, []);
+
+  if (error && location.pathname.startsWith('/store')) {
+    return (
+      <div className="mx-auto grid max-w-[1440px] gap-3 px-4 py-10 sm:px-5 lg:px-6">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-900 shadow-sm max-w-md mx-auto">
+          <h2 className="text-lg font-black mb-2">Error de Catálogo</h2>
+          <p className="text-sm">{error}</p>
+          <p className="text-xs mt-4 opacity-70">El backend de inventario no está respondiendo o la base de datos está inaccesible.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Routes>
       <Route path="authentication/sign-in" element={<SignInPage contentProvider={signInContentProvider} gateway={signInGateway} />} />
@@ -80,7 +108,7 @@ export function AppRouter() {
         <Route path="dashboard" element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="apps/inventory/dashboard" element={<InventoryDashboardPage provider={inventoryDemoProvider} />} />
         <Route path="apps/inventory/devices" element={<InventoryDevicesPage provider={inventoryDemoProvider} />} />
-        <Route path="apps/inventory/devices/new" element={<InventoryDeviceIntakePage masterDataProvider={masterDataProvider} provider={inventoryDemoProvider} />} />
+        <Route path="apps/inventory/devices/new" element={<InventoryProductCreatePage />} />
         <Route path="apps/inventory/devices/evaluation" element={<InventoryDeviceEvaluationPage provider={inventoryDemoProvider} />} />
         <Route path="applications/management/inventory" element={<InventoryView />} />
         <Route path="applications/management/customers" element={<CustomerDirectoryView />} />

@@ -3,10 +3,13 @@ use App\Presentation\Http\Controllers\AuthLoginController;
 use App\Presentation\Http\Controllers\AuthLogoutController;
 use App\Presentation\Http\Controllers\AuthMeController;
 use App\Presentation\Http\Controllers\IamController;
+use App\Presentation\Http\Controllers\InventoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
  Route::post('/auth/login',AuthLoginController::class)->name('api.v1.auth.login');
+ Route::get('/store/products',[InventoryController::class, 'showroomList'])->name('api.v1.store.products.index');
+ Route::post('/admin/inventory',[InventoryController::class, 'create'])->name('api.v1.admin.inventory.store');
 
  Route::middleware('auth:sanctum')->group(function (): void {
   Route::post('/auth/logout',AuthLogoutController::class)->name('api.v1.auth.logout');
