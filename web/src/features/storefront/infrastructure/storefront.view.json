@@ -580,13 +580,13 @@
       {
         "id": "listing-camera-module",
         "title": "Módulo cámara iPhone 11",
-        "subtitle": "Pieza demo extraída y testeada",
+        "subtitle": "Pieza extraída y testeada",
         "priceLabel": "UYU 2.250",
         "compareLabel": "Costo repuesto nuevo: UYU 1.720",
         "badgeLabel": "Cámara",
         "href": "/store/products/iphone-11-camera-module",
         "compatibilityLabel": "Compatible: iPhone 11",
-        "stockLabel": "Stock demo: 2",
+        "stockLabel": "Stock de referencia: 2",
         "image": {
           "src": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
           "alt": "Dispositivo tecnológico como referencia visual de módulo",
@@ -607,7 +607,7 @@
       {
         "id": "listing-used-galaxy",
         "title": "Samsung S20 usado",
-        "subtitle": "Equipo demo para venta asistida",
+        "subtitle": "Equipo para venta asistida",
         "priceLabel": "USD 195",
         "badgeLabel": "Usado B",
         "href": "/store/products/samsung-s20-used-b",
@@ -632,7 +632,7 @@
       }
     ],
     "emptyState": {
-      "title": "Sin resultados demo",
+      "title": "Sin resultados",
       "description": "No encontramos coincidencias para la búsqueda y filtros actuales. Limpia los criterios o prueba una combinación diferente."
     },
     "listingNotice": {
@@ -641,7 +641,7 @@
     }
   },
   "productDetail": {
-    "eyebrow": "Detalle público demo",
+    "eyebrow": "Detalle público",
     "backLabel": "Volver al listado",
     "backHref": "/store/products",
     "actionNotice": {
@@ -658,8 +658,8 @@
         "compareLabel": "Costo repuesto nuevo: UYU 3.950",
         "stockLabel": "Stock de muestra: 3",
         "compatibilityLabel": "Compatible: iPhone 13",
-        "conditionLabel": "Condición: nuevo demo",
-        "warrantyLabel": "Garantía demo configurable",
+        "conditionLabel": "Condición: nuevo",
+        "warrantyLabel": "Garantía configurable",
         "heroLabel": "Repuesto crítico",
         "description": "Ficha pública preparada para mostrar precio de tienda, costo de repuesto nuevo, compatibilidad y stock sin exponer costos internos ni datos del dispositivo donante.",
         "highlights": [
@@ -678,11 +678,11 @@
           },
           {
             "label": "Stock",
-            "value": "3 unidades demo"
+            "value": "3 unidades de referencia"
           },
           {
             "label": "Estado",
-            "value": "Nuevo demo"
+            "value": "Nuevo"
           }
         ],
         "gallery": [
@@ -698,7 +698,7 @@
           },
           {
             "id": "package",
-            "label": "Empaque demo",
+            "label": "Empaque de referencia",
             "tone": "light"
           }
         ],
@@ -711,7 +711,7 @@
           {
             "id": "no-inventory-mutation",
             "title": "Sin movimiento de inventario",
-            "description": "El stock mostrado es demo y no se descuenta."
+            "description": "El stock mostrado es de referencia y no se descuenta."
           }
         ],
         "relatedProductSlugs": [
@@ -728,8 +728,8 @@
         "compareLabel": "Costo repuesto nuevo: UYU 1.150",
         "stockLabel": "Stock de muestra: 5",
         "compatibilityLabel": "Compatible: Galaxy S21",
-        "conditionLabel": "Condición: nuevo demo",
-        "warrantyLabel": "Garantía demo configurable",
+        "conditionLabel": "Condición: nuevo",
+        "warrantyLabel": "Garantía configurable",
         "heroLabel": "Energía y autonomía",
         "description": "Detalle público de repuesto preparado para comunicar compatibilidad, precio y disponibilidad sin habilitar compra real.",
         "highlights": [
@@ -748,11 +748,11 @@
           },
           {
             "label": "Stock",
-            "value": "5 unidades demo"
+            "value": "5 unidades de referencia"
           },
           {
             "label": "Estado",
-            "value": "Nuevo demo"
+            "value": "Nuevo"
           }
         ],
         "gallery": [
@@ -763,12 +763,12 @@
           },
           {
             "id": "label",
-            "label": "Etiqueta demo",
+            "label": "Etiqueta de referencia",
             "tone": "warm"
           },
           {
             "id": "package",
-            "label": "Empaque demo",
+            "label": "Empaque de referencia",
             "tone": "light"
           }
         ],
@@ -792,8 +792,8 @@
         "priceLabel": "USD 285",
         "stockLabel": "Unidad única de muestra",
         "compatibilityLabel": "Color: Negro · Batería: 87%",
-        "conditionLabel": "Condición: usado A demo",
-        "warrantyLabel": "Garantía demo configurable",
+        "conditionLabel": "Condición: usado A",
+        "warrantyLabel": "Garantía configurable",
         "heroLabel": "Equipo individual",
         "description": "Ficha de celular usado preparada para mostrar atributos comerciales sin exponer costo de adquisición ni trazabilidad interna.",
         "highlights": [
@@ -816,7 +816,7 @@
           },
           {
             "label": "Batería",
-            "value": "87% demo"
+            "value": "87% de referencia"
           }
         ],
         "gallery": [
@@ -850,8 +850,8 @@
       }
     ],
     "notFound": {
-      "title": "Producto demo no encontrado",
-      "description": "El slug solicitado no existe en el catálogo demo de Storefront.",
+      "title": "Producto no encontrado",
+      "description": "El slug solicitado no existe en el catálogo público de Storefront.",
       "actionLabel": "Volver a productos",
       "actionHref": "/store/products"
     }

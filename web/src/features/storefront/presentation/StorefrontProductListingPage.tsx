@@ -134,7 +134,7 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
           </div>
 
           {discovery.resultCount > 0 ? (
-            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-label="Listado de productos demo" data-storefront-discovery-results>
+            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-label="Listado de productos" data-storefront-discovery-results>
               {discovery.products.map((product) => (
                 <StorefrontProductCard key={product.id} context="listing" product={product} />
               ))}
