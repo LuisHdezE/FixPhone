@@ -45,7 +45,7 @@ export interface TwoFactorViewDto {
     code: TwoFactorFieldDto;
     submitLabel: string;
     submittingLabel: string;
-    demoNotice: string;
+    localNotice: string;
     codeHint: string;
     codeLength: number;
     backToSignIn: {

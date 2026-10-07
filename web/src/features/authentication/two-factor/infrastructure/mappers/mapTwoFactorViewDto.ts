@@ -110,7 +110,7 @@ export function mapTwoFactorViewDto(value: unknown): TwoFactorViewDto {
       code: mapField(form.code, 'form.code'),
       submitLabel: asString(form.submitLabel, 'form.submitLabel'),
       submittingLabel: asString(form.submittingLabel, 'form.submittingLabel'),
-      demoNotice: asString(form.demoNotice, 'form.demoNotice'),
+      localNotice: asString(form.localNotice, 'form.localNotice'),
       codeHint: asString(form.codeHint, 'form.codeHint'),
       codeLength: asCodeLength(form.codeLength),
       backToSignIn: {
