@@ -62,7 +62,7 @@ export const templateNavigation: readonly TemplateNavigationSection[] = [
       { label: 'Acceso interno', to: '/authentication/sign-in', icon: 'lock', status: 'implemented' },
       { label: 'Recuperar contraseña', to: '/authentication/password-reset', icon: 'lock', status: 'implemented' },
       { label: 'Verificación 2FA', to: '/authentication/two-factor', icon: 'lock', status: 'implemented' },
-      { label: 'Usuarios y roles', to: '/fixphone/admin/users', icon: 'user', ...planned('UI pendiente; API IAM F7C disponible en FixPhone') },
+      { label: 'Usuarios y roles', to: '/fixphone/admin/users', icon: 'user', ...planned('UI pendiente; servicio de identidad F7C disponible en FixPhone') },
       { label: 'Catálogo comercial admin', to: '/fixphone/catalog/products', icon: 'apps', ...planned() },
       { label: 'Lotes de adquisición', to: '/fixphone/acquisition-lots', icon: 'table', ...planned() },
       { label: 'Consignaciones', to: '/fixphone/consignments', icon: 'document', ...planned() },

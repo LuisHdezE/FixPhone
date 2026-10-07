@@ -83,7 +83,7 @@ export function StorefrontShippingPage({ provider }: { provider: StorefrontProvi
             <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--storefront-primary-strong)]">Estado del envío</p>
             <p className="mt-3 text-sm font-black text-slate-950">Tarifa visible en modo de muestra</p>
             <p className="mt-2 text-[11px] leading-4 text-slate-600">
-              Las zonas muestran importes de referencia. El método de entrega quedará asociado al pedido cuando el checkout se conecte a la API.
+              Las zonas muestran importes de referencia. El método de entrega quedará asociado al pedido cuando el checkout quede conectado al servicio de pedidos.
             </p>
             <Link className="mt-4 flex w-full items-center justify-center rounded-full bg-[var(--storefront-primary)] px-4 py-2 text-[11px] font-black text-[var(--storefront-on-primary)]" to={shipping.returnToCheckoutHref}>
               {shipping.returnToCheckoutLabel}
