@@ -38,7 +38,7 @@
     },
     "codeLength": 6,
     "codeHint": "Introduce los 6 dígitos, incluidos los ceros iniciales.",
-    "demoNotice": "Validación local activa: usa cualquier código de 6 dígitos. La verificación real se habilitará al conectar el servicio de autenticación.",
+    "localNotice": "Validación local activa: usa cualquier código de 6 dígitos. La verificación real se habilitará al conectar el servicio de autenticación.",
     "submitLabel": "Verificar código",
     "submittingLabel": "Verificando...",
     "backToSignIn": {

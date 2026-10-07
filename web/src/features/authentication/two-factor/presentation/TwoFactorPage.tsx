@@ -176,8 +176,8 @@ export function TwoFactorPage({ contentProvider, gateway }: TwoFactorPageProps) 
                 ) : null}
               </div>
 
-              <p id="two-factor-demo-notice" className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs leading-4 text-slate-600">
-                {view.form.demoNotice}
+              <p id="two-factor-local-notice" className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs leading-4 text-slate-600">
+                {view.form.localNotice}
               </p>
 
               {submissionState === 'success' ? (
