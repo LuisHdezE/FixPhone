@@ -38,7 +38,7 @@
     },
     "codeLength": 6,
     "codeHint": "Introduce los 6 dígitos, incluidos los ceros iniciales.",
-    "demoNotice": "Modo local temporal: usa cualquier código de 6 dígitos. La verificación real se habilitará al conectar la autenticación con la API.",
+    "demoNotice": "Modo local temporal: usa cualquier código de 6 dígitos. La verificación real se habilitará al conectar el servicio de autenticación.",
     "submitLabel": "Verificar código",
     "submittingLabel": "Verificando...",
     "backToSignIn": {
@@ -52,7 +52,7 @@
     },
     "feedback": {
       "successTitle": "Código validado",
-      "successMessage": "El código cumple la validación local. La sesión real se habilitará al conectar la API.",
+      "successMessage": "El código cumple la validación local. La sesión real se habilitará al conectar el servicio de autenticación.",
       "invalidCode": "El código no es válido. Compruébalo e inténtalo de nuevo.",
       "expiredCode": "El código ha caducado. Usa el código actual de tu aplicación.",
       "unavailable": "No se pudo verificar el código. Inténtalo nuevamente."
