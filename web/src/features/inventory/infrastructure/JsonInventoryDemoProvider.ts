@@ -9,7 +9,7 @@ export class JsonInventoryDemoProvider implements InventoryDemoProvider {
   getDashboard(): InventoryDashboardDto {
     const dashboard = rawDashboard as InventoryDashboardDto;
     if (!dashboard.title || !dashboard.breadcrumbs.length || !dashboard.metrics.length || !dashboard.queue.length || !dashboard.analytics?.trend.series.length || !dashboard.analytics.distribution.segments.length || !dashboard.analytics.funnel.stages.length) {
-      throw new Error('Inventory dashboard demo data is incomplete.');
+      throw new Error('Inventory dashboard reference data is incomplete.');
     }
     return dashboard;
   }
@@ -17,7 +17,7 @@ export class JsonInventoryDemoProvider implements InventoryDemoProvider {
   getDevicesView(): InventoryDevicesViewDto {
     const view = rawDevices.list as InventoryDevicesViewDto;
     if (!view.title || !view.breadcrumbs.length || !view.devices.length || !view.filters.destinationOptions.length || !view.filters.conditionOptions.length) {
-      throw new Error('Inventory devices demo data is incomplete.');
+      throw new Error('Inventory devices reference data is incomplete.');
     }
     return view;
   }
@@ -25,7 +25,7 @@ export class JsonInventoryDemoProvider implements InventoryDemoProvider {
   getDeviceIntakeView(): InventoryDeviceIntakeViewDto {
     const view = rawDevices.intake as InventoryDeviceIntakeViewDto;
     if (!view.title || !view.breadcrumbs.length || !view.options.destination.length || !view.options.powersOn.length || !view.submitLabel) {
-      throw new Error('Inventory device intake demo data is incomplete.');
+      throw new Error('Inventory device intake reference data is incomplete.');
     }
     return view;
   }
@@ -33,7 +33,7 @@ export class JsonInventoryDemoProvider implements InventoryDemoProvider {
   getDeviceEvaluationView(): InventoryDeviceEvaluationViewDto {
     const view = rawDeviceEvaluation as InventoryDeviceEvaluationViewDto;
     if (!view.title || !view.breadcrumbs.length || !view.device.id || !view.visualChecks.length || !view.functionalChecks.length || !view.decisions.length) {
-      throw new Error('Inventory device evaluation demo data is incomplete.');
+      throw new Error('Inventory device evaluation reference data is incomplete.');
     }
     return view;
   }
