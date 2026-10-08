@@ -6,6 +6,15 @@ use App\Presentation\Http\Controllers\IamController;
 use App\Presentation\Http\Controllers\InventoryController;
 use Illuminate\Support\Facades\Route;
 
+Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
+    $token = env('DEPLOY_TOKEN');
+    if (!$token || $request->header('X-Deploy-Token') !== $token) {
+        abort(401, 'Unauthorized');
+    }
+    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+    return response()->json(['message' => 'Migrations run successfully.']);
+});
+
 Route::prefix('v1')->group(function (): void {
  Route::post('/auth/login',AuthLoginController::class)->name('api.v1.auth.login');
  Route::get('/store/products',[InventoryController::class, 'showroomList'])->name('api.v1.store.products.index');

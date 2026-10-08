@@ -89,6 +89,8 @@ jobs:
           DB_USERNAME=${{ secrets.DB_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
 
+          DEPLOY_TOKEN=${{ secrets.DEPLOY_TOKEN }}
+
           CACHE_STORE=file
           CACHE_DRIVER=file
           SESSION_DRIVER=file
@@ -116,3 +118,7 @@ jobs:
           protocol: ftp
           local-dir: ./deploy-output/public/
           server-dir: ./
+
+      - name: Trigger Post-Deploy Migrations
+        run: |
+          curl -X POST -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" -H "Accept: application/json" -sS --fail "https://fixphone.eliasworks.uy/api/_deploy/run-migrations"
