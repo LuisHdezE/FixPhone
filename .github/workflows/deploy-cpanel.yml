@@ -1,11 +1,12 @@
-name: Manual Deploy to cPanel
+name: Deploy to cPanel (FTP)
 
 on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  test-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -14,61 +15,97 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, dom, fileinfo, pdo_mysql
           coverage: none
 
-      - name: Install Composer Dependencies (No Dev)
-        run: composer install --no-dev --optimize-autoloader
+      - name: Install PHP dependencies (dev)
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Prepare Laravel Environment for tests
+        run: |
+          cp .env.example .env || touch .env
+          cat >> .env <<'EOF'
+          APP_ENV=testing
+          APP_DEBUG=true
+          DB_CONNECTION=sqlite
+          DB_DATABASE=database/database.sqlite
+          CACHE_STORE=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          EOF
+          mkdir -p database
+          touch database/database.sqlite
+          php artisan key:generate
+
+      - name: Run Backend Tests
+        run: php artisan test --env=testing
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install NPM Dependencies & Build React
+      - name: Install NPM Dependencies & Check
         working-directory: ./web
         run: |
           npm ci || npm install
-          npm run build
+          npm run check
+
+      - name: Prepare production PHP dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Build React Frontend
+        working-directory: ./web
+        run: npm run build
 
       - name: Copy React build to Laravel public
         run: cp -r web/dist/* public/
 
-      - name: Prepare Release Package
+      - name: Prepare deployment package
+        shell: pwsh
+        run: ./scripts/prepare-deploy.ps1
+
+      - name: Create production environment file
+        shell: pwsh
         run: |
-          # Preflight: ensure .env production file exists on server (checked remotely)
-          mkdir -p release
-          # Copy only required files for production Laravel/React app
-          cp -r app bootstrap config database public resources routes storage vendor artisan composer.json composer.lock release/
-          
-          # Create archive excluding sensitive logs/cache
-          tar -czf release.tar.gz -C release . \
-            --exclude='storage/logs/*.log' \
-            --exclude='storage/framework/cache/data/*'
+          @"
+          APP_NAME="FixPhone"
+          APP_ENV=production
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_DEBUG=false
+          APP_URL=https://fixphone.eliasworks.uy
 
-      - name: Copy Release via SCP
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.CPANEL_SSH_HOST }}
-          port: ${{ secrets.CPANEL_SSH_PORT }}
-          username: ${{ secrets.CPANEL_SSH_USERNAME }}
-          key: ${{ secrets.CPANEL_SSH_KEY }}
-          source: "release.tar.gz"
-          target: ${{ secrets.CPANEL_TARGET_DIR }}
+          DB_CONNECTION=mysql
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=3306
+          DB_DATABASE=${{ secrets.DB_DATABASE }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
 
-      - name: Execute Server Optimization Scripts
-        uses: appleboy/ssh-action@master
+          CACHE_STORE=file
+          CACHE_DRIVER=file
+          SESSION_DRIVER=file
+          QUEUE_CONNECTION=sync
+          FILESYSTEM_DISK=local
+          LOG_LEVEL=error
+          "@ | Set-Content -Encoding UTF8 ./deploy-output/app/.env
+
+      - name: Upload application
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          host: ${{ secrets.CPANEL_SSH_HOST }}
-          port: ${{ secrets.CPANEL_SSH_PORT }}
-          username: ${{ secrets.CPANEL_SSH_USERNAME }}
-          key: ${{ secrets.CPANEL_SSH_KEY }}
-          script: |
-            cd ${{ secrets.CPANEL_TARGET_DIR }}
-            # Preflight: ensure .env exists on the remote server
-            test -f .env || { echo ".env production file missing"; exit 1; }
-            tar -xzf release.tar.gz
-            rm release.tar.gz
-            php artisan optimize:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_APP_USERNAME }}
+          password: ${{ secrets.FTP_APP_PASSWORD }}
+          protocol: ftp
+          local-dir: ./deploy-output/app/
+          server-dir: ./
+
+      - name: Upload public files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_PUBLIC_USERNAME }}
+          password: ${{ secrets.FTP_PUBLIC_PASSWORD }}
+          protocol: ftp
+          local-dir: ./deploy-output/public/
+          server-dir: ./
