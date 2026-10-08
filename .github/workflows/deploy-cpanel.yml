@@ -1,7 +1,14 @@
 name: Deploy to cPanel (FTP)
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
+
+concurrency:
+  group: fixphone-production-deploy
+  cancel-in-progress: false
 
 jobs:
   test-and-deploy:
