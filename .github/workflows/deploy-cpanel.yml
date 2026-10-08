@@ -121,4 +121,4 @@ jobs:
 
       - name: Trigger Post-Deploy Migrations
         run: |
-          curl -X POST -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" -H "Accept: application/json" -sS --fail "https://fixphone.eliasworks.uy/api/_deploy/run-migrations"
+          curl -X POST -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" -H "Accept: application/json" --silent --show-error --fail --retry 3 --max-time 60 "https://fixphone.eliasworks.uy/api/_deploy/run-migrations"
