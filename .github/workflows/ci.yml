@@ -1,30 +1,57 @@
-name: CI
+name: FixPhone CI
+
 on:
-  pull_request:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'mvp/**'
+  pull_request:
 
 jobs:
-  backend:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3
           coverage: none
-      - run: composer install --no-interaction --prefer-dist
-      - run: php artisan test
 
-  web:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Prepare Laravel Environment
+        run: |
+          cp .env.example .env || touch .env
+          cat >> .env <<'EOF'
+          APP_ENV=testing
+          APP_DEBUG=true
+          DB_CONNECTION=sqlite
+          DB_DATABASE=database/database.sqlite
+          CACHE_STORE=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          EOF
+          mkdir -p database
+          touch database/database.sqlite
+          php artisan key:generate
+
+      - name: Run Backend Tests
+        run: php artisan test --env=testing
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - run: npm install --no-audit --no-fund
-      - run: npm run check
+          node-version: '20'
+
+      - name: Install NPM Dependencies
+        working-directory: ./web
+        run: npm ci || npm install
+
+      - name: Run Frontend Typecheck and Build (Dummy Validation)
+        working-directory: ./web
+        run: npm run check

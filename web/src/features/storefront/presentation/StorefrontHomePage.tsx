@@ -1,136 +1,116 @@
-import { useState } from 'react';
 import { Link } from 'react-router';
 import type { StorefrontProvider } from '../application/storefront.contracts';
-import type { StorefrontCategoryCardDto } from '../application/storefront.dto';
-import { StorefrontSectionIntro } from './StorefrontPrimitives';
-import { StorefrontProductCard } from './StorefrontProductCard';
 
-function CategoryCard({ category }: { category: StorefrontCategoryCardDto }) {
-  return (
-    <Link
-      className="group grid min-h-40 content-between rounded-xl border border-black/10 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--storefront-primary)] hover:shadow-md"
-      to={category.href}
-    >
-      <span>
-        <span className="rounded-full bg-[var(--storefront-primary-soft)] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--storefront-primary-strong)]">
-          {category.eyebrow}
-        </span>
-        <span className="mt-3 block text-base font-black tracking-[-0.02em] text-slate-950">{category.title}</span>
-        <span className="mt-1.5 block text-[11px] leading-4 text-slate-600">{category.description}</span>
-      </span>
-      <span className="mt-3 flex items-center justify-between gap-3 text-xs font-black text-[var(--storefront-primary-strong)]">
-        <span>{category.itemCountLabel}</span>
-        <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span>
-      </span>
-    </Link>
-  );
-}
-
-export function StorefrontHomePage({ provider }: { provider: StorefrontProvider }) {
-  const home = provider.getHomeView();
-  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
-  const activeBanner = home.heroBanners[activeBannerIndex] ?? home.heroBanners[0];
-
-  if (!activeBanner) return null;
-
-  function moveBanner(direction: -1 | 1) {
-    setActiveBannerIndex((current) => {
-      const next = current + direction;
-      if (next < 0) return home.heroBanners.length - 1;
-      if (next >= home.heroBanners.length) return 0;
-      return next;
-    });
-  }
+export function StorefrontHomePage({ provider: _provider }: { provider: StorefrontProvider }) {
+  const waLink = "https://wa.me/59800000000";
 
   return (
-    <div className="mx-auto grid max-w-[1440px] gap-6 px-4 py-4 sm:px-5 lg:px-6 lg:py-5" data-storefront-home>
-      <section className="relative overflow-hidden rounded-xl border border-black/10 bg-slate-100 shadow-sm" data-storefront-hero-carousel>
-        <div className="relative min-h-[260px] sm:min-h-[320px] lg:min-h-[360px]">
-          <img
-            alt={activeBanner.image.alt}
-            className="absolute inset-0 h-full w-full object-cover"
-            data-storefront-hero-image
-            src={activeBanner.image.src}
-            style={{ objectPosition: activeBanner.image.objectPosition ?? 'center' }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-black/10" />
-          <div className="relative z-10 flex min-h-[260px] max-w-2xl flex-col justify-center px-8 py-8 text-white sm:min-h-[320px] sm:px-12 lg:min-h-[360px] lg:px-14">
-            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/80">{activeBanner.eyebrow}</p>
-            <h1 className="mt-2 text-2xl font-black tracking-[-0.035em] sm:text-2xl">{activeBanner.title}</h1>
-            <p className="mt-3 max-w-xl text-[11px] leading-4 text-white/85">{activeBanner.description}</p>
-            <Link
-              className="mt-5 inline-flex w-fit rounded-full bg-[var(--storefront-primary)] px-5 py-2 text-[11px] font-black text-[var(--storefront-on-primary)] transition hover:bg-[var(--storefront-primary-strong)]"
-              to={activeBanner.actionHref}
+    <div className="mx-auto grid max-w-[1440px] gap-12 px-4 py-8 sm:px-5 lg:px-8 lg:py-12" data-storefront-home>
+      <section className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 opacity-90" />
+        <div className="relative z-10 flex min-h-[400px] flex-col justify-center px-8 py-12 sm:px-12 lg:px-20">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-sky-300">Tu celular como nuevo</p>
+          <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
+            Expertos en Reparación y <br className="hidden sm:block" /> Venta de Celulares
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg text-slate-300">
+            Reparaciones rápidas, desbloqueos, celulares usados seleccionados y testeados, repuestos de calidad y garantía comprobada.
+          </p>
+          <div className="mt-10 flex flex-wrap gap-4">
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-full bg-[#25D366] px-8 py-3.5 text-sm font-bold text-white shadow-lg transition-transform hover:scale-105"
             >
-              {activeBanner.actionLabel}
-            </Link>
+              Contacto rápido por WhatsApp
+            </a>
+            <a
+              href="#servicios"
+              className="inline-flex items-center justify-center rounded-full bg-white/10 px-8 py-3.5 text-sm font-bold text-white transition-colors hover:bg-white/20"
+            >
+              Ver servicios
+            </a>
           </div>
+        </div>
+      </section>
 
-          <button
-            aria-label="Banner anterior"
-            className="absolute left-3 top-1/2 z-20 grid size-10 -translate-y-1/2 place-items-center rounded-xl bg-white/95 text-base font-black text-slate-800 shadow-md transition hover:bg-white"
-            type="button"
-            onClick={() => moveBanner(-1)}
-          >
-            ‹
-          </button>
-          <button
-            aria-label="Banner siguiente"
-            className="absolute right-3 top-1/2 z-20 grid size-10 -translate-y-1/2 place-items-center rounded-xl bg-white/95 text-base font-black text-slate-800 shadow-md transition hover:bg-white"
-            type="button"
-            onClick={() => moveBanner(1)}
-          >
-            ›
-          </button>
+      <section id="servicios" className="grid gap-6">
+        <div className="text-center">
+          <h2 className="text-3xl font-black tracking-tight text-slate-900">Servicios Principales</h2>
+          <p className="mt-2 text-slate-600">Soluciones integrales para tu dispositivo</p>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { title: 'Reparación de Celulares', desc: 'Pantallas, baterías, pines de carga y micro soldadura.' },
+            { title: 'Desbloqueos', desc: 'Liberaciones de red y software rápido y seguro.' },
+            { title: 'Presupuesto sin Costo', desc: 'Revisamos tu equipo y te damos un diagnóstico gratis.' }
+          ].map(s => (
+             <article key={s.title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[var(--storefront-primary)] hover:shadow-md">
+               <h3 className="text-xl font-bold text-slate-900">{s.title}</h3>
+               <p className="mt-3 text-slate-600">{s.desc}</p>
+             </article>
+          ))}
+        </div>
+      </section>
 
-          <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2" aria-label="Selector de banners">
-            {home.heroBanners.map((banner, index) => (
-              <button
-                key={banner.id}
-                aria-label={`Mostrar banner ${index + 1}`}
-                className={`h-2.5 rounded-full transition-all ${index === activeBannerIndex ? 'w-7 bg-white' : 'w-2.5 bg-white/55'}`}
-                type="button"
-                onClick={() => setActiveBannerIndex(index)}
-              />
+      <section className="grid gap-6 lg:grid-cols-2">
+        <div className="flex flex-col justify-center rounded-3xl bg-slate-50 p-8 sm:p-12">
+          <h3 className="text-2xl font-black text-slate-900">Celulares Usados Seleccionados</h3>
+          <p className="mt-4 text-slate-600">Equipos 100% testeados, libres de fábrica y con garantía. La mejor relación calidad-precio.</p>
+          <Link to="/store/used-phones" className="mt-8 w-fit rounded-full bg-slate-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800">Ver catálogo de equipos</Link>
+        </div>
+        <div className="flex flex-col justify-center rounded-3xl bg-slate-50 p-8 sm:p-12">
+          <h3 className="text-2xl font-black text-slate-900">Repuestos Originales y AAA</h3>
+          <p className="mt-4 text-slate-600">Pantallas, baterías, flex y más para todas las marcas. Venta al público y técnicos.</p>
+          <Link to="/store/spare-parts" className="mt-8 w-fit rounded-full bg-slate-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800">Ver repuestos</Link>
+        </div>
+      </section>
+
+      <section className="grid gap-8 border-t border-slate-200 pt-12 md:grid-cols-2 lg:gap-16">
+        <div>
+          <h2 className="text-2xl font-black text-slate-900">Por qué confiar en FixPhone</h2>
+          <ul className="mt-6 space-y-4">
+            {['Técnicos especializados con años de experiencia', 'Garantía real en todas nuestras reparaciones y ventas', 'Transparencia total en precios y diagnósticos', 'Repuestos de la más alta calidad del mercado'].map(item => (
+              <li key={item} className="flex items-start gap-3 text-slate-700">
+                <span className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--storefront-primary-soft)] text-[10px] text-[var(--storefront-primary-strong)]">✓</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-slate-900">Cómo Trabajamos</h2>
+          <div className="mt-6 space-y-6">
+            {[
+              { step: '1', title: 'Contacto / Recepción', desc: 'Escribinos o traé tu equipo a nuestro local.' },
+              { step: '2', title: 'Diagnóstico Sin Costo', desc: 'Evaluamos el problema y te pasamos presupuesto exacto.' },
+              { step: '3', title: 'Reparación', desc: 'Si aceptás, reparamos tu equipo en tiempo récord.' },
+              { step: '4', title: 'Entrega y Garantía', desc: 'Te devolvemos tu celular funcionando con su garantía.' }
+            ].map(item => (
+              <div key={item.step} className="flex gap-4">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-900 font-black text-white">{item.step}</span>
+                <div>
+                  <h4 className="font-bold text-slate-900">{item.title}</h4>
+                  <p className="mt-1 text-sm text-slate-600">{item.desc}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-3" aria-label="Base Storefront B1">
-        {home.featureTiles.map((tile) => (
-          <article key={tile.id} className="rounded-xl border border-black/10 bg-white p-3 shadow-sm">
-            <p className="text-sm font-black text-slate-950">{tile.title}</p>
-            <p className="mt-1.5 text-[11px] leading-4 text-slate-600">{tile.description}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="grid gap-3" data-storefront-category-section>
-        <StorefrontSectionIntro {...home.categorySection} />
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {home.categorySection.categories.map((category) => <CategoryCard key={category.id} category={category} />)}
-        </div>
-      </section>
-
-      <section className="grid gap-3" data-storefront-product-section>
-        <StorefrontSectionIntro {...home.productSection} />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {home.productSection.products.map((product) => <StorefrontProductCard key={product.id} context="home" product={product} />)}
-        </div>
-      </section>
-
-      <section className="rounded-xl bg-[var(--storefront-primary-strong)] p-3 text-[var(--storefront-on-primary)] sm:p-6" data-storefront-promo-band>
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-white/70">{home.promoBand.eyebrow}</p>
-            <h2 className="mt-1.5 max-w-3xl text-lg font-black tracking-[-0.03em] sm:text-2xl">{home.promoBand.title}</h2>
-            <p className="mt-2 max-w-2xl text-[11px] leading-4 text-white/85">{home.promoBand.description}</p>
-          </div>
-          <Link className="rounded-full bg-white px-4 py-2 text-xs font-black text-[var(--storefront-primary-strong)] transition hover:bg-[var(--storefront-primary-soft)]" to={home.promoBand.actionHref}>
-            {home.promoBand.actionLabel}
-          </Link>
-        </div>
+      <section className="rounded-3xl bg-[var(--storefront-primary-strong)] p-8 text-center text-[var(--storefront-on-primary)] sm:p-16">
+        <h2 className="text-3xl font-black tracking-tight sm:text-4xl">¿Necesitás ayuda con tu celular?</h2>
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-white/80">Escribinos ahora por WhatsApp y te respondemos a la brevedad. Tu solución está a un mensaje de distancia.</p>
+        <a
+          href={waLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mx-auto mt-8 inline-flex items-center justify-center rounded-full bg-[#25D366] px-8 py-4 text-base font-bold text-white shadow-xl transition hover:scale-105"
+        >
+          Iniciar chat en WhatsApp
+        </a>
       </section>
     </div>
   );
