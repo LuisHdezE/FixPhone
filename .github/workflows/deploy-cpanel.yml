@@ -1,0 +1,74 @@
+name: Manual Deploy to cPanel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Install Composer Dependencies (No Dev)
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install NPM Dependencies & Build React
+        working-directory: ./web
+        run: |
+          npm ci || npm install
+          npm run build
+
+      - name: Copy React build to Laravel public
+        run: cp -r web/dist/* public/
+
+      - name: Prepare Release Package
+        run: |
+          # Preflight: ensure .env production file exists on server (checked remotely)
+          mkdir -p release
+          # Copy only required files for production Laravel/React app
+          cp -r app bootstrap config database public resources routes storage vendor artisan composer.json composer.lock release/
+          
+          # Create archive excluding sensitive logs/cache
+          tar -czf release.tar.gz -C release . \
+            --exclude='storage/logs/*.log' \
+            --exclude='storage/framework/cache/data/*'
+
+      - name: Copy Release via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.CPANEL_SSH_HOST }}
+          port: ${{ secrets.CPANEL_SSH_PORT }}
+          username: ${{ secrets.CPANEL_SSH_USERNAME }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          source: "release.tar.gz"
+          target: ${{ secrets.CPANEL_TARGET_DIR }}
+
+      - name: Execute Server Optimization Scripts
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.CPANEL_SSH_HOST }}
+          port: ${{ secrets.CPANEL_SSH_PORT }}
+          username: ${{ secrets.CPANEL_SSH_USERNAME }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          script: |
+            cd ${{ secrets.CPANEL_TARGET_DIR }}
+            # Preflight: ensure .env exists on the remote server
+            test -f .env || { echo ".env production file missing"; exit 1; }
+            tar -xzf release.tar.gz
+            rm release.tar.gz
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache

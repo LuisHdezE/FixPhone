@@ -1,4 +1,4 @@
-﻿import { JsonStorefrontProvider } from './JsonStorefrontProvider';
+import { JsonStorefrontProvider } from './JsonStorefrontProvider';
 import type { StorefrontViewDto } from '../application/storefront.dto';
 
 export class ApiStorefrontProvider extends JsonStorefrontProvider {
@@ -14,7 +14,7 @@ export class ApiStorefrontProvider extends JsonStorefrontProvider {
     const view = JSON.parse(JSON.stringify(super.getStorefrontView())) as StorefrontViewDto;
 
 
-    const mappedProducts = this.apiProducts.map(apiItem => {
+    const mappedProducts: any[] = this.apiProducts.map(apiItem => {
       const isUsedPhone = apiItem.item_type === 'used_phone';
       const condition = apiItem.operational_status === 'reparado' ? 'Reacondicionado' : 'Nuevo';
       const formattedPrice = '$ ' + (apiItem.sale_price_amount_minor || 0).toLocaleString('es-UY');
