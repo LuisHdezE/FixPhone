@@ -4,6 +4,7 @@ use App\Presentation\Http\Controllers\AuthLogoutController;
 use App\Presentation\Http\Controllers\AuthMeController;
 use App\Presentation\Http\Controllers\IamController;
 use App\Presentation\Http\Controllers\InventoryController;
+use App\Presentation\Http\Controllers\MasterDataController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -20,6 +21,11 @@ Route::prefix('v1')->group(function (): void {
  Route::get('/store/products',[InventoryController::class, 'showroomList'])->name('api.v1.store.products.index');
  Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->name('api.v1.admin.inventory.index');
  Route::post('/admin/inventory',[InventoryController::class, 'create'])->name('api.v1.admin.inventory.store');
+ Route::get('/admin/master-data',[MasterDataController::class, 'catalog'])->name('api.v1.admin.master-data.catalog');
+ Route::get('/admin/master-data/{kind}',[MasterDataController::class, 'index'])->name('api.v1.admin.master-data.index');
+ Route::post('/admin/master-data/{kind}',[MasterDataController::class, 'store'])->name('api.v1.admin.master-data.store');
+ Route::patch('/admin/master-data/{kind}/{id}',[MasterDataController::class, 'update'])->name('api.v1.admin.master-data.update');
+ Route::delete('/admin/master-data/{kind}/{id}',[MasterDataController::class, 'destroy'])->name('api.v1.admin.master-data.destroy');
 
  Route::middleware('auth:sanctum')->group(function (): void {
   Route::post('/auth/logout',AuthLogoutController::class)->name('api.v1.auth.logout');

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import { ApiStorefrontProvider } from '@/features/storefront/infrastructure/ApiStorefrontProvider';
 import { JsonPasswordResetContentProvider } from '@/features/authentication/password-reset/infrastructure/JsonPasswordResetContentProvider';
@@ -16,6 +16,7 @@ import { InventoryDashboardPage } from '@/features/inventory/presentation/Invent
 import { InventoryDeviceEvaluationPage } from '@/features/inventory/presentation/InventoryDeviceEvaluationPage';
 import { InventoryDeviceIntakePage } from '@/features/inventory/presentation/InventoryDeviceIntakePage';
 import { InventoryDevicesPage } from '@/features/inventory/presentation/InventoryDevicesPage';
+import { ApiMasterDataGateway } from '@/features/master-data/infrastructure/ApiMasterDataGateway';
 import { JsonMasterDataAdminViewProvider } from '@/features/master-data/infrastructure/JsonMasterDataAdminViewProvider';
 import { JsonMasterDataProvider } from '@/features/master-data/infrastructure/JsonMasterDataProvider';
 import { MasterDataBrandsPage, MasterDataCategoriesPage, MasterDataDeviceModelsPage } from '@/features/master-data/presentation/MasterDataAdminPages';
@@ -49,14 +50,30 @@ const twoFactorContentProvider = new JsonTwoFactorContentProvider();
 const twoFactorGateway = new MockTwoFactorGateway();
 const inventoryDemoProvider = new JsonInventoryDemoProvider();
 const inventoryDevicesGateway = new ApiInventoryDevicesGateway();
-const masterDataProvider = new JsonMasterDataProvider();
+const defaultMasterDataProvider = new JsonMasterDataProvider();
+const masterDataGateway = new ApiMasterDataGateway();
 const masterDataAdminViewProvider = new JsonMasterDataAdminViewProvider();
 const defaultStorefrontProvider = new JsonStorefrontProvider();
 
 export function AppRouter() {
   const [storefrontProvider, setStorefrontProvider] = useState<any>(defaultStorefrontProvider);
   const [error, setError] = useState<string | null>(null);
+  const [masterDataProvider, setMasterDataProvider] = useState(defaultMasterDataProvider);
+  const [masterDataLoading, setMasterDataLoading] = useState(true);
+  const [masterDataError, setMasterDataError] = useState<string | null>(null);
   const location = useLocation();
+
+  const refreshMasterData = useCallback(async () => {
+    setMasterDataError(null);
+    const catalog = await masterDataGateway.fetchCatalog();
+    setMasterDataProvider(new JsonMasterDataProvider(catalog));
+  }, []);
+
+  useEffect(() => {
+    refreshMasterData()
+      .catch((loadError) => setMasterDataError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el catálogo maestro.'))
+      .finally(() => setMasterDataLoading(false));
+  }, [refreshMasterData]);
 
   useEffect(() => {
     fetch('/api/v1/store/products')
@@ -67,6 +84,16 @@ export function AppRouter() {
       .then(products => setStorefrontProvider(new ApiStorefrontProvider(products)))
       .catch(e => setError(e.message));
   }, []);
+
+  const needsMasterData = location.pathname.startsWith('/admin/master-data') || location.pathname === '/apps/inventory/devices/new';
+
+  if (needsMasterData && masterDataLoading) {
+    return <div className="grid min-h-dvh place-items-center bg-slate-50 text-sm font-semibold text-slate-600">Cargando catálogo maestro…</div>;
+  }
+
+  if (needsMasterData && masterDataError) {
+    return <div className="grid min-h-dvh place-items-center bg-slate-50 p-6"><div className="max-w-md rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800"><strong>No se pudo cargar el catálogo maestro.</strong><p className="mt-2">{masterDataError}</p></div></div>;
+  }
 
   if (error && location.pathname.startsWith('/store')) {
     return (
@@ -115,14 +142,14 @@ export function AppRouter() {
         <Route path="applications/management/inventory" element={<InventoryView />} />
         <Route path="applications/management/customers" element={<CustomerDirectoryView />} />
         <Route path="applications/management/orders" element={<OrderListView />} />
-        <Route path="admin/master-data/brands" element={<MasterDataBrandsPage masterDataProvider={masterDataProvider} viewProvider={masterDataAdminViewProvider} />} />
-        <Route path="admin/master-data/device-models" element={<MasterDataDeviceModelsPage masterDataProvider={masterDataProvider} viewProvider={masterDataAdminViewProvider} />} />
-        <Route path="admin/master-data/categories" element={<MasterDataCategoriesPage masterDataProvider={masterDataProvider} viewProvider={masterDataAdminViewProvider} />} />
-        <Route path="admin/master-data/colors" element={<MasterDataColorsPage masterDataProvider={masterDataProvider} />} />
-        <Route path="admin/master-data/storage-capacities" element={<MasterDataStorageCapacitiesPage masterDataProvider={masterDataProvider} />} />
-        <Route path="admin/master-data/ram-capacities" element={<MasterDataRamCapacitiesPage masterDataProvider={masterDataProvider} />} />
-        <Route path="admin/master-data/conditions" element={<MasterDataConditionsPage masterDataProvider={masterDataProvider} />} />
-        <Route path="admin/master-data/spare-part-types" element={<MasterDataSparePartTypesPage masterDataProvider={masterDataProvider} />} />
+        <Route path="admin/master-data/brands" element={<MasterDataBrandsPage masterDataProvider={masterDataProvider} viewProvider={masterDataAdminViewProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
+        <Route path="admin/master-data/device-models" element={<MasterDataDeviceModelsPage masterDataProvider={masterDataProvider} viewProvider={masterDataAdminViewProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
+        <Route path="admin/master-data/categories" element={<MasterDataCategoriesPage masterDataProvider={masterDataProvider} viewProvider={masterDataAdminViewProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
+        <Route path="admin/master-data/colors" element={<MasterDataColorsPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
+        <Route path="admin/master-data/storage-capacities" element={<MasterDataStorageCapacitiesPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
+        <Route path="admin/master-data/ram-capacities" element={<MasterDataRamCapacitiesPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
+        <Route path="admin/master-data/conditions" element={<MasterDataConditionsPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
+        <Route path="admin/master-data/spare-part-types" element={<MasterDataSparePartTypesPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
         <Route path="user/profile" element={<UserProfilePage />} />
         <Route path="user/account-settings" element={<AccountSettingsPage />} />
       </Route>
