@@ -14,7 +14,7 @@ import { ApiInventoryDevicesGateway } from '@/features/inventory/infrastructure/
 import { JsonInventoryDemoProvider } from '@/features/inventory/infrastructure/JsonInventoryDemoProvider';
 import { InventoryDashboardPage } from '@/features/inventory/presentation/InventoryDashboardPage';
 import { InventoryDeviceEvaluationPage } from '@/features/inventory/presentation/InventoryDeviceEvaluationPage';
-import { InventoryProductCreatePage } from '@/features/inventory/presentation/InventoryProductCreatePage';
+import { InventoryDeviceIntakePage } from '@/features/inventory/presentation/InventoryDeviceIntakePage';
 import { InventoryDevicesPage } from '@/features/inventory/presentation/InventoryDevicesPage';
 import { JsonMasterDataAdminViewProvider } from '@/features/master-data/infrastructure/JsonMasterDataAdminViewProvider';
 import { JsonMasterDataProvider } from '@/features/master-data/infrastructure/JsonMasterDataProvider';
@@ -110,7 +110,7 @@ export function AppRouter() {
         <Route path="dashboard" element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="apps/inventory/dashboard" element={<InventoryDashboardPage provider={inventoryDemoProvider} />} />
         <Route path="apps/inventory/devices" element={<InventoryDevicesPage provider={inventoryDemoProvider} gateway={inventoryDevicesGateway} />} />
-        <Route path="apps/inventory/devices/new" element={<InventoryProductCreatePage />} />
+        <Route path="apps/inventory/devices/new" element={<InventoryDeviceIntakePage provider={inventoryDemoProvider} masterDataProvider={masterDataProvider} />} />
         <Route path="apps/inventory/devices/evaluation" element={<InventoryDeviceEvaluationPage provider={inventoryDemoProvider} />} />
         <Route path="applications/management/inventory" element={<InventoryView />} />
         <Route path="applications/management/customers" element={<CustomerDirectoryView />} />
