@@ -27,6 +27,17 @@ jobs:
       - name: Prepare Laravel Environment
         run: |
           cp .env.example .env || touch .env
+          cat >> .env <<'EOF'
+          APP_ENV=testing
+          APP_DEBUG=true
+          DB_CONNECTION=sqlite
+          DB_DATABASE=database/database.sqlite
+          CACHE_STORE=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          EOF
+          mkdir -p database
+          touch database/database.sqlite
           php artisan key:generate
 
       - name: Run Backend Tests
