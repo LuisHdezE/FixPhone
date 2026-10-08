@@ -18,6 +18,7 @@ Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $reque
 Route::prefix('v1')->group(function (): void {
  Route::post('/auth/login',AuthLoginController::class)->name('api.v1.auth.login');
  Route::get('/store/products',[InventoryController::class, 'showroomList'])->name('api.v1.store.products.index');
+ Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->name('api.v1.admin.inventory.index');
  Route::post('/admin/inventory',[InventoryController::class, 'create'])->name('api.v1.admin.inventory.store');
 
  Route::middleware('auth:sanctum')->group(function (): void {

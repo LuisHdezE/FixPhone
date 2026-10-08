@@ -10,6 +10,7 @@ import { SignInPage } from '@/features/authentication/sign-in/presentation/SignI
 import { JsonTwoFactorContentProvider } from '@/features/authentication/two-factor/infrastructure/JsonTwoFactorContentProvider';
 import { MockTwoFactorGateway } from '@/features/authentication/two-factor/infrastructure/MockTwoFactorGateway';
 import { TwoFactorPage } from '@/features/authentication/two-factor/presentation/TwoFactorPage';
+import { ApiInventoryDevicesGateway } from '@/features/inventory/infrastructure/ApiInventoryDevicesGateway';
 import { JsonInventoryDemoProvider } from '@/features/inventory/infrastructure/JsonInventoryDemoProvider';
 import { InventoryDashboardPage } from '@/features/inventory/presentation/InventoryDashboardPage';
 import { InventoryDeviceEvaluationPage } from '@/features/inventory/presentation/InventoryDeviceEvaluationPage';
@@ -47,6 +48,7 @@ const signInGateway = new MockSignInGateway();
 const twoFactorContentProvider = new JsonTwoFactorContentProvider();
 const twoFactorGateway = new MockTwoFactorGateway();
 const inventoryDemoProvider = new JsonInventoryDemoProvider();
+const inventoryDevicesGateway = new ApiInventoryDevicesGateway();
 const masterDataProvider = new JsonMasterDataProvider();
 const masterDataAdminViewProvider = new JsonMasterDataAdminViewProvider();
 const defaultStorefrontProvider = new JsonStorefrontProvider();
@@ -107,7 +109,7 @@ export function AppRouter() {
         <Route index element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="dashboard" element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="apps/inventory/dashboard" element={<InventoryDashboardPage provider={inventoryDemoProvider} />} />
-        <Route path="apps/inventory/devices" element={<InventoryDevicesPage provider={inventoryDemoProvider} />} />
+        <Route path="apps/inventory/devices" element={<InventoryDevicesPage provider={inventoryDemoProvider} gateway={inventoryDevicesGateway} />} />
         <Route path="apps/inventory/devices/new" element={<InventoryProductCreatePage />} />
         <Route path="apps/inventory/devices/evaluation" element={<InventoryDeviceEvaluationPage provider={inventoryDemoProvider} />} />
         <Route path="applications/management/inventory" element={<InventoryView />} />

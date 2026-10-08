@@ -10,6 +10,16 @@ use Illuminate\Support\Str;
 
 class InventoryController extends Controller
 {
+    public function devicesList()
+    {
+        $items = InventoryItem::query()
+            ->whereIn('item_type', ['used_phone', 'device'])
+            ->latest('created_at')
+            ->get();
+
+        return response()->json(['data' => $items]);
+    }
+
     public function create(Request $request)
     {
         $validated = $request->validate([

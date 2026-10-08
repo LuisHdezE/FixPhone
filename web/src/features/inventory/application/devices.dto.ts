@@ -1,7 +1,7 @@
 import type { StatusBadgeTone } from '@/components/data-display/StatusBadge';
 
 export type DeviceDestination = 'Pending Evaluation' | 'Donor' | 'Refurbish' | 'Hold' | 'Discard';
-export type DevicePhysicalCondition = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Damaged';
+export type DevicePhysicalCondition = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Damaged' | 'Unknown';
 export type DevicePowerState = 'Yes' | 'No' | 'Unknown';
 export type DeviceAccountLock = 'Clear' | 'Locked' | 'Unknown';
 
