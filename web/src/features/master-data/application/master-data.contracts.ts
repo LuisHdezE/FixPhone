@@ -11,6 +11,15 @@ import type {
 } from './master-data.dto';
 import type { MasterDataAdminViewDto, MasterDataAdminViewKind, MasterDataAdminViewsDto } from './master-data-admin.dto';
 
+export type MasterDataKind = 'brands' | 'deviceModels' | 'categories' | 'colors' | 'storageCapacities' | 'ramCapacities' | 'conditions' | 'sparePartTypes';
+
+export interface MasterDataGateway {
+  fetchCatalog(): Promise<MasterDataCatalogDto>;
+  create<T>(kind: MasterDataKind, payload: object): Promise<T>;
+  update<T>(kind: MasterDataKind, id: string, payload: object): Promise<T>;
+  delete(kind: MasterDataKind, id: string): Promise<void>;
+}
+
 export interface MasterDataProvider {
   getCatalog(): MasterDataCatalogDto;
   getBrands(): readonly MasterDataBrandDto[];

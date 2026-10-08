@@ -24,8 +24,8 @@ function assertRequiredCollection<T>(items: readonly T[], label: string): void {
 export class JsonMasterDataProvider implements MasterDataProvider {
   private readonly catalog: MasterDataCatalogDto;
 
-  constructor() {
-    this.catalog = rawCatalog as MasterDataCatalogDto;
+  constructor(catalog: MasterDataCatalogDto = rawCatalog as MasterDataCatalogDto) {
+    this.catalog = catalog;
     this.validateCatalog(this.catalog);
   }
 
