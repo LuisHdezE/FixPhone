@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 final class MasterDataController extends Controller
 {
@@ -18,6 +19,14 @@ final class MasterDataController extends Controller
         'storageCapacities',
         'ramCapacities',
         'conditions',
+        'sparePartTypes',
+    ];
+
+    /**
+     * Kinds whose items reference a parent of the same kind through `parentId`.
+     */
+    private const HIERARCHICAL_KINDS = [
+        'categories',
         'sparePartTypes',
     ];
 
@@ -68,6 +77,8 @@ final class MasterDataController extends Controller
             abort(409, 'Master data id already exists.');
         }
 
+        $this->assertRelationships($kind, $id, $payload, true);
+
         $payload['id'] = $id;
         $entry = MasterDataEntry::query()->create([
             'id' => $id,
@@ -87,7 +98,10 @@ final class MasterDataController extends Controller
             ->whereKey($id)
             ->firstOrFail();
 
-        $payload = array_replace($entry->payload, $this->validatedPayload($request, true));
+        $changes = $this->validatedPayload($request, true);
+        $this->assertRelationships($kind, $id, $changes, false);
+
+        $payload = array_replace($entry->payload, $changes);
         $payload['id'] = $id;
 
         $entry->update(['payload' => $payload]);
@@ -104,6 +118,8 @@ final class MasterDataController extends Controller
             ->whereKey($id)
             ->firstOrFail();
 
+        $this->assertDeletable($kind, $id);
+
         $entry->delete();
 
         return response()->json(['deleted' => true, 'id' => $id]);
@@ -112,6 +128,76 @@ final class MasterDataController extends Controller
     private function assertKind(string $kind): void
     {
         abort_unless(in_array($kind, self::KINDS, true), 404, 'Unknown master data kind.');
+    }
+
+    /**
+     * Validates references to other master data items.
+     *
+     * On create the full payload is checked; on update only the fields sent in
+     * the request are checked, so legacy data does not block unrelated edits.
+     */
+    private function assertRelationships(string $kind, string $id, array $payload, bool $creating): void
+    {
+        $errors = [];
+
+        if ($kind === 'deviceModels' && ($creating || array_key_exists('brandId', $payload))) {
+            $brandId = trim((string) ($payload['brandId'] ?? ''));
+
+            if ($brandId === '') {
+                $errors['brandId'] = 'Device model requires a brandId.';
+            } elseif (!$this->entryExists('brands', $brandId)) {
+                $errors['brandId'] = 'Selected brand does not exist.';
+            }
+        }
+
+        if (in_array($kind, self::HIERARCHICAL_KINDS, true) && array_key_exists('parentId', $payload)) {
+            $parentId = trim((string) ($payload['parentId'] ?? ''));
+
+            if ($parentId !== '') {
+                if ($parentId === $id) {
+                    $errors['parentId'] = 'An item cannot be its own parent.';
+                } elseif (!$this->entryExists($kind, $parentId)) {
+                    $errors['parentId'] = 'Selected parent does not exist.';
+                }
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    /**
+     * Blocks deletions that would leave orphaned references.
+     */
+    private function assertDeletable(string $kind, string $id): void
+    {
+        if ($kind === 'brands' && $this->hasDependents('deviceModels', 'brandId', $id)) {
+            abort(409, 'Brand has associated device models and cannot be deleted.');
+        }
+
+        if (in_array($kind, self::HIERARCHICAL_KINDS, true) && $this->hasDependents($kind, 'parentId', $id)) {
+            abort(409, 'Item has child items and cannot be deleted.');
+        }
+    }
+
+    private function entryExists(string $kind, string $id): bool
+    {
+        return MasterDataEntry::query()
+            ->where('kind', $kind)
+            ->whereKey($id)
+            ->exists();
+    }
+
+    /**
+     * Filters in PHP to stay portable across SQLite (tests) and MySQL (cPanel).
+     */
+    private function hasDependents(string $kind, string $field, string $id): bool
+    {
+        return MasterDataEntry::query()
+            ->where('kind', $kind)
+            ->get()
+            ->contains(fn (MasterDataEntry $entry) => ($entry->payload[$field] ?? null) === $id);
     }
 
     private function validatedPayload(Request $request, bool $partial): array
