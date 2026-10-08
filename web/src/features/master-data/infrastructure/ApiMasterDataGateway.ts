@@ -7,8 +7,26 @@ type CatalogResponse = {
 
 async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const body = await response.text();
-    throw new Error(body || `Master data request failed (${response.status}).`);
+    const bodyText = await response.text();
+    let errorMessage = `Master data request failed (${response.status}).`;
+    try {
+      const parsed = JSON.parse(bodyText);
+      if (parsed.errors && typeof parsed.errors === 'object') {
+        const errorMessages = Object.values(parsed.errors).flat();
+        if (errorMessages.length > 0) {
+          errorMessage = errorMessages.join(' ');
+        } else if (parsed.message) {
+          errorMessage = parsed.message;
+        }
+      } else if (parsed.message) {
+        errorMessage = parsed.message;
+      }
+    } catch {
+      if (bodyText) {
+        errorMessage = bodyText;
+      }
+    }
+    throw new Error(errorMessage);
   }
 
   return response.json() as Promise<T>;
@@ -56,8 +74,19 @@ export class ApiMasterDataGateway implements MasterDataGateway {
     });
 
     if (!response.ok) {
-      const body = await response.text();
-      throw new Error(body || `Master data delete failed (${response.status}).`);
+      const bodyText = await response.text();
+      let errorMessage = `Master data delete failed (${response.status}).`;
+      try {
+        const parsed = JSON.parse(bodyText);
+        if (parsed.message) {
+          errorMessage = parsed.message;
+        }
+      } catch {
+        if (bodyText) {
+          errorMessage = bodyText;
+        }
+      }
+      throw new Error(errorMessage);
     }
   }
 }
