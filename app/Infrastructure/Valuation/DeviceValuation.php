@@ -4,6 +4,8 @@ namespace App\Infrastructure\Valuation;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Infrastructure\Inventory\InventoryItem;
 
 final class DeviceValuation extends Model
 {
@@ -14,12 +16,18 @@ final class DeviceValuation extends Model
         'power_state', 'estimated_min_minor', 'estimated_max_minor',
         'asking_price_minor', 'minimum_price_minor', 'publication_status',
         'market_reference', 'notes', 'facebook_copy', 'facebook_post_url', 'created_by',
+        'public_listing_status', 'public_image_url', 'public_description', 'provenance_confirmed',
     ];
 
     protected $casts = [
+        'provenance_confirmed' => 'boolean',
         'estimated_min_minor' => 'integer',
         'estimated_max_minor' => 'integer',
         'asking_price_minor' => 'integer',
         'minimum_price_minor' => 'integer',
     ];
+    public function inventoryItem(): BelongsTo
+    {
+        return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
+    }
 }
