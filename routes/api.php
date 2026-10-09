@@ -24,8 +24,6 @@ Route::prefix('v1')->group(function (): void {
  Route::get('/store/parts-donors', [PartsDonorStorefrontController::class, 'index'])->name('api.v1.store.parts-donors.index');
  Route::get('/store/parts-donors/{id}', [PartsDonorStorefrontController::class, 'show'])->name('api.v1.store.parts-donors.show');
  Route::get('/store/products',[InventoryController::class, 'showroomList'])->name('api.v1.store.products.index');
- Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->name('api.v1.admin.inventory.index');
- Route::post('/admin/inventory',[InventoryController::class, 'create'])->name('api.v1.admin.inventory.store');
  Route::get('/admin/master-data',[MasterDataController::class, 'catalog'])->name('api.v1.admin.master-data.catalog');
  Route::get('/admin/master-data/{kind}',[MasterDataController::class, 'index'])->name('api.v1.admin.master-data.index');
  Route::post('/admin/master-data/{kind}',[MasterDataController::class, 'store'])->name('api.v1.admin.master-data.store');
@@ -33,6 +31,8 @@ Route::prefix('v1')->group(function (): void {
  Route::delete('/admin/master-data/{kind}/{id}',[MasterDataController::class, 'destroy'])->name('api.v1.admin.master-data.destroy');
 
  Route::middleware('auth:sanctum')->group(function (): void {
+  Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.index');
+  Route::post('/admin/inventory',[InventoryController::class, 'create'])->middleware('permission:devices.intake')->name('api.v1.admin.inventory.store');
   Route::post('/auth/logout',AuthLogoutController::class)->name('api.v1.auth.logout');
   Route::get('/auth/me',AuthMeController::class)->name('api.v1.auth.me');
 
