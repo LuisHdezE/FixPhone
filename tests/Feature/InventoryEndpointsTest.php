@@ -3,6 +3,11 @@
 namespace Tests\Feature;
 
 use App\Infrastructure\Inventory\InventoryItem;
+use App\Infrastructure\Identity\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -10,8 +15,29 @@ final class InventoryEndpointsTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function actingAsOwner(): void
+    {
+        $user = User::query()->create([
+            'id' => (string) Str::ulid(),
+            'name' => 'Owner',
+            'email' => 'inventory-owner@fixphone.test',
+            'password' => Hash::make('test-secret-owner'),
+            'active' => true,
+        ]);
+        DB::table('user_roles')->insert(['user_id' => $user->id, 'role_slug' => 'owner']);
+        Sanctum::actingAs($user);
+    }
+
+    public function test_admin_inventory_requires_authentication(): void
+    {
+        $this->getJson('/api/v1/admin/inventory')->assertUnauthorized();
+        $this->postJson('/api/v1/admin/inventory', [])->assertUnauthorized();
+    }
+
+
     public function test_devices_list_returns_real_device_inventory_and_excludes_non_devices(): void
     {
+        $this->actingAsOwner();
         InventoryItem::query()->create([
             'sku' => 'DEV-1001',
             'title' => 'iPhone 12 128 GB',
@@ -54,6 +80,7 @@ final class InventoryEndpointsTest extends TestCase
 
     public function test_device_intake_payload_is_persisted_and_listed(): void
     {
+        $this->actingAsOwner();
         $response = $this->postJson('/api/v1/admin/inventory', [
             'title' => 'Apple iPhone 12 128 GB',
             'item_type' => 'used_phone',
