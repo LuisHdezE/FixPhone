@@ -70,7 +70,8 @@ final class MasterDataEndpointsTest extends TestCase
     public function test_brand_with_device_models_cannot_be_deleted(): void
     {
         $this->deleteJson('/api/v1/admin/master-data/brands/brand-huawei')
-            ->assertStatus(409);
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'Brand has associated device models and cannot be deleted.');
 
         $this->getJson('/api/v1/admin/master-data/brands')
             ->assertJsonFragment(['id' => 'brand-huawei']);
@@ -82,7 +83,8 @@ final class MasterDataEndpointsTest extends TestCase
     public function test_parent_category_with_children_cannot_be_deleted(): void
     {
         $this->deleteJson('/api/v1/admin/master-data/categories/cat-accessories')
-            ->assertStatus(409);
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'Item has child items and cannot be deleted.');
 
         $this->deleteJson('/api/v1/admin/master-data/categories/cat-accessories-chargers')->assertOk();
         $this->deleteJson('/api/v1/admin/master-data/categories/cat-accessories')->assertOk();
@@ -91,7 +93,8 @@ final class MasterDataEndpointsTest extends TestCase
     public function test_parent_spare_part_type_with_children_cannot_be_deleted(): void
     {
         $this->deleteJson('/api/v1/admin/master-data/sparePartTypes/part-display')
-            ->assertStatus(409);
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'Item has child items and cannot be deleted.');
 
         $this->deleteJson('/api/v1/admin/master-data/sparePartTypes/part-battery')->assertOk();
     }
