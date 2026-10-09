@@ -6,6 +6,7 @@ use App\Presentation\Http\Controllers\IamController;
 use App\Presentation\Http\Controllers\InventoryController;
 use App\Presentation\Http\Controllers\MasterDataController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
+use App\Presentation\Http\Controllers\RepairQuoteController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -36,6 +37,11 @@ Route::prefix('v1')->group(function (): void {
    Route::get('/',[DeviceValuationController::class,'index'])->name('api.v1.admin.valuations.index');
    Route::post('/',[DeviceValuationController::class,'store'])->name('api.v1.admin.valuations.store');
    Route::patch('/{id}',[DeviceValuationController::class,'update'])->name('api.v1.admin.valuations.update');
+  });
+
+  Route::prefix('admin/repair-quotes')->middleware('permission:repair_quotes.manage')->group(function (): void {
+   Route::get('/', [RepairQuoteController::class, 'index'])->name('api.v1.admin.repair-quotes.index');
+   Route::post('/', [RepairQuoteController::class, 'store'])->name('api.v1.admin.repair-quotes.store');
   });
 
   Route::prefix('admin')->middleware('permission:users.manage')->group(function (): void {
