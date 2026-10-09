@@ -31,6 +31,7 @@ FixPhone
 - Los registros históricos existentes quedan privados por la migración: `public_listing_status=draft`.
 - Publicar exige: equipo vinculado, inventario parts_donor con stock positivo, precio positivo, descripción significativa, imagen HTTPS y procedencia legítima confirmada.
 - La respuesta pública excluye: costo, mínimo aceptable, market_reference, notes, IMEI, metadata, created_by y URLs de Facebook privadas.
+- Endpoints existentes `/api/v1/admin/inventory` requieren sesión Sanctum; lectura `inventory.view`, alta `devices.intake`. Cliente React adaptado para usar el mismo bearer administrativo.
 - Cuando stock pasa a cero, el elemento desaparece del showroom aunque no se haya actualizado aún el estado de ValuPhone.
 - No se prometen garantías del equipo funcional ni desbloqueo de activación; verificar procedencia de cada unidad.
 - No incorporar automáticamente los teléfonos iCloud en anuncios de Meta ni feed/catálogos hasta revisión de políticas y elegibilidad.
