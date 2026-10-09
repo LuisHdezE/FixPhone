@@ -158,6 +158,8 @@ final class MasterDataController extends Controller
                     $errors['parentId'] = 'An item cannot be its own parent.';
                 } elseif (!$this->entryExists($kind, $parentId)) {
                     $errors['parentId'] = 'Selected parent does not exist.';
+                } elseif ($this->hasHierarchyCycle($kind, $id, $parentId)) {
+                    $errors['parentId'] = 'Master data hierarchy cannot contain cycles.';
                 }
             }
         }
@@ -187,6 +189,34 @@ final class MasterDataController extends Controller
             ->where('kind', $kind)
             ->whereKey($id)
             ->exists();
+    }
+
+    private function hasHierarchyCycle(string $kind, string $id, string $parentId): bool
+    {
+        $parents = MasterDataEntry::query()
+            ->where('kind', $kind)
+            ->get()
+            ->keyBy('id')
+            ->map(fn (MasterDataEntry $entry) => $entry->payload['parentId'] ?? null)
+            ->toArray();
+
+        $parents[$id] = $parentId;
+
+        $visited = [];
+        $current = $parentId;
+
+        while ($current !== null && $current !== '') {
+            if ($current === $id) {
+                return true;
+            }
+            if (isset($visited[$current])) {
+                break;
+            }
+            $visited[$current] = true;
+            $current = $parents[$current] ?? null;
+        }
+
+        return false;
     }
 
     /**

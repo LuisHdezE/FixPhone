@@ -156,4 +156,25 @@ final class MasterDataEndpointsTest extends TestCase
                 ->assertJsonPath('parentId', $existingId);
         }
     }
+
+    public function test_hierarchical_indirect_cycles_are_prevented(): void
+    {
+        // A -> B -> A
+        $this->patchJson('/api/v1/admin/master-data/categories/cat-spare-parts', [
+            'parentId' => 'cat-spare-parts-batteries',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('parentId');
+
+        // A -> B -> C -> A
+        $this->patchJson('/api/v1/admin/master-data/categories/cat-spare-parts', [
+            'parentId' => 'cat-spare-parts-batteries-apple',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('parentId');
+
+        // A -> B -> A for sparePartTypes
+        $this->patchJson('/api/v1/admin/master-data/sparePartTypes/part-display', [
+            'parentId' => 'part-display-oled',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('parentId');
+    }
 }
