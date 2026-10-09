@@ -14,7 +14,7 @@ API administrativa con `auth:sanctum` + `integrations.manage`:
 - PATCH `/api/v1/admin/media/storage-profiles/{id}`: editar, claves vacías preservan las actuales.
 - POST `/api/v1/admin/media/storage-profiles/{id}/select`: seleccionar uno, transaccional. Exige clave de acceso, secreto y URL pública configurados.
 
-Un perfil almacena: nombre, proveedor (`r2` en esta primera versión), bucket, endpoint S3 de la cuenta (sin /bucket), URL pública HTTPS opcional, prefijo de objetos, credenciales cifradas y selección. La configuración está en MySQL, no en los assets frontend, GitHub ni `.env` por cliente. El código backend dispone del resolvedor `MediaStorageProfileResolver`, que descifra los valores exclusivamente en servidor.
+Un perfil almacena: nombre, proveedor (`r2` en esta primera versión), bucket, endpoint S3 de la cuenta (sin /bucket), URL pública HTTPS opcional, prefijo de objetos, credenciales cifradas y selección. La configuración está en MySQL, no en los assets frontend, GitHub ni `.env` por cliente. La infraestructura backend dispone del resolvedor `MediaStorageProfileResolver`, que descifra los valores exclusivamente en servidor.
 
 ### Seguridad y límites
 
