@@ -43,7 +43,7 @@
       "showLabel": "Mostrar contraseña",
       "hideLabel": "Ocultar contraseña"
     },
-    "rememberMeLabel": "Recordarme en este dispositivo",
+    "rememberMeLabel": "Recordarme en este navegador (12 horas)",
     "forgotPassword": {
       "label": "¿Olvidaste tu contraseña?",
       "href": "/authentication/password-reset"
