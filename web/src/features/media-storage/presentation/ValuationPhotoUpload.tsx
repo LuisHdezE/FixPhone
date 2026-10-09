@@ -9,6 +9,7 @@ const uploadLabels: Record<UploadStep | 'optimization', string> = {
   optimization: 'Preparando fotografías y quitando metadatos…',
   authorization: 'Solicitando autorización segura a FixPhone…',
   r2: 'Enviando fotografía a Cloudflare R2…',
+  fallback: 'La conexión directa falló. Probando transferencia segura desde FixPhone…',
   verification: 'Comprobando que la fotografía llegó correctamente…',
 };
 
