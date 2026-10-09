@@ -5,6 +5,7 @@ use App\Presentation\Http\Controllers\AuthMeController;
 use App\Presentation\Http\Controllers\IamController;
 use App\Presentation\Http\Controllers\InventoryController;
 use App\Presentation\Http\Controllers\MasterDataController;
+use App\Presentation\Http\Controllers\DeviceValuationController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -30,6 +31,12 @@ Route::prefix('v1')->group(function (): void {
  Route::middleware('auth:sanctum')->group(function (): void {
   Route::post('/auth/logout',AuthLogoutController::class)->name('api.v1.auth.logout');
   Route::get('/auth/me',AuthMeController::class)->name('api.v1.auth.me');
+
+  Route::prefix('admin/valuations')->middleware('permission:valuation.manage')->group(function (): void {
+   Route::get('/',[DeviceValuationController::class,'index'])->name('api.v1.admin.valuations.index');
+   Route::post('/',[DeviceValuationController::class,'store'])->name('api.v1.admin.valuations.store');
+   Route::patch('/{id}',[DeviceValuationController::class,'update'])->name('api.v1.admin.valuations.update');
+  });
 
   Route::prefix('admin')->middleware('permission:users.manage')->group(function (): void {
    Route::get('/users',[IamController::class,'usersList'])->name('api.v1.admin.users.index');
