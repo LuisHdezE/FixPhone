@@ -9,7 +9,7 @@ final class PublishedPartsDonor
 {
     public static function query(): Builder
     {
-        return DeviceValuation::query()
+        return DeviceValuation::query()->with('verifiedPhotos')
             ->where('public_listing_status', 'published')
             ->where('provenance_confirmed', true)
             ->whereNotNull('public_image_url')
@@ -26,6 +26,10 @@ final class PublishedPartsDonor
     {
         // Whitelist intentionally excludes private notes, appraisal margins, client data,
         // purchase costs, inventory metadata, IMEI and Facebook account details.
+        $verified = $valuation->verifiedPhotos->pluck('public_url')->all();
+        $images = array_values(array_unique(array_merge(
+            [$valuation->public_image_url], $verified,
+        )));
         return [
             'id' => $valuation->id,
             'model_name' => $valuation->model_name,
@@ -43,6 +47,7 @@ final class PublishedPartsDonor
             'price_minor' => $valuation->asking_price_minor,
             'currency_code' => 'UYU',
             'image_url' => $valuation->public_image_url,
+            'images' => $images,
             'description' => $valuation->public_description,
             'availability' => 'available',
             'href' => '/store/for-parts/'.$valuation->id,
