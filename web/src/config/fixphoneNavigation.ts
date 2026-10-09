@@ -16,6 +16,7 @@ export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
       { label: 'Panel operativo', to: '/apps/inventory/dashboard' },
       { label: 'Equipos', to: '/apps/inventory/devices' },
       { label: 'Registrar equipo', to: '/apps/inventory/devices/new' },
+      { label: 'Presupuestos', to: '/admin/repair-quotes' },
       { label: 'Evaluación', to: '/apps/inventory/devices/evaluation' },
       { label: 'Diagnósticos', planned: true },
       { label: 'Órdenes de reparación', planned: true },
