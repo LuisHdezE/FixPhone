@@ -139,6 +139,26 @@ final class MediaStorageSettingsTest extends TestCase
         $this->assertStringNotContainsString('CUSTOMER-SECRET-KEY', $this->getJson('/api/v1/admin/media/storage-profiles')->getContent());
     }
 
+    public function test_changing_selected_destination_requires_reselection(): void
+    {
+        $this->signIn('owner');
+        $id = $this->postJson('/api/v1/admin/media/storage-profiles', $this->profile())
+            ->assertCreated()->json('data.id');
+        $this->postJson('/api/v1/admin/media/storage-profiles/'.$id.'/select')
+            ->assertOk()->assertJsonPath('data.is_selected', true);
+
+        $this->patchJson('/api/v1/admin/media/storage-profiles/'.$id, [
+            'name' => 'Nueva etiqueta',
+        ])->assertOk()->assertJsonPath('data.is_selected', true);
+
+        $this->patchJson('/api/v1/admin/media/storage-profiles/'.$id, [
+            'bucket' => 'new-client-bucket',
+        ])->assertOk()->assertJsonPath('data.is_selected', false);
+
+        $this->assertSame(0, MediaStorageProfile::query()->where('is_selected', true)->count());
+        $this->assertNull(app(MediaStorageProfileResolver::class)->selected());
+    }
+
     public function test_incomplete_profile_cannot_be_preferred(): void
     {
         $this->signIn('owner');
