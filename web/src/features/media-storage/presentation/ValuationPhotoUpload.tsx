@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { ValuationPhotosGateway } from '../infrastructure/ValuationPhotosGateway';
+import { ValuationPhotosGateway, type UploadStep } from '../infrastructure/ValuationPhotosGateway';
 import type { ValuationPhoto } from '../application/valuationPhotos.types';
 
 const gateway = new ValuationPhotosGateway();
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
+const uploadLabels: Record<UploadStep | 'optimization', string> = {
+  optimization: 'Preparando fotografías y quitando metadatos…',
+  authorization: 'Solicitando autorización segura a FixPhone…',
+  r2: 'Enviando fotografía a Cloudflare R2…',
+  fallback: 'La conexión directa falló. Probando transferencia segura desde FixPhone…',
+  verification: 'Comprobando que la fotografía llegó correctamente…',
+};
 
 async function optimizedPhoto(source: File): Promise<Blob> {
   if (source.size > MAX_SOURCE_BYTES) throw new Error('La imagen original no puede superar 20 MB.');
@@ -51,11 +58,17 @@ export function ValuationPhotoUpload({ valuationId, currentPrimaryUrl, onPrimary
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [step, setStep] = useState<UploadStep | 'optimization'>('optimization');
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [selectedNames, setSelectedNames] = useState('');
   const chooser = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setPhotos([]);
+    setPendingFiles([]);
+    setSelectedNames('');
     setError('');
     setMessage('');
     gateway.list(valuationId).then((data) => {
@@ -66,26 +79,38 @@ export function ValuationPhotoUpload({ valuationId, currentPrimaryUrl, onPrimary
     return () => { active = false; };
   }, [valuationId]);
 
-  async function upload(files: FileList | null) {
-    if (!files?.length) return;
+  async function upload(files: File[]) {
+    if (!files.length) return;
     setError('');
     setMessage('');
+    setPendingFiles([]);
+    setSelectedNames(files.map((file) => file.name).join(', '));
     setBusy(true);
     let currentPhotos = [...photos];
+    let completed = 0;
     try {
-      for (const file of Array.from(files)) {
+      for (const file of files) {
         if (currentPhotos.length >= 8) throw new Error('Máximo 8 fotografías por equipo.');
+        setStep('optimization');
         const cleanImage = await optimizedPhoto(file);
-        const saved = await gateway.upload(valuationId, cleanImage);
+        const saved = await gateway.upload(valuationId, cleanImage, setStep);
         currentPhotos = [...currentPhotos, saved];
+        completed++;
         setPhotos(currentPhotos);
         if (!currentPrimaryUrl && currentPhotos.length === 1) {
           onPrimaryChange(saved.url);
         }
       }
-      setMessage('Fotografías guardadas y verificadas en R2. Elegí una imagen principal si lo necesitás.');
+      setMessage('¡Listo! ' + completed + ' fotografía(s) confirmada(s) en Cloudflare R2. Podés elegir la imagen principal.');
+      setSelectedNames('');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'No se pudo subir la fotografía.');
+      const details = reason instanceof Error ? reason.message : 'No se pudo subir la fotografía.';
+      setError(details);
+      // Confirmation may have failed *after* a successful PUT. Never retry
+      // blindly in that case, since it could produce duplicate R2 objects.
+      if (!details.startsWith('La fotografía se envió a R2') && !details.startsWith('La foto llegó a R2')) {
+        setPendingFiles(files.slice(completed));
+      }
     } finally {
       setBusy(false);
       if (chooser.current) chooser.current.value = '';
@@ -106,12 +131,27 @@ export function ValuationPhotoUpload({ valuationId, currentPrimaryUrl, onPrimary
   }
 
   return <div className="rounded-lg border border-slate-200 bg-white p-3">
-    <h4 className="text-xs font-bold text-slate-900">Fotos reales de esta valoración</h4>
-    <p className="mt-1 text-[11px] leading-5 text-slate-600">Elegí fotografías de tu equipo. Se optimizan a WebP y se envían directamente a Cloudflare R2. El sistema elimina los metadatos de la cámara. Máximo 8 imágenes; hasta 20 MB por original.</p>
+    <h4 className="text-sm font-bold text-slate-900">Fotografías del equipo</h4>
+    <p className="mt-1 text-xs leading-5 text-slate-600">Agregá fotos reales desde tu computadora o celular. FixPhone las optimiza en formato WebP, elimina metadatos de la cámara y las guarda en Cloudflare R2. Hasta 8 fotos de 20 MB por archivo original.</p>
     <div className="mt-3 flex flex-wrap items-center gap-2">
-      <input ref={chooser} className="max-w-full text-xs" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy || photos.length >= 8} onChange={(event) => void upload(event.currentTarget.files)} />
-      {busy ? <span className="text-xs font-semibold">Subiendo y verificando…</span> : null}
+      <input ref={chooser} className="sr-only" type="file" aria-label="Seleccionar fotografías del equipo" accept="image/jpeg,image/png,image/webp" multiple disabled={busy || photos.length >= 8 || loading} onChange={(event) => void upload(Array.from(event.currentTarget.files ?? []))} />
+      <button
+        type="button"
+        className="inline-flex items-center gap-2 rounded-md bg-[var(--theme-primary)] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={busy || loading || photos.length >= 8}
+        onClick={() => chooser.current?.click()}
+      >
+        <span aria-hidden="true">＋</span> {photos.length ? 'Agregar más fotografías' : 'Agregar fotografías'}
+      </button>
+      <span className="text-xs text-slate-500">{photos.length}/8 fotografías</span>
+      {pendingFiles.length && !busy ? (
+        <button className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold" type="button" onClick={() => void upload(pendingFiles)}>
+          Reintentar {pendingFiles.length === 1 ? 'fotografía' : 'fotografías'}
+        </button>
+      ) : null}
     </div>
+    {selectedNames ? <p className="mt-2 break-words text-xs text-slate-600">Archivos seleccionados: {selectedNames}</p> : null}
+    {busy ? <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800" role="status">{uploadLabels[step]}</p> : null}
     {loading ? <p className="mt-3 text-xs">Consultando galería…</p> : null}
     {error ? <p role="alert" className="mt-3 rounded bg-rose-50 p-2 text-xs text-rose-800">{error}</p> : null}
     {message ? <p role="status" className="mt-3 rounded bg-emerald-50 p-2 text-xs text-emerald-800">{message}</p> : null}

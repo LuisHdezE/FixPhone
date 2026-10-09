@@ -40,6 +40,7 @@ Route::prefix('v1')->group(function (): void {
    Route::post('/', [MediaStorageSettingsController::class, 'store'])->name('api.v1.admin.media.storage.store');
    Route::patch('/{id}', [MediaStorageSettingsController::class, 'update'])->name('api.v1.admin.media.storage.update');
    Route::post('/{id}/select', [MediaStorageSettingsController::class, 'select'])->name('api.v1.admin.media.storage.select');
+   Route::post('/{id}/test', [MediaStorageSettingsController::class, 'testConnection'])->middleware('throttle:6,1')->name('api.v1.admin.media.storage.test');
   });
 
   Route::post('/auth/logout',AuthLogoutController::class)->name('api.v1.auth.logout');
@@ -52,6 +53,7 @@ Route::prefix('v1')->group(function (): void {
    Route::get('/{id}/photos',[ValuationPhotosController::class,'index'])->name('api.v1.admin.valuations.photos.index');
    Route::post('/{id}/photos/presign',[ValuationPhotosController::class,'presign'])->middleware('throttle:10,1')->name('api.v1.admin.valuations.photos.presign');
    Route::post('/{id}/photos/{photoId}/confirm',[ValuationPhotosController::class,'confirm'])->name('api.v1.admin.valuations.photos.confirm');
+   Route::post('/{id}/photos/{photoId}/relay',[ValuationPhotosController::class,'relay'])->middleware('throttle:10,1')->name('api.v1.admin.valuations.photos.relay');
    Route::post('/{id}/photos/{photoId}/primary',[ValuationPhotosController::class,'primary'])->name('api.v1.admin.valuations.photos.primary');
   });
 

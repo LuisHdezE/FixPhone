@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -169,6 +170,33 @@ final class MediaStorageSettingsTest extends TestCase
 
         $this->postJson('/api/v1/admin/media/storage-profiles/'.$id.'/select')
             ->assertUnprocessable()->assertJsonValidationErrors(['profile']);
+    }
+
+    public function test_connection_probe_checks_credentials_without_uploading_or_exposing_keys(): void
+    {
+        $this->signIn('owner');
+        $id = $this->postJson('/api/v1/admin/media/storage-profiles', $this->profile())
+            ->assertCreated()->json('data.id');
+
+        Http::fake(['*' => Http::response('', 404)]);
+        $response = $this->postJson('/api/v1/admin/media/storage-profiles/'.$id.'/test')
+            ->assertOk()->assertJsonPath('data.reachable', true);
+        $this->assertStringNotContainsString('PRIVATE-ACCESS-KEY-123', $response->getContent());
+        $this->assertStringNotContainsString('PRIVATE-SECRET-KEY-456', $response->getContent());
+        $this->assertNull(MediaStorageProfile::query()->findOrFail($id)->verified_at);
+        Http::assertSentCount(1);
+    }
+
+    public function test_connection_probe_rejects_bad_r2_credentials_without_changing_selected_profile(): void
+    {
+        $this->signIn('owner');
+        $id = $this->postJson('/api/v1/admin/media/storage-profiles', $this->profile())
+            ->assertCreated()->json('data.id');
+
+        Http::fake(['*' => Http::response('', 403)]);
+        $this->postJson('/api/v1/admin/media/storage-profiles/'.$id.'/test')
+            ->assertUnprocessable()->assertJsonValidationErrors(['profile']);
+        $this->assertNull(MediaStorageProfile::query()->findOrFail($id)->verified_at);
     }
 
     public function test_invalid_storage_endpoint_is_rejected(): void

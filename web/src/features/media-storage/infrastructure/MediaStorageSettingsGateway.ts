@@ -30,6 +30,14 @@ export class MediaStorageSettingsGateway {
     }))).data;
   }
 
+  async testConnection(id: string): Promise<string> {
+    const response = await adminFetch(
+      '/api/v1/admin/media/storage-profiles/' + encodeURIComponent(id) + '/test',
+      { method: 'POST' },
+    );
+    return (await decode<{ data: { reachable: boolean; detail: string } }>(response)).data.detail;
+  }
+
   async select(id: string): Promise<MediaStorageProfile> {
     return (await decode<ProfileResponse>(await adminFetch(
       '/api/v1/admin/media/storage-profiles/' + encodeURIComponent(id) + '/select',

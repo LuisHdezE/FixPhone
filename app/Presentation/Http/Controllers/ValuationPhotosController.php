@@ -97,6 +97,62 @@ final class ValuationPhotosController extends Controller
         ], 201)->header('Cache-Control', 'no-store');
     }
 
+    /**
+     * Fallback when browser-to-R2 is blocked by a network or CORS policy.
+     * Image is limited to 5MB, validated against an existing signed reservation,
+     * streamed through this request to R2 and never retained in cPanel storage.
+     */
+    public function relay(Request $request, string $id, string $photoId, R2Presigner $signer): JsonResponse
+    {
+        DeviceValuation::query()->findOrFail($id);
+        $photo = DeviceValuationPhoto::query()->where('device_valuation_id', $id)->findOrFail($photoId);
+        if ($photo->status !== 'pending' || $photo->upload_expires_at->isPast()) {
+            throw ValidationException::withMessages([
+                'photos' => 'Esta autorización de subida venció. Elegí la fotografía nuevamente.',
+            ]);
+        }
+
+        $validated = $request->validate([
+            'photo' => ['required', 'file', 'mimetypes:image/webp,image/jpeg,image/png', 'max:5120'],
+        ]);
+        /** @var \Illuminate\Http\UploadedFile $upload */
+        $upload = $validated['photo'];
+        if ($upload->getSize() !== $photo->byte_size ||
+            $upload->getMimeType() !== $photo->content_type) {
+            throw ValidationException::withMessages([
+                'photo' => 'La fotografía no coincide con el tipo y tamaño autorizados.',
+            ]);
+        }
+
+        $profile = MediaStorageProfile::query()->findOrFail($photo->media_storage_profile_id);
+        $putUrl = $signer->signedUrl(
+            $profile->endpoint_url, $profile->bucket, $photo->object_key,
+            Crypt::decryptString($profile->access_key_id_encrypted),
+            Crypt::decryptString($profile->secret_access_key_encrypted),
+            'PUT', 60, $photo->content_type,
+        );
+
+        try {
+            // PHP uses a temporary upload buffer, not permanent photo storage.
+            // Image size is strictly bounded to avoid exhausting hosting RAM.
+            $response = Http::timeout(25)->withoutRedirecting()
+                ->withBody(file_get_contents($upload->getRealPath()), $photo->content_type)
+                ->put($putUrl);
+        } catch (\Throwable) {
+            throw ValidationException::withMessages([
+                'photos' => 'Ni el navegador ni el servidor pudieron conectar con R2. Probá «Probar conexión» en Administración → Almacenamiento de imágenes.',
+            ]);
+        }
+        if (!$response->successful()) {
+            throw ValidationException::withMessages([
+                'photos' => 'R2 rechazó la transferencia alternativa (HTTP '.$response->status().'). Revisá permisos, bucket y endpoint.',
+            ]);
+        }
+
+        // One trusted HEAD validates the final object before it is listed.
+        return $this->confirm($id, $photoId, $signer);
+    }
+
     public function confirm(string $id, string $photoId, R2Presigner $signer): JsonResponse
     {
         DeviceValuation::query()->findOrFail($id);

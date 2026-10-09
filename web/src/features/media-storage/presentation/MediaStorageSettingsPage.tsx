@@ -96,10 +96,24 @@ export function MediaStorageSettingsPage() {
       const profile = await gateway.save(data, editingId ?? undefined);
       setEditingId(profile.id);
       setForm(forEdit(profile));
-      setNotice('Perfil guardado. Aún no se ha comprobado la conexión ni se ha subido ninguna fotografía.');
+      setNotice('Perfil guardado. Podés usar «Probar conexión» para verificar el acceso S3 sin subir una imagen.');
       await refresh();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudo guardar el perfil.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function testProfile(profile: MediaStorageProfile) {
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const detail = await gateway.testConnection(profile.id);
+      setNotice(profile.name + ': ' + detail);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No fue posible comprobar la conexión R2.');
     } finally {
       setBusy(false);
     }
@@ -128,7 +142,7 @@ export function MediaStorageSettingsPage() {
       {error ? <p role="alert" className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">{error}</p> : null}
       {notice ? <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">{notice}</p> : null}
       <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-950">
-        Esta pantalla guarda los perfiles en forma segura. <strong>No realiza todavía subidas de fotos ni comprueba la conexión.</strong> El siguiente módulo de carga usará el perfil seleccionado. Las fotografías existentes no cambian de ubicación automáticamente.
+        La conexión S3 puede probarse sin subir archivos. <strong>La prueba de conexión no sustituye a una subida real desde ValuPhone</strong>, que necesita además que CORS permita el origen de tu página. Las fotografías existentes no cambian de ubicación automáticamente.
       </div>
       <div className="grid gap-3 xl:grid-cols-[320px_minmax(0,1fr)]">
         <SurfaceCard>
@@ -150,6 +164,7 @@ export function MediaStorageSettingsPage() {
               <p className="text-[11px] text-slate-500">Conexión: {profile.connection_status === 'verified' ? 'R2 verificado con una fotografía real' : 'sin comprobar'}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <button className={button} type="button" onClick={() => edit(profile)}>Editar</button>
+                <button className={button} type="button" disabled={busy || !profile.has_credentials} onClick={() => void testProfile(profile)}>Probar conexión</button>
                 {!profile.is_selected ? <button className={button} disabled={busy || !profile.has_credentials || !profile.public_base_url} type="button" onClick={() => void selectProfile(profile)}>Elegir</button> : null}
               </div>
             </div>)}

@@ -10,6 +10,7 @@ use App\Infrastructure\Media\R2Presigner;
 use App\Infrastructure\Valuation\DeviceValuation;
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -220,6 +221,39 @@ final class ValuationPhotoUploadsTest extends TestCase
         $this->assertSame($newPhoto->public_url, $v->fresh()->public_image_url);
 
         $this->assertSame(2, count($this->getJson('/api/v1/admin/valuations/'.$v->id.'/photos')->json('data')));
+    }
+
+    public function test_relay_sends_small_verified_webp_to_original_bucket_without_publishing_device(): void
+    {
+        $this->auth();
+        $valuation = $this->valuation();
+        $this->profile();
+        $webp = base64_decode('UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoCAAIAAgA0JaQAA3AA/vuUAAA=');
+        $grant = $this->grant($valuation->id, strlen($webp));
+
+        Http::fake(['*' => Http::response('', 200, [
+            'Content-Type' => 'image/webp',
+            'Content-Length' => (string) strlen($webp),
+        ])]);
+        $response = $this->post(
+            '/api/v1/admin/valuations/'.$valuation->id.'/photos/'.$grant['id'].'/relay',
+            ['photo' => UploadedFile::fake()->createWithContent('camera.webp', $webp)],
+            ['Accept' => 'application/json'],
+        )->assertOk()->assertJsonPath('data.id', $grant['id']);
+
+        $this->assertStringNotContainsString('EXAMPLESECRETKEY123', $response->getContent());
+        $this->assertSame('confirmed', DeviceValuationPhoto::query()->findOrFail($grant['id'])->status);
+        $this->assertSame('draft', $valuation->fresh()->public_listing_status);
+        Http::assertSentCount(2);
+    }
+
+    public function test_relay_only_allows_matching_pending_small_image_and_valuation_permission(): void
+    {
+        $this->postJson('/api/v1/admin/valuations/unknown/photos/unknown/relay')
+            ->assertUnauthorized();
+        $this->auth('technician');
+        $this->postJson('/api/v1/admin/valuations/unknown/photos/unknown/relay')
+            ->assertForbidden();
     }
 
     public function test_expired_photo_cannot_be_verified(): void
