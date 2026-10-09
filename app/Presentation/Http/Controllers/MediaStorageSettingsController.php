@@ -52,7 +52,18 @@ final class MediaStorageSettingsController extends Controller
         ], $values));
 
         DB::transaction(function () use ($request, $profile, $values): void {
-            $profile->fill($this->safeFields($values) + $this->encryptedFields($values))->save();
+            $changedDestination = array_intersect(
+                array_keys($values),
+                ['provider', 'bucket', 'endpoint_url', 'public_base_url',
+                 'object_prefix', 'access_key_id', 'secret_access_key'],
+            ) !== [];
+            $profile->fill($this->safeFields($values) + $this->encryptedFields($values));
+            if ($changedDestination && $profile->is_selected) {
+                // A destination change must be consciously re-selected, never
+                // silently redirecting future uploads to a different bucket.
+                $profile->is_selected = false;
+            }
+            $profile->save();
             $this->audit($request, $profile, 'updated');
         });
 
