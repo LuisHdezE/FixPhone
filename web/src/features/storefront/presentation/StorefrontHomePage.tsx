@@ -35,6 +35,13 @@ export function StorefrontHomePage({ provider: _provider }: { provider: Storefro
         </div>
       </section>
 
+      <section className="rounded-xl border border-amber-200 bg-white p-5 shadow-sm">
+        <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Productos · Equipos para repuestos</p>
+        <h2 className="mt-2 text-xl font-black">Celulares con fallas, vendidos por unidad para repuestos</h2>
+        <p className="mt-2 text-sm text-slate-600">Consultá equipos reales con bloqueo iCloud, fallas de señal o placa, claramente separados de los celulares usados funcionales.</p>
+        <Link className="mt-4 inline-block rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white" to="/store/for-parts">Ver celulares para repuestos</Link>
+      </section>
+
       <section id="servicios" className="grid gap-6">
         <div className="text-center">
           <h2 className="text-3xl font-black tracking-tight text-slate-900">Servicios Principales</h2>
