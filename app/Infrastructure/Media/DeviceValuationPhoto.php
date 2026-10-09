@@ -10,6 +10,7 @@ final class DeviceValuationPhoto extends Model
     use HasUlids;
 
     protected $fillable = [
+        'id',
         'device_valuation_id', 'media_storage_profile_id', 'object_key',
         'public_url', 'content_type', 'byte_size', 'status', 'upload_expires_at',
     ];
