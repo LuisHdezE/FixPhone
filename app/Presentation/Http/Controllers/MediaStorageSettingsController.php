@@ -58,10 +58,13 @@ final class MediaStorageSettingsController extends Controller
                  'object_prefix', 'access_key_id', 'secret_access_key'],
             ) !== [];
             $profile->fill($this->safeFields($values) + $this->encryptedFields($values));
-            if ($changedDestination && $profile->is_selected) {
-                // A destination change must be consciously re-selected, never
-                // silently redirecting future uploads to a different bucket.
-                $profile->is_selected = false;
+            if ($changedDestination) {
+                // Verification belongs to these exact connection settings.
+                $profile->verified_at = null;
+                if ($profile->is_selected) {
+                    // Never redirect future uploads to a changed destination silently.
+                    $profile->is_selected = false;
+                }
             }
             $profile->save();
             $this->audit($request, $profile, 'updated');
