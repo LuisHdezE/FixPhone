@@ -53,6 +53,7 @@ Route::prefix('v1')->group(function (): void {
    Route::get('/{id}/photos',[ValuationPhotosController::class,'index'])->name('api.v1.admin.valuations.photos.index');
    Route::post('/{id}/photos/presign',[ValuationPhotosController::class,'presign'])->middleware('throttle:10,1')->name('api.v1.admin.valuations.photos.presign');
    Route::post('/{id}/photos/{photoId}/confirm',[ValuationPhotosController::class,'confirm'])->name('api.v1.admin.valuations.photos.confirm');
+   Route::post('/{id}/photos/{photoId}/relay',[ValuationPhotosController::class,'relay'])->middleware('throttle:10,1')->name('api.v1.admin.valuations.photos.relay');
    Route::post('/{id}/photos/{photoId}/primary',[ValuationPhotosController::class,'primary'])->name('api.v1.admin.valuations.photos.primary');
   });
 
