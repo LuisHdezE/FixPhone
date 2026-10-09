@@ -112,11 +112,7 @@ final class DeviceValuationEndpointsTest extends TestCase
 
         $this->assertSame(1, InventoryItem::query()->count());
         $this->assertSame('no_publicable', $device->fresh()->publication_status);
-        $this->assertSame(1, DeviceValuationCount());
+        $this->assertDatabaseCount('device_valuations', 1);
     }
 }
 
-function DeviceValuationCount(): int
-{
-    return DB::table('device_valuations')->count();
-}
