@@ -3,11 +3,13 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Media\MediaStorageProfile;
+use App\Infrastructure\Media\R2Presigner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -95,6 +97,55 @@ final class MediaStorageSettingsController extends Controller
         });
 
         return response()->json(['data' => $selected->safeSummary()]);
+    }
+
+    /**
+     * Non-destructive connectivity check: a signed HEAD for a guaranteed-absent
+     * object should return 404 with valid R2 credentials. We do not write data,
+     * leak the presigned URL, or mark photo-upload verification complete.
+     */
+    public function testConnection(string $id, R2Presigner $signer): JsonResponse
+    {
+        $profile = MediaStorageProfile::query()->findOrFail($id);
+        if (!filled($profile->access_key_id_encrypted) || !filled($profile->secret_access_key_encrypted)) {
+            throw ValidationException::withMessages(['profile' => 'Guardá las credenciales R2 antes de probar la conexión.']);
+        }
+
+        $probe = trim($profile->object_prefix, '/').'/_connection_test/'.(string) Str::ulid().'.webp';
+        $url = $signer->signedUrl(
+            $profile->endpoint_url,
+            $profile->bucket,
+            ltrim($probe, '/'),
+            Crypt::decryptString($profile->access_key_id_encrypted),
+            Crypt::decryptString($profile->secret_access_key_encrypted),
+            'HEAD',
+            60,
+        );
+
+        try {
+            $response = Http::timeout(10)->withoutRedirecting()->head($url);
+        } catch (\Throwable) {
+            throw ValidationException::withMessages([
+                'profile' => 'El servidor de FixPhone no pudo comunicarse con la API de Cloudflare R2. Revisá conectividad y firewall del hosting.',
+            ]);
+        }
+
+        if ($response->status() === 404) {
+            return response()->json([
+                'data' => [
+                    'reachable' => true,
+                    'detail' => 'La API R2 respondió al control de lectura firmado. La subida desde el navegador aún debe probarse por separado.',
+                ],
+            ])->header('Cache-Control', 'no-store');
+        }
+
+        throw ValidationException::withMessages([
+            'profile' => match ($response->status()) {
+                401, 403 => 'R2 rechazó el control firmado (HTTP '.$response->status().'). Revisá el endpoint, bucket y permisos del token.',
+                429 => 'Cloudflare limitó temporalmente las solicitudes. Volvé a intentar en unos minutos.',
+                default => 'R2 devolvió HTTP '.$response->status().' en la prueba de conexión. Revisá la configuración.',
+            },
+        ]);
     }
 
     private function rules(bool $partial): array
