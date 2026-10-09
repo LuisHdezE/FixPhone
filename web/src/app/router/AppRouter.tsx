@@ -23,6 +23,7 @@ import { MasterDataBrandsPage, MasterDataCategoriesPage, MasterDataDeviceModelsP
 import { MasterDataColorsPage, MasterDataConditionsPage, MasterDataRamCapacitiesPage, MasterDataSparePartTypesPage, MasterDataStorageCapacitiesPage } from '@/features/master-data/presentation/ExtendedMasterDataAdminPages';
 import { JsonStorefrontProvider } from '@/features/storefront/infrastructure/JsonStorefrontProvider';
 import { StorefrontCartPage } from '@/features/storefront/presentation/StorefrontCartPage';
+import { PartsDonorCatalogPage, PartsDonorDetailPage } from '@/features/storefront/presentation/PartsDonorPages';
 import { StorefrontCatalogPage } from '@/features/storefront/presentation/StorefrontCatalogPage';
 import { StorefrontCheckoutPage } from '@/features/storefront/presentation/StorefrontCheckoutPage';
 import { StorefrontContactPage } from '@/features/storefront/presentation/StorefrontContactPage';
@@ -120,6 +121,8 @@ export function AppRouter() {
         <Route path="store/products" element={<StorefrontProductListingPage provider={storefrontProvider} />} />
         <Route path="store/spare-parts" element={<StorefrontCatalogPage provider={storefrontProvider} routeKey="spare-parts" />} />
         <Route path="store/used-phones" element={<StorefrontCatalogPage provider={storefrontProvider} routeKey="used-phones" />} />
+        <Route path="store/for-parts" element={<PartsDonorCatalogPage />} />
+        <Route path="store/for-parts/:id" element={<PartsDonorDetailPage />} />
         <Route path="store/brands" element={<StorefrontCatalogPage provider={storefrontProvider} routeKey="brands" />} />
         <Route path="store/categories/:category" element={<StorefrontCatalogPage provider={storefrontProvider} />} />
         <Route path="store/products/:slug" element={<StorefrontProductDetailPage provider={storefrontProvider} />} />
