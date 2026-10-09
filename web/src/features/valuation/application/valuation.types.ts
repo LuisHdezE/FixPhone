@@ -19,6 +19,10 @@ export interface DeviceValuation {
   notes: string | null;
   facebook_copy: string | null;
   facebook_post_url: string | null;
+  public_listing_status: 'draft' | 'published';
+  public_image_url: string | null;
+  public_description: string | null;
+  provenance_confirmed: boolean;
   created_at: string;
   updated_at: string;
 }
