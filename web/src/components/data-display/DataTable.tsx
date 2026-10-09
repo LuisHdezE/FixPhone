@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+﻿import { useMemo, useState, type ReactNode } from 'react';
 import { SearchField } from '@/components/forms/SearchField';
 import { SelectField } from '@/components/forms/SelectField';
 
@@ -44,7 +44,7 @@ export function DataTable<Row>({
   caption,
   searchable = false,
   searchLabel = 'Buscar',
-  searchPlaceholder = 'Buscar…',
+  searchPlaceholder = 'Buscarâ€¦',
   filters = [],
   selectable = false,
   pageSizeOptions = [10, 25, 50],
@@ -127,9 +127,9 @@ export function DataTable<Row>({
   const hasControls = searchable || filters.length > 0 || selectable || pageSizeOptions.length > 1;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white" data-data-table>
-      {hasControls ? <div className="border-b border-slate-200 bg-slate-50/60 p-3">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_repeat(2,minmax(150px,220px))_auto]">
+    <div className="overflow-hidden rounded-md border border-slate-200 bg-white" data-data-table>
+      {hasControls ? <div className="border-b border-slate-200 bg-slate-50/60 p-2.5">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_repeat(2,minmax(150px,220px))_auto]">
           {searchable ? <SearchField id="data-table-search" label={searchLabel} onChange={(value) => { setQuery(value); resetPage(); }} placeholder={searchPlaceholder} value={query} /> : null}
           {filters.map((filter) => <SelectField
             id={`data-table-filter-${filter.id}`}
@@ -146,26 +146,26 @@ export function DataTable<Row>({
             options={pageSizeOptions.map((size) => ({ value: String(size), label: String(size) }))}
             value={String(pageSize)}
           />
-          <button className="self-end rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" onClick={resetControls} type="button">Restablecer</button>
+          <button className="self-end rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" onClick={resetControls} type="button">Restablecer</button>
         </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
           <span data-data-table-count>{processedRows.length} de {rows.length} registros</span>
           {selectable ? <span className="font-semibold text-slate-700" data-data-table-selected>{selectedIds.size} seleccionados</span> : null}
         </div>
       </div> : null}
 
       <div className="overflow-x-auto">
-        <table className="min-w-[720px] w-full border-collapse text-left text-sm">
+        <table className="min-w-[720px] w-full border-collapse text-left text-xs">
           {caption ? <caption className="sr-only">{caption}</caption> : null}
           <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.07em] text-slate-500">
             <tr>
-              {selectable ? <th className="w-12 px-4 py-3" scope="col">
+              {selectable ? <th className="w-10 px-2.5 py-2" scope="col">
                 <input aria-label="Seleccionar filas visibles" checked={allVisibleSelected} onChange={toggleVisible} type="checkbox" />
               </th> : null}
               {columns.map((column) => (
-                <th className={`px-4 py-3 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id} scope="col">
+                <th className={`px-2.5 py-2 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id} scope="col">
                   {column.sortable && column.sortValue ? <button className="inline-flex items-center gap-1 font-semibold uppercase tracking-[0.07em] hover:text-slate-800" onClick={() => toggleSort(column)} type="button">
-                    {column.header}<span aria-hidden="true">{sort?.id === column.id ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}</span>
+                    {column.header}<span aria-hidden="true">{sort?.id === column.id ? (sort.direction === 'asc' ? 'â†‘' : 'â†“') : 'â†•'}</span>
                   </button> : column.header}
                 </th>
               ))}
@@ -175,20 +175,20 @@ export function DataTable<Row>({
             {pageRows.length > 0 ? pageRows.map((row) => {
               const id = getRowId(row);
               return <tr className="transition hover:bg-slate-50/80" key={id}>
-                {selectable ? <td className="px-4 py-3"><input aria-label={`Seleccionar ${id}`} checked={selectedIds.has(id)} onChange={() => toggleRow(id)} type="checkbox" /></td> : null}
-                {columns.map((column) => <td className={`px-4 py-3 align-middle text-slate-600 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id}>{column.cell(row)}</td>)}
+                {selectable ? <td className="px-2.5 py-2"><input aria-label={`Seleccionar ${id}`} checked={selectedIds.has(id)} onChange={() => toggleRow(id)} type="checkbox" /></td> : null}
+                {columns.map((column) => <td className={`px-2.5 py-2 align-middle text-slate-600 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id}>{column.cell(row)}</td>)}
               </tr>;
-            }) : <tr><td className="px-4 py-10 text-center text-sm text-slate-500" colSpan={columns.length + (selectable ? 1 : 0)}>{emptyMessage}</td></tr>}
+            }) : <tr><td className="px-2.5 py-8 text-center text-xs text-slate-500" colSpan={columns.length + (selectable ? 1 : 0)}>{emptyMessage}</td></tr>}
           </tbody>
         </table>
       </div>
 
-      {hasControls ? <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
-        <span>Página {safePage} de {pageCount}</span>
+      {hasControls ? <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-2.5 py-2 text-xs text-slate-500">
+        <span>PÃ¡gina {safePage} de {pageCount}</span>
         <div className="flex items-center gap-1" data-data-table-pagination>
-          <button className="rounded-md border border-slate-200 px-2.5 py-1.5 disabled:opacity-40" disabled={safePage <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} type="button">Anterior</button>
+          <button className="rounded-md border border-slate-200 px-2 py-1 disabled:opacity-40" disabled={safePage <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} type="button">Anterior</button>
           {Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button aria-current={number === safePage ? 'page' : undefined} className={`rounded-md border px-2.5 py-1.5 ${number === safePage ? 'border-brand-300 bg-brand-50 font-semibold text-brand-700' : 'border-slate-200 text-slate-600'}`} key={number} onClick={() => setPage(number)} type="button">{number}</button>)}
-          <button className="rounded-md border border-slate-200 px-2.5 py-1.5 disabled:opacity-40" disabled={safePage >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))} type="button">Siguiente</button>
+          <button className="rounded-md border border-slate-200 px-2 py-1 disabled:opacity-40" disabled={safePage >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))} type="button">Siguiente</button>
         </div>
       </div> : null}
     </div>

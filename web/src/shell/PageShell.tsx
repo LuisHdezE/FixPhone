@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactNode } from 'react';
+﻿import type { PropsWithChildren, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { AppIcon } from '@/components/AppIcon';
 
@@ -31,10 +31,10 @@ export function PageShell({ title, description, breadcrumbs, actions, children }
         ))}
       </nav>
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-slate-900">{title}</h1>
-          <p className="mt-1 max-w-3xl text-[12px] leading-5 text-slate-500">{description}</p>
+          <h1 className="text-[18px] font-semibold tracking-[-0.02em] text-slate-900">{title}</h1>
+          <p className="mt-0.5 max-w-3xl text-[12px] leading-4 text-slate-500">{description}</p>
         </div>
         {actions ? <div className="shrink-0">{actions}</div> : null}
       </div>
@@ -46,15 +46,15 @@ export function PageShell({ title, description, breadcrumbs, actions, children }
 
 export function PendingViewCard() {
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+    <div className="rounded-md border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
       <div className="flex items-start gap-3">
-        <div className="grid size-9 shrink-0 place-items-center rounded-md bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]">
+        <div className="grid size-8 shrink-0 place-items-center rounded-md bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]">
           <AppIcon className="size-[18px]" name="layers" />
         </div>
         <div>
-          <h2 className="text-[13px] font-semibold text-slate-900">Vista preparada para construcción</h2>
+          <h2 className="text-[13px] font-semibold text-slate-900">Vista preparada para construcciÃ³n</h2>
           <p className="mt-1 max-w-2xl text-[12px] leading-5 text-slate-500">
-            La ruta ya forma parte de FixPhone. Sus componentes se incorporarán por etapas y se habilitarán cuando exista flujo funcional real.
+            La ruta ya forma parte de FixPhone. Sus componentes se incorporarÃ¡n por etapas y se habilitarÃ¡n cuando exista flujo funcional real.
           </p>
         </div>
       </div>
