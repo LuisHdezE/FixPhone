@@ -5,7 +5,7 @@ import { JsonPasswordResetContentProvider } from '@/features/authentication/pass
 import { MockPasswordResetGateway } from '@/features/authentication/password-reset/infrastructure/MockPasswordResetGateway';
 import { PasswordResetPage } from '@/features/authentication/password-reset/presentation/PasswordResetPage';
 import { JsonSignInContentProvider } from '@/features/authentication/sign-in/infrastructure/JsonSignInContentProvider';
-import { MockSignInGateway } from '@/features/authentication/sign-in/infrastructure/MockSignInGateway';
+import { ApiSignInGateway } from '@/features/authentication/sign-in/infrastructure/ApiSignInGateway';
 import { SignInPage } from '@/features/authentication/sign-in/presentation/SignInPage';
 import { JsonTwoFactorContentProvider } from '@/features/authentication/two-factor/infrastructure/JsonTwoFactorContentProvider';
 import { MockTwoFactorGateway } from '@/features/authentication/two-factor/infrastructure/MockTwoFactorGateway';
@@ -34,6 +34,7 @@ import { StorefrontProductListingPage } from '@/features/storefront/presentation
 import { StorefrontSessionProvider } from '@/features/storefront/presentation/StorefrontSessionContext';
 import { StorefrontShippingPage } from '@/features/storefront/presentation/StorefrontShippingPage';
 import { StorefrontWarrantyPage } from '@/features/storefront/presentation/StorefrontWarrantyPage';
+import { ValuPhonePage } from '@/features/valuation/presentation/ValuPhonePage';
 import { AccountSettingsPage } from '@/features/user/presentation/AccountSettingsPage';
 import { UserProfilePage } from '@/features/user/presentation/UserProfilePage';
 import { CustomerDirectoryView } from '@/customers/CustomerDirectoryView';
@@ -45,7 +46,7 @@ import { StorefrontShell } from '@/shell/StorefrontShell';
 const passwordResetContentProvider = new JsonPasswordResetContentProvider();
 const passwordResetGateway = new MockPasswordResetGateway();
 const signInContentProvider = new JsonSignInContentProvider();
-const signInGateway = new MockSignInGateway();
+const signInGateway = new ApiSignInGateway();
 const twoFactorContentProvider = new JsonTwoFactorContentProvider();
 const twoFactorGateway = new MockTwoFactorGateway();
 const inventoryDemoProvider = new JsonInventoryDemoProvider();
@@ -150,6 +151,7 @@ export function AppRouter() {
         <Route path="admin/master-data/ram-capacities" element={<MasterDataRamCapacitiesPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
         <Route path="admin/master-data/conditions" element={<MasterDataConditionsPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
         <Route path="admin/master-data/spare-part-types" element={<MasterDataSparePartTypesPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
+        <Route path="admin/valuations" element={<ValuPhonePage />} />
         <Route path="user/profile" element={<UserProfilePage />} />
         <Route path="user/account-settings" element={<AccountSettingsPage />} />
       </Route>
