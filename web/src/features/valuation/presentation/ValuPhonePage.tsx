@@ -142,14 +142,14 @@ export function ValuPhonePage() {
     }
   }
   if (!hasSession) {
-    return <PageShell breadcrumbs={[{ label: 'Comercial' }, { label: 'ValuPhone' }]} title="ValuPhone" description="Valoraciones individuales para FixPhone.">
+    return <PageShell breadcrumbs={[{ label: 'Operación' }, { label: 'ValuPhone' }]} title="ValuPhone" description="Valoraciones individuales para FixPhone.">
       <SurfaceCard><p className="text-xs">Esta herramienta requiere una sesión administrativa autorizada.</p>
         <Link className="mt-2 inline-block rounded-md bg-[var(--theme-primary)] px-3 py-2 text-xs text-white" to="/authentication/sign-in">Iniciar sesión</Link>
       </SurfaceCard>
     </PageShell>;
   }
 
-  return <PageShell breadcrumbs={[{ label: 'Comercial' }, { label: 'ValuPhone' }]} title="ValuPhone" description="Valorar un teléfono por vez y preparar anuncios de FixPhone para Facebook.">
+  return <PageShell breadcrumbs={[{ label: 'Operación' }, { label: 'ValuPhone' }]} title="ValuPhone" description="Valorar un teléfono por vez y preparar anuncios de FixPhone para Facebook.">
     <div className="grid gap-3" data-valuations>
       {error ? <p className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800" role="alert">{error}</p> : null}
       {notice ? <p className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800" role="status">{notice}</p> : null}
@@ -160,18 +160,23 @@ export function ValuPhonePage() {
         </div>
         <form onSubmit={save}>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <label className={label}>Equipo de inventario (opcional)
+            <label className={label}>Equipo ya registrado en inventario (opcional)
               <select className={input} value={form.inventoryId} onChange={(e) => {
                 const device = devices.find((value) => value.id === e.target.value);
                 setForm((current) => ({ ...current, inventoryId: e.target.value, model: device?.model || current.model }));
               }}>
-                <option value="">No vinculado</option>
+                <option value="">No vinculado: valorar sin crear inventario</option>
                 {devices.map((d) => <option key={d.id} value={d.id}>{d.sku || d.id.slice(0, 8)} · {d.model || d.title}</option>)}
               </select>
             </label>
-            <label className={label}>Modelo (del 6 al 17 y posteriores)
-              <input className={input} list="fixphone-model-list" required value={form.model} onChange={(e) => change('model', e.target.value)} />
-              <datalist id="fixphone-model-list">{iphoneModels.map((m) => <option key={m} value={m} />)}</datalist>
+            <label className={label}>Modelo (iPhone 6 al 17, todas las variantes)
+              <select aria-label="Seleccionar modelo de iPhone" className={input} value={iphoneModels.includes(form.model) ? form.model : '__other__'} onChange={(e) => change('model', e.target.value === '__other__' ? '' : e.target.value)}>
+                {iphoneModels.map((m) => <option key={m} value={m}>{m}</option>)}
+                <option value="__other__">Otro modelo / modelo futuro…</option>
+              </select>
+              {!iphoneModels.includes(form.model) ? (
+                <input aria-label="Escribir otro modelo de teléfono" className={input} placeholder="Ej.: iPhone 18 o un modelo especial" required value={form.model} onChange={(e) => change('model', e.target.value)} />
+              ) : null}
             </label>
             <label className={label}>Falla
               <select className={input} value={form.fault} onChange={(e) => change('fault', e.target.value as FaultType)}>
