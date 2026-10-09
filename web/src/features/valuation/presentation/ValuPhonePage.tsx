@@ -144,7 +144,7 @@ export function ValuPhonePage() {
   if (!hasSession) {
     return <PageShell breadcrumbs={[{ label: 'Operación' }, { label: 'ValuPhone' }]} title="ValuPhone" description="Valoraciones individuales para FixPhone.">
       <SurfaceCard><p className="text-xs">Esta herramienta requiere una sesión administrativa autorizada.</p>
-        <Link className="mt-2 inline-block rounded-md bg-[var(--theme-primary)] px-3 py-2 text-xs text-white" to="/authentication/sign-in">Iniciar sesión</Link>
+        <Link className="mt-2 inline-block rounded-md bg-[var(--theme-primary)] px-3 py-2 text-xs text-white" to="/authentication/sign-in" state={{ from: '/admin/valuations' }}>Iniciar sesión</Link>
       </SurfaceCard>
     </PageShell>;
   }
