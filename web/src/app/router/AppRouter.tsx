@@ -37,6 +37,7 @@ import { StorefrontShippingPage } from '@/features/storefront/presentation/Store
 import { StorefrontWarrantyPage } from '@/features/storefront/presentation/StorefrontWarrantyPage';
 import { ValuPhonePage } from '@/features/valuation/presentation/ValuPhonePage';
 import { RepairQuotesPage } from '@/features/repair-quotes/presentation/RepairQuotesPage';
+import { MediaStorageSettingsPage } from '@/features/media-storage/presentation/MediaStorageSettingsPage';
 import { AccountSettingsPage } from '@/features/user/presentation/AccountSettingsPage';
 import { UserProfilePage } from '@/features/user/presentation/UserProfilePage';
 import { CustomerDirectoryView } from '@/customers/CustomerDirectoryView';
@@ -157,6 +158,7 @@ export function AppRouter() {
         <Route path="admin/master-data/spare-part-types" element={<MasterDataSparePartTypesPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
         <Route path="admin/valuations" element={<ValuPhonePage />} />
         <Route path="admin/repair-quotes" element={<RepairQuotesPage />} />
+        <Route path="admin/settings/media-storage" element={<MediaStorageSettingsPage />} />
         <Route path="user/profile" element={<UserProfilePage />} />
         <Route path="user/account-settings" element={<AccountSettingsPage />} />
       </Route>
