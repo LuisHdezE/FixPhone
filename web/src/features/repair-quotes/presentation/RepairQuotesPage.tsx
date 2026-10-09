@@ -156,7 +156,7 @@ export function RepairQuotesPage() {
   if (!authorized) {
     return <PageShell breadcrumbs={[{ label: 'Operación' }, { label: 'Presupuestos' }]} title="Presupuestos" description="Calculadora de reparaciones FixPhone">
       <SurfaceCard><p className="text-xs text-slate-600">Ingresá con una cuenta administrativa para usar la calculadora y guardar presupuestos.</p>
-        <Link className="mt-2 inline-block rounded-md bg-[var(--theme-primary)] px-3 py-2 text-xs text-white" to="/authentication/sign-in">Iniciar sesión</Link>
+        <Link className="mt-2 inline-block rounded-md bg-[var(--theme-primary)] px-3 py-2 text-xs text-white" to="/authentication/sign-in" state={{ from: '/admin/repair-quotes' }}>Iniciar sesión</Link>
       </SurfaceCard>
     </PageShell>;
   }
