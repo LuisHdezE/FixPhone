@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { endAdminSession } from '@/auth/adminApiSession';
+import type { AdminPrincipal } from '@/auth/AuthenticatedAdminShell';
 import { Link, NavLink, Outlet } from 'react-router';
 import { AppIcon } from '@/components/AppIcon';
 import { fixPhoneNavigation } from '@/config/fixphoneNavigation';
@@ -10,7 +11,7 @@ function navClass({ isActive }: { isActive: boolean }) {
     ? 'bg-[var(--theme-primary-soft)] text-[var(--theme-primary)]'
     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`;
 }
-export function FixPhoneAdminShell() {
+export function FixPhoneAdminShell({ principal }: { principal: AdminPrincipal }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   async function logout() {
@@ -64,10 +65,14 @@ export function FixPhoneAdminShell() {
           </button>
           <ThemeColorPicker />
           <details className="relative">
-            <summary className="grid size-8 cursor-pointer list-none place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900" aria-label="Men+¦ de usuario">
+            <summary className="grid size-8 cursor-pointer list-none place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900" aria-label={'Menú de usuario: ' + principal.name}>
               <AppIcon className="size-4" name="user" />
             </summary>
             <div className="absolute right-0 top-10 z-[70] w-44 rounded-md border border-slate-200 bg-white py-1 text-[12px] text-slate-700 shadow-xl">
+              <div className="border-b border-slate-100 px-3 py-2">
+                <p className="truncate text-xs font-semibold text-slate-900">{principal.name}</p>
+                <p className="truncate text-[11px] text-slate-500">{principal.email}</p>
+              </div>
               <Link className="block px-3 py-1.5 hover:bg-slate-50" to="/user/profile">Perfil</Link>
               <Link className="block px-3 py-1.5 hover:bg-slate-50" to="/user/account-settings">Configuraci+¦n</Link>
               <button className="block w-full px-3 py-1.5 text-left hover:bg-slate-50" type="button" onClick={() => void logout()}>Cerrar sesión</button>
