@@ -35,7 +35,7 @@ function storedRememberedToken(): string | null {
 }
 
 export function adminToken(): string | null {
-  return sessionStorage.getItem(SESSION_KEY) || storedRememberedToken();
+  return storedRememberedToken() || sessionStorage.getItem(SESSION_KEY);
 }
 
 export function clearAdminToken(): void {
