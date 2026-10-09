@@ -91,7 +91,7 @@ final class ValuationPhotoUploadsTest extends TestCase
     public function test_admin_permissions_and_missing_active_profile(): void
     {
         $this->postJson('/api/v1/admin/valuations/abc/photos/presign', [])->assertUnauthorized();
-        $this->auth('sales_operator');
+        $this->auth('technician');
         $this->postJson('/api/v1/admin/valuations/abc/photos/presign', [])->assertForbidden();
     }
 
