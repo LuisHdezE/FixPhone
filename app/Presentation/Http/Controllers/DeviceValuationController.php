@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Valuation\DeviceValuation;
+use App\Infrastructure\Inventory\InventoryItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -24,6 +25,7 @@ final class DeviceValuationController extends Controller
     {
         $validated = $request->validate($this->rules(false));
         $this->checkPrices($validated);
+        $this->checkPublicListing($validated);
         $item = DB::transaction(function () use ($request, $validated): DeviceValuation {
             $item = DeviceValuation::query()->create([
                 ...$validated,
@@ -39,10 +41,14 @@ final class DeviceValuationController extends Controller
     {
         $item = DeviceValuation::query()->findOrFail($id);
         $validated = $request->validate($this->rules(true));
-        $this->checkPrices(array_merge($item->only([
+        $current = array_merge($item->only([
             'estimated_min_minor', 'estimated_max_minor', 'asking_price_minor',
-            'minimum_price_minor', 'publication_status',
-        ]), $validated));
+            'minimum_price_minor', 'publication_status', 'inventory_item_id',
+            'public_listing_status', 'public_image_url', 'public_description',
+            'provenance_confirmed',
+        ]), $validated);
+        $this->checkPrices($current);
+        $this->checkPublicListing($current);
 
         DB::transaction(function () use ($request, $item, $validated): void {
             $item->fill($validated)->save();
@@ -74,7 +80,44 @@ final class DeviceValuationController extends Controller
             'notes' => ['sometimes', 'nullable', 'string', 'max:4000'],
             'facebook_copy' => ['sometimes', 'nullable', 'string', 'max:4000'],
             'facebook_post_url' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'public_listing_status' => ['sometimes', Rule::in(['draft', 'published'])],
+            'public_image_url' => ['sometimes', 'nullable', 'url', 'starts_with:https://', 'max:2048'],
+            'public_description' => ['sometimes', 'nullable', 'string', 'max:1500'],
+            'provenance_confirmed' => ['sometimes', 'boolean'],
         ];
+    }
+
+    private function checkPublicListing(array $values): void
+    {
+        if (($values['public_listing_status'] ?? 'draft') !== 'published') {
+            return;
+        }
+
+        $error = [];
+        if (empty($values['provenance_confirmed'])) {
+            $error['provenance_confirmed'] = 'Confirmá que el equipo tiene procedencia legítima.';
+        }
+        if (empty($values['public_description']) || mb_strlen(trim($values['public_description'])) < 20) {
+            $error['public_description'] = 'Describí el estado real del equipo (mínimo 20 caracteres).';
+        }
+        if (empty($values['public_image_url'])) {
+            $error['public_image_url'] = 'Ingresá una URL HTTPS de una fotografía real.';
+        }
+        if (empty($values['asking_price_minor']) || $values['asking_price_minor'] <= 0) {
+            $error['asking_price_minor'] = 'Indicá un precio de venta mayor que cero.';
+        }
+        $inventory = isset($values['inventory_item_id'])
+            ? InventoryItem::query()->find($values['inventory_item_id'])
+            : null;
+        if ($inventory === null ||
+            !in_array($inventory->item_type, ['device', 'used_phone'], true) ||
+            $inventory->inventory_purpose !== 'parts_donor' ||
+            $inventory->stock_quantity < 1) {
+            $error['inventory_item_id'] = 'Vinculá un teléfono del inventario marcado para repuestos y con stock.';
+        }
+        if ($error) {
+            throw ValidationException::withMessages($error);
+        }
     }
 
     private function checkPrices(array $values): void

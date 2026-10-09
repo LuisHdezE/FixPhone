@@ -27,12 +27,22 @@
         "href": "/store/used-phones"
       },
       {
+        "id": "for-parts",
+        "label": "Para repuestos",
+        "href": "/store/for-parts"
+      },
+      {
         "id": "brands",
         "label": "Marcas",
         "href": "/store/brands"
       }
     ],
     "categoryNav": [
+      {
+        "id": "for-parts",
+        "label": "Equipos para repuestos",
+        "href": "/store/for-parts"
+      },
       {
         "id": "displays",
         "label": "Displays",
@@ -90,6 +100,11 @@
             "id": "footer-used-phones",
             "label": "Celulares usados",
             "href": "/store/used-phones"
+          },
+          {
+            "id": "footer-for-parts",
+            "label": "Equipos para repuestos",
+            "href": "/store/for-parts"
           }
         ]
       },

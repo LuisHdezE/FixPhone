@@ -10,6 +10,8 @@ type Form = {
   model: string; inventoryId: string; fault: FaultType; screen: ScreenCondition; power: PowerState;
   low: string; high: string; asking: string; minimum: string; status: PublicationStatus;
   source: string; notes: string; ad: string; postUrl: string;
+  publicStatus: 'draft' | 'published'; publicImageUrl: string;
+  publicDescription: string; provenanceConfirmed: boolean;
 };
 type DeviceOption = { id: string; sku?: string; model?: string; title: string };
 const gateway = new ApiValuationGateway();
@@ -17,6 +19,7 @@ const initial: Form = {
   model: 'iPhone 11', inventoryId: '', fault: 'icloud', screen: 'unknown', power: 'unknown',
   low: '', high: '', asking: '', minimum: '', status: 'draft',
   source: '', notes: '', ad: '', postUrl: '',
+  publicStatus: 'draft', publicImageUrl: '', publicDescription: '', provenanceConfirmed: false,
 };
 const iphoneModels = [
   'iPhone 6', 'iPhone 6 Plus', 'iPhone 6s', 'iPhone 6s Plus', 'iPhone SE (1.ª gen.)',
@@ -63,6 +66,8 @@ function fromRow(row: DeviceValuation): Form {
     asking: cash(row.asking_price_minor), minimum: cash(row.minimum_price_minor),
     status: row.publication_status, source: row.market_reference ?? '',
     notes: row.notes ?? '', ad: row.facebook_copy ?? '', postUrl: row.facebook_post_url ?? '',
+    publicStatus: row.public_listing_status, publicImageUrl: row.public_image_url ?? '',
+    publicDescription: row.public_description ?? '', provenanceConfirmed: row.provenance_confirmed,
   };
 }
 function payload(f: Form): ValuationPayload {
@@ -74,6 +79,10 @@ function payload(f: Form): ValuationPayload {
     publication_status: f.status, market_reference: f.source.trim() || null,
     notes: f.notes.trim() || null, facebook_copy: f.ad.trim() || null,
     facebook_post_url: f.postUrl.trim() || null,
+    public_listing_status: f.publicStatus,
+    public_image_url: f.publicImageUrl.trim() || null,
+    public_description: f.publicDescription.trim() || null,
+    provenance_confirmed: f.provenanceConfirmed,
   };
 }
 function createAd(f: Form): string {
@@ -223,6 +232,36 @@ export function ValuPhonePage() {
               <textarea className={input + ' min-h-16 py-2'} value={form.notes} onChange={(e) => change('notes', e.target.value)} />
             </label>
           </div>
+          <section className="mt-4 grid gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Ficha pública para compartir en Facebook</h3>
+              <p className="mt-1 text-xs text-slate-700">Esta publicación es independiente del estado del anuncio de Facebook. No se activa hasta que la autorices y cumplas los requisitos de seguridad.</p>
+            </div>
+            <label className={label}>URL HTTPS de foto REAL de esta unidad
+              <input className={input} type="url" placeholder="https://.../iphone-real.jpg" value={form.publicImageUrl} onChange={(e) => change('publicImageUrl', e.target.value)} />
+            </label>
+            <p className="text-[11px] text-slate-600">Usá una foto tuya con enlace HTTPS público. No se admiten imágenes genéricas ni enlaces a carpetas privadas. La carga directa de imágenes queda para el próximo bloque.</p>
+            <label className={label}>Descripción pública del estado (sin datos privados)
+              <textarea className={input + ' min-h-24 py-2'} maxLength={1500} placeholder="Ej.: iPhone 11 para repuestos. Bloqueo de activación iCloud. Enciende, pantalla comprobada... No se garantiza uso como teléfono." value={form.publicDescription} onChange={(e) => change('publicDescription', e.target.value)} />
+            </label>
+            <label className="flex items-start gap-2 text-xs font-semibold text-slate-800">
+              <input type="checkbox" className="mt-0.5" checked={form.provenanceConfirmed} onChange={(e) => change('provenanceConfirmed', e.target.checked)} />
+              <span>Confirmo la procedencia legítima del equipo y que la publicación describe honestamente sus fallas y limitaciones.</span>
+            </label>
+            <label className={label}>Visibilidad en la tienda FixPhone
+              <select className={input} value={form.publicStatus} onChange={(e) => change('publicStatus', e.target.value as 'draft' | 'published')}>
+                <option value="draft">Privada (borrador)</option>
+                <option value="published">Publicar ficha visible en la web</option>
+              </select>
+            </label>
+            <p className="text-[11px] text-slate-700">Para publicar necesitás vincular arriba un equipo real de inventario clasificado como <strong>para repuestos</strong>, con stock, precio en UYU, foto HTTPS real y descripción. Las notas y valores internos jamás se mostrarán.</p>
+            {id && form.publicStatus === 'published' ? (
+              <Link className="w-fit rounded-md border border-amber-300 bg-white px-3 py-2 text-xs font-bold" to={'/store/for-parts/' + id} target="_blank" rel="noopener noreferrer">
+                Abrir ficha pública individual ↗
+              </Link>
+            ) : null}
+          </section>
+
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <strong className="text-xs">Texto para publicar en Facebook</strong>
             <div className="flex gap-2">

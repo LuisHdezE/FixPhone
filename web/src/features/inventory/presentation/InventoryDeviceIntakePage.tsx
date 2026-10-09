@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { adminFetch } from '@/auth/adminApiSession';
 import { Link } from 'react-router';
 import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SelectField } from '@/components/forms/SelectField';
@@ -217,7 +218,7 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
         },
       };
 
-      const response = await fetch('/api/v1/admin/inventory', {
+      const response = await adminFetch('/api/v1/admin/inventory', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
