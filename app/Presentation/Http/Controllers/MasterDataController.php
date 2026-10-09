@@ -175,11 +175,11 @@ final class MasterDataController extends Controller
     private function assertDeletable(string $kind, string $id): void
     {
         if ($kind === 'brands' && $this->hasDependents('deviceModels', 'brandId', $id)) {
-            abort(409, 'Brand has associated device models and cannot be deleted.');
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json(['message' => 'Brand has associated device models and cannot be deleted.'], 409));
         }
 
         if (in_array($kind, self::HIERARCHICAL_KINDS, true) && $this->hasDependents($kind, 'parentId', $id)) {
-            abort(409, 'Item has child items and cannot be deleted.');
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json(['message' => 'Item has child items and cannot be deleted.'], 409));
         }
     }
 
