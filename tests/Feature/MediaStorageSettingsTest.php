@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Application\Media\MediaStorageProfileResolver;
+use App\Infrastructure\Media\MediaStorageProfileResolver;
 use App\Infrastructure\Identity\User;
 use App\Infrastructure\Media\MediaStorageProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
