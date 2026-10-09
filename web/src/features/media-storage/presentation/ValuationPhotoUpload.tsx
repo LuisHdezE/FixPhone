@@ -151,7 +151,7 @@ export function ValuationPhotoUpload({ valuationId, currentPrimaryUrl, onPrimary
       ) : null}
     </div>
     {selectedNames ? <p className="mt-2 break-words text-xs text-slate-600">Archivos seleccionados: {selectedNames}</p> : null}
-    {busy ? <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800" role="status">{uploadLabels[step]}</p> : null>
+    {busy ? <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800" role="status">{uploadLabels[step]}</p> : null}
     {loading ? <p className="mt-3 text-xs">Consultando galería…</p> : null}
     {error ? <p role="alert" className="mt-3 rounded bg-rose-50 p-2 text-xs text-rose-800">{error}</p> : null}
     {message ? <p role="status" className="mt-3 rounded bg-emerald-50 p-2 text-xs text-emerald-800">{message}</p> : null}
