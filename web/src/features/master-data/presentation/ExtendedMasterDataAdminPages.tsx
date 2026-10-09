@@ -1,4 +1,5 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+﻿import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { AppIcon, type AppIconName } from '@/components/AppIcon';
 import { DataTable, type DataTableColumn } from '@/components/data-display/DataTable';
 import { StatusBadge } from '@/components/data-display/StatusBadge';
 import { SelectField } from '@/components/forms/SelectField';
@@ -83,7 +84,7 @@ function PersistenceNote() {
 
 function ModalShell({ children, title, onClose }: { children: ReactNode; title: string; onClose: () => void }) {
   return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-3" role="dialog" aria-modal="true" aria-label={title}>
-    <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white shadow-2xl">
+    <div className="w-full max-w-4xl rounded-md border border-slate-200 bg-white shadow-2xl">
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
         <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
         <button className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-900" onClick={onClose} type="button">Cerrar</button>
@@ -95,12 +96,12 @@ function ModalShell({ children, title, onClose }: { children: ReactNode; title: 
 
 function FormModal({ title, children, onSubmit, onCancel, submitLabel, error }: { title: string; children: ReactNode; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; submitLabel: string; error?: string | null }) {
   return <ModalShell title={title} onClose={onCancel}>
-    <form className="p-4" data-extended-master-data-form onSubmit={onSubmit}>
+    <form className="p-3" data-extended-master-data-form onSubmit={onSubmit}>
       {error ? <div className="mb-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700" role="alert">{error}</div> : null}
-      <div className="grid gap-2 md:grid-cols-2">{children}</div>
-      <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900" onClick={onCancel} type="button">Cancelar</button>
-        <button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" type="submit">{submitLabel}</button>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{children}</div>
+      <div className="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <button className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900" onClick={onCancel} type="button">Cancelar</button>
+        <button className="rounded-md bg-[var(--theme-primary)] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" type="submit">{submitLabel}</button>
       </div>
     </form>
   </ModalShell>;
@@ -112,17 +113,26 @@ function ConfirmDialog({ action, onCancel }: { action: ConfirmAction; onCancel: 
   return <ModalShell title={action.title} onClose={onCancel}>
     <div className="p-4">
       <p className="text-xs leading-5 text-slate-600">{action.message}</p>
-      <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50" onClick={onCancel} type="button">Cancelar</button>
-        <button className={`rounded-md px-3 py-1.5 text-xs font-semibold text-white transition ${buttonClass}`} onClick={() => void action.onConfirm()} type="button">{action.confirmLabel}</button>
+      <div className="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <button className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50" onClick={onCancel} type="button">Cancelar</button>
+        <button className={`rounded-md px-2.5 py-1.5 text-xs font-semibold text-white transition ${buttonClass}`} onClick={() => void action.onConfirm()} type="button">{action.confirmLabel}</button>
       </div>
     </div>
   </ModalShell>;
 }
 
+function actionIcon(label: ReactNode): AppIconName {
+  const text = String(label);
+  if (text === 'Editar') return 'edit';
+  if (text === 'Eliminar') return 'trash';
+  if (text === 'Activar' || text === 'Desactivar') return 'power';
+  return 'settings';
+}
+
 function ActionButton({ children, onClick, tone = 'neutral' }: { children: ReactNode; onClick: () => void; tone?: 'neutral' | 'warning' | 'danger' }) {
   const classes = tone === 'danger' ? 'border-rose-200 text-rose-600 hover:bg-rose-50' : tone === 'warning' ? 'border-amber-200 text-amber-700 hover:bg-amber-50' : 'border-slate-200 text-slate-600 hover:bg-slate-50';
-  return <button className={`rounded border px-2 py-1 text-[11px] font-semibold transition ${classes}`} onClick={onClick} type="button">{children}</button>;
+  const label = String(children);
+  return <button aria-label={label} className={`grid size-7 place-items-center rounded border transition ${classes}`} onClick={onClick} title={label} type="button"><AppIcon className="size-3.5" name={actionIcon(children)} /><span className="sr-only">{label}</span></button>;
 }
 
 function BooleanSelect({ id, label, value, onChange }: { id: string; label: string; value: boolean; onChange: (value: boolean) => void }) {
@@ -190,10 +200,10 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
     if (config.supportsSlug && !slug) { setError('El slug es obligatorio.'); return; }
     if (!value) { setError(`${config.valueLabel} es obligatorio.`); return; }
     if ((config.kind === 'storageCapacities' || config.kind === 'ramCapacities') && (!Number.isInteger(Number(value)) || Number(value) <= 0)) {
-      setError('La capacidad debe ser un número entero mayor que cero.');
+      setError('La capacidad debe ser un nÃºmero entero mayor que cero.');
       return;
     }
-    if (config.supportsParent && form.id && parentId === form.id) { setError('Un elemento no puede ser padre de sí mismo.'); return; }
+    if (config.supportsParent && form.id && parentId === form.id) { setError('Un elemento no puede ser padre de sÃ­ mismo.'); return; }
     if (config.supportsSlug && items.some((item) => item.slug === slug && item.id !== form.id)) { setError('Ya existe un elemento con ese slug.'); return; }
 
     const simplePayload = { name, slug, value, description: form.description.trim(), parentId, active: form.active, sortOrder: form.sortOrder };
@@ -216,7 +226,7 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
   function requestToggle(item: SimpleMasterDataItem) {
     setConfirmAction({
       title: item.active ? `Desactivar ${config.singularLabel.toLocaleLowerCase()}` : `Activar ${config.singularLabel.toLocaleLowerCase()}`,
-      message: `${item.active ? 'Desactivar' : 'Activar'} ${item.name} en el catálogo maestro.`,
+      message: `${item.active ? 'Desactivar' : 'Activar'} ${item.name} en el catÃ¡logo maestro.`,
       confirmLabel: item.active ? 'Desactivar' : 'Activar',
       tone: 'warning',
       onConfirm: async () => {
@@ -258,25 +268,25 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
 
   const columns: readonly DataTableColumn<SimpleMasterDataItem>[] = [
     { id: 'name', header: 'Nombre', cell: (item) => <div><strong className="text-slate-900">{item.name}</strong><div className="text-xs text-slate-400">{item.id}</div></div>, sortable: true, sortValue: (item) => item.name, searchValue: (item) => textSearch([item.name, item.slug, item.id]) },
-    ...(config.supportsParent ? [{ id: 'parent', header: config.parentLabel ?? 'Padre', cell: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : 'Raíz', sortable: true, sortValue: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : '', searchValue: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : '' }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
+    ...(config.supportsParent ? [{ id: 'parent', header: config.parentLabel ?? 'Padre', cell: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : 'RaÃ­z', sortable: true, sortValue: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : '', searchValue: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : '' }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
     { id: 'value', header: config.valueLabel, cell: (item) => <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{item.value}</code>, sortable: true, sortValue: (item) => item.value, searchValue: (item) => item.value },
-    ...(config.supportsDescription ? [{ id: 'description', header: config.descriptionLabel ?? 'Descripción', cell: (item: SimpleMasterDataItem) => <span className="text-xs leading-5 text-slate-500">{item.description || 'Sin descripción'}</span>, searchValue: (item: SimpleMasterDataItem) => item.description }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
+    ...(config.supportsDescription ? [{ id: 'description', header: config.descriptionLabel ?? 'DescripciÃ³n', cell: (item: SimpleMasterDataItem) => <span className="text-xs leading-5 text-slate-500">{item.description || 'Sin descripciÃ³n'}</span>, searchValue: (item: SimpleMasterDataItem) => item.description }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
     ...(config.supportsSlug ? [{ id: 'slug', header: 'Slug', cell: (item: SimpleMasterDataItem) => <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{item.slug}</code>, sortable: true, sortValue: (item: SimpleMasterDataItem) => item.slug, searchValue: (item: SimpleMasterDataItem) => item.slug }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
     { id: 'status', header: 'Estado', cell: (item) => status(item.active), sortable: true, sortValue: (item) => Number(item.active), searchValue: (item) => (item.active ? 'activo' : 'inactivo') },
     { id: 'sortOrder', header: 'Orden', cell: (item) => item.sortOrder, align: 'right', sortable: true, sortValue: (item) => item.sortOrder, searchValue: (item) => String(item.sortOrder) },
     { id: 'actions', header: 'Acciones', cell: (item) => <div className="flex flex-wrap gap-1"><ActionButton onClick={() => editItem(item)}>Editar</ActionButton><ActionButton onClick={() => requestToggle(item)} tone="warning">{item.active ? 'Desactivar' : 'Activar'}</ActionButton><ActionButton onClick={() => requestDelete(item)} tone="danger">Eliminar</ActionButton></div> },
   ];
 
-  return <PageShell actions={<button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" data-extended-master-data-create onClick={newItem} type="button">{config.createLabel}</button>} breadcrumbs={[{ label: 'Admin' }, { label: 'Datos Maestros' }, { label: config.title }]} description={config.description} title={config.title}>
+  return <PageShell actions={<button className="rounded-md bg-[var(--theme-primary)] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" data-extended-master-data-create onClick={newItem} type="button">{config.createLabel}</button>} breadcrumbs={[{ label: 'Admin' }, { label: 'Datos Maestros' }, { label: config.title }]} description={config.description} title={config.title}>
     <div className="grid gap-3" data-extended-master-data={config.kind} data-testid={config.dataAttribute}>
       <PersistenceNote /><AdminNotice notice={notice} />
-      <DataTable caption={config.title} columns={columns} emptyMessage="No hay datos para mostrar." getRowId={(item) => item.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={items} searchable searchLabel={`Buscar ${config.title.toLocaleLowerCase()}`} searchPlaceholder="Buscar por nombre, slug, valor o estado…" />
+      <DataTable caption={config.title} columns={columns} emptyMessage="No hay datos para mostrar." getRowId={(item) => item.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={items} searchable searchLabel={`Buscar ${config.title.toLocaleLowerCase()}`} searchPlaceholder="Buscar por nombre, slug, valor o estadoâ€¦" />
       {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveItem(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? `Editar ${config.singularLabel.toLocaleLowerCase()}` : config.createLabel}>
         {config.supportsParent ? <SelectField id={`${config.kind}-parent`} label={config.parentLabel ?? 'Padre'} onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={parentOptions.filter((option) => option.value !== form.id)} value={form.parentId ?? ''} /> : null}
         <TextField id={`${config.kind}-name`} label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id={`${config.kind}-value`} label={config.valueLabel} onChange={(value) => setForm((current) => current ? { ...current, value } : current)} placeholder={config.valuePlaceholder} value={form.value} />
         {config.supportsSlug ? <TextField id={`${config.kind}-slug`} label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} /> : null}
-        {config.supportsDescription ? <div className="md:col-span-2"><TextAreaField id={`${config.kind}-description`} label={config.descriptionLabel ?? 'Descripción'} onChange={(value) => setForm((current) => current ? { ...current, description: value } : current)} value={form.description} /></div> : null}
+        {config.supportsDescription ? <div className="md:col-span-2"><TextAreaField id={`${config.kind}-description`} label={config.descriptionLabel ?? 'DescripciÃ³n'} onChange={(value) => setForm((current) => current ? { ...current, description: value } : current)} value={form.description} /></div> : null}
         <TextField id={`${config.kind}-sort-order`} label="Orden" onChange={(value) => setForm((current) => current ? { ...current, sortOrder: toSortOrder(value) } : current)} value={String(form.sortOrder)} />
         <BooleanSelect id={`${config.kind}-active`} label="Estado" onChange={(value) => setForm((current) => current ? { ...current, active: value } : current)} value={form.active} />
       </FormModal> : null}
@@ -289,7 +299,7 @@ export function MasterDataColorsPage({ masterDataProvider, gateway, onChanged }:
   return <SimpleMasterDataPage gateway={gateway} onChanged={onChanged} config={{
     kind: 'colors',
     title: 'Colores',
-    description: 'Catálogo canónico de colores para equipos, variantes y filtros comerciales.',
+    description: 'CatÃ¡logo canÃ³nico de colores para equipos, variantes y filtros comerciales.',
     createLabel: 'Nuevo color',
     singularLabel: 'Color',
     dataAttribute: 'master-data-colors',
@@ -332,13 +342,13 @@ export function MasterDataConditionsPage({ masterDataProvider, gateway, onChange
   return <SimpleMasterDataPage gateway={gateway} onChanged={onChanged} config={{
     kind: 'conditions',
     title: 'Condiciones',
-    description: 'Estados comerciales y operativos normalizados para inventario y catálogo.',
-    createLabel: 'Nueva condición',
-    singularLabel: 'Condición',
+    description: 'Estados comerciales y operativos normalizados para inventario y catÃ¡logo.',
+    createLabel: 'Nueva condiciÃ³n',
+    singularLabel: 'CondiciÃ³n',
     dataAttribute: 'master-data-conditions',
     valueLabel: 'Grado',
     valuePlaceholder: 'A',
-    descriptionLabel: 'Descripción',
+    descriptionLabel: 'DescripciÃ³n',
     supportsSlug: true,
     supportsDescription: true,
     initialItems: masterDataProvider.getConditions().map((condition) => ({ id: condition.id, name: condition.name, slug: condition.slug, value: condition.grade, description: condition.description, parentId: null, active: condition.active, sortOrder: condition.sortOrder })),

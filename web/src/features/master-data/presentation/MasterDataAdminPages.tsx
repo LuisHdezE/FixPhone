@@ -1,4 +1,5 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+﻿import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { AppIcon, type AppIconName } from '@/components/AppIcon';
 import { DataTable, type DataTableColumn } from '@/components/data-display/DataTable';
 import { StatusBadge } from '@/components/data-display/StatusBadge';
 import { SelectField } from '@/components/forms/SelectField';
@@ -58,7 +59,7 @@ function PersistenceNote() {
 
 function ModalShell({ children, title, onClose }: { children: ReactNode; title: string; onClose: () => void }) {
   return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-3" role="dialog" aria-modal="true" aria-label={title}>
-    <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white shadow-2xl">
+    <div className="w-full max-w-4xl rounded-md border border-slate-200 bg-white shadow-2xl">
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
         <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
         <button className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-900" onClick={onClose} type="button">Cerrar</button>
@@ -84,12 +85,12 @@ function FormModal({
   error?: string | null;
 }) {
   return <ModalShell title={title} onClose={onCancel}>
-    <form className="p-4" data-master-data-form onSubmit={onSubmit}>
+    <form className="p-3" data-master-data-form onSubmit={onSubmit}>
       {error ? <div className="mb-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700" role="alert">{error}</div> : null}
-      <div className="grid gap-2 md:grid-cols-2">{children}</div>
-      <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900" onClick={onCancel} type="button">Cancelar</button>
-        <button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" type="submit">{submitLabel}</button>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{children}</div>
+      <div className="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <button className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900" onClick={onCancel} type="button">Cancelar</button>
+        <button className="rounded-md bg-[var(--theme-primary)] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" type="submit">{submitLabel}</button>
       </div>
     </form>
   </ModalShell>;
@@ -101,9 +102,9 @@ function ConfirmDialog({ action, onCancel }: { action: ConfirmAction; onCancel: 
   return <ModalShell title={action.title} onClose={onCancel}>
     <div className="p-4">
       <p className="text-xs leading-5 text-slate-600">{action.message}</p>
-      <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50" onClick={onCancel} type="button">Cancelar</button>
-        <button className={`rounded-md px-3 py-1.5 text-xs font-semibold text-white transition ${buttonClass}`} onClick={() => void action.onConfirm()} type="button">{action.confirmLabel}</button>
+      <div className="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <button className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50" onClick={onCancel} type="button">Cancelar</button>
+        <button className={`rounded-md px-2.5 py-1.5 text-xs font-semibold text-white transition ${buttonClass}`} onClick={() => void action.onConfirm()} type="button">{action.confirmLabel}</button>
       </div>
     </div>
   </ModalShell>;
@@ -114,7 +115,7 @@ function BooleanSelect({
   label,
   value,
   onChange,
-  trueLabel = 'Sí',
+  trueLabel = 'SÃ­',
   falseLabel = 'No',
 }: {
   id: string;
@@ -127,12 +128,21 @@ function BooleanSelect({
   return <SelectField id={id} label={label} onChange={(next) => onChange(next === 'true')} options={[{ value: 'true', label: trueLabel }, { value: 'false', label: falseLabel }]} value={String(value) as 'true' | 'false'} />;
 }
 
-function ActionButton({ children, onClick, tone = 'neutral' }: { children: ReactNode; onClick: () => void; tone?: 'neutral' | 'warning' | 'danger' }) {
-  const classes = tone === 'danger' ? 'border-rose-200 text-rose-600 hover:bg-rose-50' : tone === 'warning' ? 'border-amber-200 text-amber-700 hover:bg-amber-50' : 'border-slate-200 text-slate-600 hover:bg-slate-50';
-  return <button className={`rounded border px-2 py-1 text-[11px] font-semibold transition ${classes}`} onClick={onClick} type="button">{children}</button>;
+function actionIcon(label: ReactNode): AppIconName {
+  const text = String(label);
+  if (text === 'Editar') return 'edit';
+  if (text === 'Eliminar') return 'trash';
+  if (text === 'Activar' || text === 'Desactivar') return 'power';
+  return 'settings';
 }
 
-const PrimaryAction = ({ children, onClick }: { children: ReactNode; onClick: () => void }) => <button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" data-master-data-create onClick={onClick} type="button">{children}</button>;
+function ActionButton({ children, onClick, tone = 'neutral' }: { children: ReactNode; onClick: () => void; tone?: 'neutral' | 'warning' | 'danger' }) {
+  const classes = tone === 'danger' ? 'border-rose-200 text-rose-600 hover:bg-rose-50' : tone === 'warning' ? 'border-amber-200 text-amber-700 hover:bg-amber-50' : 'border-slate-200 text-slate-600 hover:bg-slate-50';
+  const label = String(children);
+  return <button aria-label={label} className={`grid size-7 place-items-center rounded border transition ${classes}`} onClick={onClick} title={label} type="button"><AppIcon className="size-3.5" name={actionIcon(children)} /><span className="sr-only">{label}</span></button>;
+}
+
+const PrimaryAction = ({ children, onClick }: { children: ReactNode; onClick: () => void }) => <button className="rounded-md bg-[var(--theme-primary)] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" data-master-data-create onClick={onClick} type="button">{children}</button>;
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'No se pudo guardar el cambio.';
@@ -187,7 +197,7 @@ export function MasterDataBrandsPage({ masterDataProvider, viewProvider, gateway
   function requestToggleBrand(brand: MasterDataBrandDto) {
     setConfirmAction({
       title: brand.active ? 'Desactivar marca' : 'Activar marca',
-      message: `${brand.active ? 'Desactivar' : 'Activar'} ${brand.name} en el catálogo maestro.`,
+      message: `${brand.active ? 'Desactivar' : 'Activar'} ${brand.name} en el catÃ¡logo maestro.`,
       confirmLabel: brand.active ? 'Desactivar' : 'Activar',
       tone: 'warning',
       onConfirm: async () => {
@@ -297,7 +307,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
   function requestToggleModel(model: MasterDataDeviceModelDto) {
     setConfirmAction({
       title: model.active ? 'Desactivar modelo' : 'Activar modelo',
-      message: `${model.active ? 'Desactivar' : 'Activar'} ${model.name} en el catálogo maestro.`,
+      message: `${model.active ? 'Desactivar' : 'Activar'} ${model.name} en el catÃ¡logo maestro.`,
       confirmLabel: model.active ? 'Desactivar' : 'Activar',
       tone: 'warning',
       onConfirm: async () => {
@@ -339,7 +349,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
   const columns: readonly DataTableColumn<MasterDataDeviceModelDto>[] = [
     { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'Modelo', cell: (model) => <div><strong className="text-slate-900">{model.name}</strong><div className="text-xs text-slate-400">{model.id}</div></div>, sortable: true, sortValue: (model) => model.name, searchValue: (model) => textSearch([model.name, model.slug, model.id]) },
     { id: 'brand', header: view.columns.find((column) => column.id === 'brand')?.header ?? 'Marca', cell: (model) => brandsById.get(model.brandId)?.name ?? model.brandId, sortable: true, sortValue: (model) => brandsById.get(model.brandId)?.name ?? model.brandId, searchValue: (model) => brandsById.get(model.brandId)?.name ?? model.brandId },
-    { id: 'code', header: view.columns.find((column) => column.id === 'code')?.header ?? 'Código', cell: (model) => model.modelCode ?? 'Sin código', sortable: true, sortValue: (model) => model.modelCode ?? '', searchValue: (model) => model.modelCode ?? '' },
+    { id: 'code', header: view.columns.find((column) => column.id === 'code')?.header ?? 'CÃ³digo', cell: (model) => model.modelCode ?? 'Sin cÃ³digo', sortable: true, sortValue: (model) => model.modelCode ?? '', searchValue: (model) => model.modelCode ?? '' },
     { id: 'slug', header: view.columns.find((column) => column.id === 'slug')?.header ?? 'Slug', cell: (model) => <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{model.slug}</code>, sortable: true, sortValue: (model) => model.slug, searchValue: (model) => model.slug },
     { id: 'status', header: view.columns.find((column) => column.id === 'status')?.header ?? 'Estado', cell: (model) => status(model.active), sortable: true, sortValue: (model) => Number(model.active), searchValue: (model) => (model.active ? 'activo' : 'inactivo') },
     { id: 'sortOrder', header: view.columns.find((column) => column.id === 'sortOrder')?.header ?? 'Orden', cell: (model) => model.sortOrder, align: 'right', sortable: true, sortValue: (model) => model.sortOrder, searchValue: (model) => String(model.sortOrder) },
@@ -354,7 +364,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
         <SelectField id="model-brand" label="Marca" onChange={(value) => setForm((current) => current ? { ...current, brandId: value } : current)} options={brands.map((brand) => ({ value: brand.id, label: brand.name }))} value={form.brandId} />
         <TextField id="model-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id="model-slug" label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} />
-        <TextField id="model-code" label="Código" onChange={(value) => setForm((current) => current ? { ...current, modelCode: value } : current)} value={form.modelCode ?? ''} />
+        <TextField id="model-code" label="CÃ³digo" onChange={(value) => setForm((current) => current ? { ...current, modelCode: value } : current)} value={form.modelCode ?? ''} />
         <TextField id="model-sort-order" label="Orden" onChange={(value) => setForm((current) => current ? { ...current, sortOrder: toSortOrder(value) } : current)} value={String(form.sortOrder)} />
         <BooleanSelect id="model-active" label="Estado" onChange={(value) => setForm((current) => current ? { ...current, active: value } : current)} value={form.active} trueLabel="Activo" falseLabel="Inactivo" />
       </FormModal> : null}
@@ -389,8 +399,8 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
     const slug = normalizeSlug(form.slug || name);
     const parentId = form.parentId || null;
     if (!name || !slug) { setError('Nombre y slug son obligatorios.'); return; }
-    if (form.id && parentId === form.id) { setError('Una categoría no puede ser padre de sí misma.'); return; }
-    if (categories.some((category) => category.slug === slug && category.id !== form.id)) { setError('Ya existe una categoría con ese slug.'); return; }
+    if (form.id && parentId === form.id) { setError('Una categorÃ­a no puede ser padre de sÃ­ misma.'); return; }
+    if (categories.some((category) => category.slug === slug && category.id !== form.id)) { setError('Ya existe una categorÃ­a con ese slug.'); return; }
 
     const payload = {
       parentId,
@@ -409,7 +419,7 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
         : await gateway.create<MasterDataCategoryDto>('categories', payload);
       setCategories((current) => form.id ? current.map((category) => category.id === saved.id ? saved : category) : [...current, saved]);
       setForm(null);
-      setNotice({ tone: 'success', message: form.id ? 'Categoría actualizada.' : 'Categoría creada.' });
+      setNotice({ tone: 'success', message: form.id ? 'CategorÃ­a actualizada.' : 'CategorÃ­a creada.' });
       await onChanged();
     } catch (saveError) {
       setError(errorMessage(saveError));
@@ -418,8 +428,8 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
 
   function requestToggleCategory(category: MasterDataCategoryDto) {
     setConfirmAction({
-      title: category.active ? 'Desactivar categoría' : 'Activar categoría',
-      message: `${category.active ? 'Desactivar' : 'Activar'} ${category.name} en el catálogo maestro.`,
+      title: category.active ? 'Desactivar categorÃ­a' : 'Activar categorÃ­a',
+      message: `${category.active ? 'Desactivar' : 'Activar'} ${category.name} en el catÃ¡logo maestro.`,
       confirmLabel: category.active ? 'Desactivar' : 'Activar',
       tone: 'warning',
       onConfirm: async () => {
@@ -427,7 +437,7 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
           const saved = await gateway.update<MasterDataCategoryDto>('categories', category.id, { active: !category.active });
           setCategories((current) => current.map((item) => item.id === category.id ? saved : item));
           setConfirmAction(null);
-          setNotice({ tone: 'success', message: category.active ? 'Categoría desactivada.' : 'Categoría activada.' });
+          setNotice({ tone: 'success', message: category.active ? 'CategorÃ­a desactivada.' : 'CategorÃ­a activada.' });
           await onChanged();
         } catch (toggleError) {
           setConfirmAction(null);
@@ -439,8 +449,8 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
 
   function requestDeleteCategory(category: MasterDataCategoryDto) {
     setConfirmAction({
-      title: 'Eliminar categoría',
-      message: `Eliminar ${category.name} de forma permanente. Las categorías hijas conservarán su referencia hasta que sean editadas.`,
+      title: 'Eliminar categorÃ­a',
+      message: `Eliminar ${category.name} de forma permanente. Las categorÃ­as hijas conservarÃ¡n su referencia hasta que sean editadas.`,
       confirmLabel: 'Eliminar',
       tone: 'danger',
       onConfirm: async () => {
@@ -448,7 +458,7 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
           await gateway.delete('categories', category.id);
           setCategories((current) => current.filter((item) => item.id !== category.id));
           setConfirmAction(null);
-          setNotice({ tone: 'warning', message: 'Categoría eliminada.' });
+          setNotice({ tone: 'warning', message: 'CategorÃ­a eliminada.' });
           await onChanged();
         } catch (deleteError) {
           setConfirmAction(null);
@@ -459,27 +469,27 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
   }
 
   const columns: readonly DataTableColumn<MasterDataCategoryDto>[] = [
-    { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'Categoría', cell: (category) => <div><strong className="text-slate-900">{category.name}</strong><div className="max-w-md text-xs text-slate-400">{category.description}</div></div>, sortable: true, sortValue: (category) => category.name, searchValue: (category) => textSearch([category.name, category.slug, category.description, category.id]) },
-    { id: 'parent', header: view.columns.find((column) => column.id === 'parent')?.header ?? 'Padre', cell: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'Raíz', sortable: true, sortValue: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'Raíz', searchValue: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'Raíz' },
+    { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'CategorÃ­a', cell: (category) => <div><strong className="text-slate-900">{category.name}</strong><div className="max-w-md text-xs text-slate-400">{category.description}</div></div>, sortable: true, sortValue: (category) => category.name, searchValue: (category) => textSearch([category.name, category.slug, category.description, category.id]) },
+    { id: 'parent', header: view.columns.find((column) => column.id === 'parent')?.header ?? 'Padre', cell: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'RaÃ­z', sortable: true, sortValue: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'RaÃ­z', searchValue: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'RaÃ­z' },
     { id: 'storefront', header: view.columns.find((column) => column.id === 'storefront')?.header ?? 'Storefront', cell: (category) => yesNo(category.showInStorefront), sortable: true, sortValue: (category) => Number(category.showInStorefront), searchValue: (category) => (category.showInStorefront ? 'visible' : 'oculto') },
     { id: 'status', header: view.columns.find((column) => column.id === 'status')?.header ?? 'Estado', cell: (category) => status(category.active), sortable: true, sortValue: (category) => Number(category.active), searchValue: (category) => (category.active ? 'activo' : 'inactivo') },
     { id: 'sortOrder', header: view.columns.find((column) => column.id === 'sortOrder')?.header ?? 'Orden', cell: (category) => category.sortOrder, align: 'right', sortable: true, sortValue: (category) => category.sortOrder, searchValue: (category) => String(category.sortOrder) },
     { id: 'actions', header: 'Acciones', cell: (category) => <div className="flex flex-wrap gap-1"><ActionButton onClick={() => editCategory(category)}>Editar</ActionButton><ActionButton onClick={() => requestToggleCategory(category)} tone="warning">{category.active ? 'Desactivar' : 'Activar'}</ActionButton><ActionButton onClick={() => requestDeleteCategory(category)} tone="danger">Eliminar</ActionButton></div> },
   ];
 
-  return <PageShell actions={<PrimaryAction onClick={newCategory}>Nueva categoría</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
+  return <PageShell actions={<PrimaryAction onClick={newCategory}>Nueva categorÃ­a</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
     <div className="grid gap-3" data-master-data-categories>
       <PersistenceNote /><AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(category) => category.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={categories} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
-      {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveCategory(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar categoría' : 'Nueva categoría'}>
-        <SelectField id="category-parent" label="Padre" onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={[{ value: '', label: 'Raíz' }, ...categories.filter((category) => category.id !== form.id).map((category) => ({ value: category.id, label: category.name }))]} value={form.parentId ?? ''} />
+      {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveCategory(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar categorÃ­a' : 'Nueva categorÃ­a'}>
+        <SelectField id="category-parent" label="Padre" onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={[{ value: '', label: 'RaÃ­z' }, ...categories.filter((category) => category.id !== form.id).map((category) => ({ value: category.id, label: category.name }))]} value={form.parentId ?? ''} />
         <TextField id="category-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id="category-slug" label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} />
         <TextField id="category-icon" label="Icono opcional" onChange={(value) => setForm((current) => current ? { ...current, imageOrIcon: value } : current)} value={form.imageOrIcon ?? ''} />
         <TextField id="category-sort-order" label="Orden" onChange={(value) => setForm((current) => current ? { ...current, sortOrder: toSortOrder(value) } : current)} value={String(form.sortOrder)} />
         <BooleanSelect id="category-active" label="Estado" onChange={(value) => setForm((current) => current ? { ...current, active: value } : current)} value={form.active} trueLabel="Activa" falseLabel="Inactiva" />
         <BooleanSelect id="category-storefront" label="Storefront" onChange={(value) => setForm((current) => current ? { ...current, showInStorefront: value } : current)} value={form.showInStorefront} trueLabel="Visible" falseLabel="Oculta" />
-        <div className="md:col-span-2"><TextAreaField id="category-description" label="Descripción" onChange={(value) => setForm((current) => current ? { ...current, description: value } : current)} value={form.description} /></div>
+        <div className="md:col-span-2"><TextAreaField id="category-description" label="DescripciÃ³n" onChange={(value) => setForm((current) => current ? { ...current, description: value } : current)} value={form.description} /></div>
       </FormModal> : null}
       <ConfirmDialog action={confirmAction} onCancel={() => setConfirmAction(null)} />
     </div>
