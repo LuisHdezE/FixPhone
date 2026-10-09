@@ -1,4 +1,6 @@
 ﻿import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { endAdminSession } from '@/auth/adminApiSession';
 import { Link, NavLink, Outlet } from 'react-router';
 import { AppIcon } from '@/components/AppIcon';
 import { fixPhoneNavigation } from '@/config/fixphoneNavigation';
@@ -10,6 +12,10 @@ function navClass({ isActive }: { isActive: boolean }) {
 }
 export function FixPhoneAdminShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  async function logout() {
+    try { await endAdminSession(); } finally { navigate('/authentication/sign-in'); }
+  }
   const navigation = (
     <div className="space-y-3">
       {fixPhoneNavigation.map((group) => {
@@ -64,7 +70,7 @@ export function FixPhoneAdminShell() {
             <div className="absolute right-0 top-10 z-[70] w-44 rounded-md border border-slate-200 bg-white py-1 text-[12px] text-slate-700 shadow-xl">
               <Link className="block px-3 py-1.5 hover:bg-slate-50" to="/user/profile">Perfil</Link>
               <Link className="block px-3 py-1.5 hover:bg-slate-50" to="/user/account-settings">Configuraci+¦n</Link>
-              <button className="block w-full px-3 py-1.5 text-left text-slate-400" type="button" disabled>Cerrar sesi+¦n</button>
+              <button className="block w-full px-3 py-1.5 text-left hover:bg-slate-50" type="button" onClick={() => void logout()}>Cerrar sesión</button>
             </div>
           </details>
         </div>
