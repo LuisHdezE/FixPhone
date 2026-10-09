@@ -147,7 +147,7 @@ export function MediaStorageSettingsPage() {
               </div>
               <p className="mt-1 break-all text-[11px] text-slate-500">R2 · {profile.bucket}</p>
               <p className="mt-1 text-[11px] text-slate-500">{profile.has_credentials ? 'Credenciales cifradas guardadas' : 'Credenciales pendientes'}</p>
-              <p className="text-[11px] text-slate-500">Conexión: sin comprobar</p>
+              <p className="text-[11px] text-slate-500">Conexión: {profile.connection_status === 'verified' ? 'R2 verificado con una fotografía real' : 'sin comprobar'}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <button className={button} type="button" onClick={() => edit(profile)}>Editar</button>
                 {!profile.is_selected ? <button className={button} disabled={busy || !profile.has_credentials || !profile.public_base_url} type="button" onClick={() => void selectProfile(profile)}>Elegir</button> : null}
