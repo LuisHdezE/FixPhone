@@ -40,6 +40,7 @@ Route::prefix('v1')->group(function (): void {
    Route::post('/', [MediaStorageSettingsController::class, 'store'])->name('api.v1.admin.media.storage.store');
    Route::patch('/{id}', [MediaStorageSettingsController::class, 'update'])->name('api.v1.admin.media.storage.update');
    Route::post('/{id}/select', [MediaStorageSettingsController::class, 'select'])->name('api.v1.admin.media.storage.select');
+   Route::post('/{id}/test', [MediaStorageSettingsController::class, 'testConnection'])->middleware('throttle:6,1')->name('api.v1.admin.media.storage.test');
   });
 
   Route::post('/auth/logout',AuthLogoutController::class)->name('api.v1.auth.logout');
