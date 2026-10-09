@@ -7,6 +7,7 @@ use App\Presentation\Http\Controllers\InventoryController;
 use App\Presentation\Http\Controllers\MasterDataController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
 use App\Presentation\Http\Controllers\RepairQuoteController;
+use App\Presentation\Http\Controllers\MediaStorageSettingsController;
 use App\Presentation\Http\Controllers\PartsDonorStorefrontController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,13 @@ Route::prefix('v1')->group(function (): void {
  Route::middleware('auth:sanctum')->group(function (): void {
   Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.index');
   Route::post('/admin/inventory',[InventoryController::class, 'create'])->middleware('permission:devices.intake')->name('api.v1.admin.inventory.store');
+  Route::prefix('admin/media/storage-profiles')->middleware('permission:integrations.manage')->group(function (): void {
+   Route::get('/', [MediaStorageSettingsController::class, 'index'])->name('api.v1.admin.media.storage.index');
+   Route::post('/', [MediaStorageSettingsController::class, 'store'])->name('api.v1.admin.media.storage.store');
+   Route::patch('/{id}', [MediaStorageSettingsController::class, 'update'])->name('api.v1.admin.media.storage.update');
+   Route::post('/{id}/select', [MediaStorageSettingsController::class, 'select'])->name('api.v1.admin.media.storage.select');
+  });
+
   Route::post('/auth/logout',AuthLogoutController::class)->name('api.v1.auth.logout');
   Route::get('/auth/me',AuthMeController::class)->name('api.v1.auth.me');
 

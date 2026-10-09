@@ -64,6 +64,7 @@ export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
       { label: 'Rentabilidad', planned: true },
       { label: 'Aging inventario', planned: true },
       { label: 'Integraciones', planned: true },
+      { label: 'Almacenamiento de imágenes', to: '/admin/settings/media-storage' },
       { label: 'Reclamos de garantía', planned: true },
       { label: 'Auditoría', planned: true },
       { label: 'Perfil', to: '/user/profile' },
