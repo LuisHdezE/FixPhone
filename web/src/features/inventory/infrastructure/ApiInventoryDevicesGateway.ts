@@ -1,3 +1,4 @@
+import { adminFetch } from '@/auth/adminApiSession';
 import type { InventoryDevicesGateway } from '../application/inventory.contracts';
 import type {
   DeviceDestination,
@@ -113,7 +114,7 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
 
 export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
   async listDevices(): Promise<readonly InventoryDeviceListItemDto[]> {
-    const response = await fetch('/api/v1/admin/inventory', {
+    const response = await adminFetch('/api/v1/admin/inventory', {
       headers: { Accept: 'application/json' },
     });
 
