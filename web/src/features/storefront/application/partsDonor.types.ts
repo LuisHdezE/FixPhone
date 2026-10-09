@@ -10,6 +10,7 @@ export type PublicPartsDonor = {
   price_minor: number;
   currency_code: 'UYU';
   image_url: string;
+  images: string[];
   description: string;
   availability: 'available';
   href: string;
