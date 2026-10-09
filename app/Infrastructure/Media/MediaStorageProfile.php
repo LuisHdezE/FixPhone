@@ -9,6 +9,8 @@ final class MediaStorageProfile extends Model
 {
     use HasUlids;
 
+    protected $attributes = ['is_selected' => false];
+
     protected $fillable = [
         'name', 'provider', 'bucket', 'endpoint_url', 'public_base_url',
         'object_prefix', 'access_key_id_encrypted', 'secret_access_key_encrypted', 'is_selected',
