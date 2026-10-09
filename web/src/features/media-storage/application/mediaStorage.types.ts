@@ -10,7 +10,7 @@ export interface MediaStorageProfile {
   object_prefix: string;
   is_selected: boolean;
   has_credentials: boolean;
-  connection_status: 'not_tested';
+  connection_status: 'not_tested' | 'verified';
   updated_at: string | null;
 }
 

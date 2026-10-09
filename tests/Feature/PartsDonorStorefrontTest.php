@@ -120,7 +120,7 @@ final class PartsDonorStorefrontTest extends TestCase
         $this->assertSame([
             'id', 'model_name', 'title', 'category', 'fault_type', 'fault_label',
             'screen_condition', 'power_state', 'price_minor', 'currency_code',
-            'image_url', 'description', 'availability', 'href',
+            'image_url', 'images', 'description', 'availability', 'href',
         ], array_keys($response->json('data')));
         $this->assertStringNotContainsString('354000111222333', $response->getContent());
         $this->assertStringNotContainsString('PRIVADA', $response->getContent());

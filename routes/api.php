@@ -8,6 +8,7 @@ use App\Presentation\Http\Controllers\MasterDataController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
 use App\Presentation\Http\Controllers\RepairQuoteController;
 use App\Presentation\Http\Controllers\MediaStorageSettingsController;
+use App\Presentation\Http\Controllers\ValuationPhotosController;
 use App\Presentation\Http\Controllers\PartsDonorStorefrontController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +49,10 @@ Route::prefix('v1')->group(function (): void {
    Route::get('/',[DeviceValuationController::class,'index'])->name('api.v1.admin.valuations.index');
    Route::post('/',[DeviceValuationController::class,'store'])->name('api.v1.admin.valuations.store');
    Route::patch('/{id}',[DeviceValuationController::class,'update'])->name('api.v1.admin.valuations.update');
+   Route::get('/{id}/photos',[ValuationPhotosController::class,'index'])->name('api.v1.admin.valuations.photos.index');
+   Route::post('/{id}/photos/presign',[ValuationPhotosController::class,'presign'])->middleware('throttle:10,1')->name('api.v1.admin.valuations.photos.presign');
+   Route::post('/{id}/photos/{photoId}/confirm',[ValuationPhotosController::class,'confirm'])->name('api.v1.admin.valuations.photos.confirm');
+   Route::post('/{id}/photos/{photoId}/primary',[ValuationPhotosController::class,'primary'])->name('api.v1.admin.valuations.photos.primary');
   });
 
   Route::prefix('admin/repair-quotes')->middleware('permission:repair_quotes.manage')->group(function (): void {

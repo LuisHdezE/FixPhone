@@ -72,6 +72,7 @@ export function PartsDonorDetailPage() {
   const [pending, setPending] = useState(true);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -84,7 +85,7 @@ export function PartsDonorDetailPage() {
         if (!response.ok) throw new Error('No fue posible consultar la ficha.');
         return response.json() as Promise<{ data: PublicPartsDonor }>;
       })
-      .then((payload) => { if (active) setItem(payload.data); })
+      .then((payload) => { if (active) { setItem(payload.data); setSelectedImage(payload.data.image_url); } })
       .catch((err: unknown) => { if (active) setError(err instanceof Error ? err.message : 'Producto no disponible.'); })
       .finally(() => { if (active) setPending(false); });
     return () => { active = false; };
@@ -110,8 +111,13 @@ export function PartsDonorDetailPage() {
     </div> : null}
     {item && !pending && !error ? <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_0.78fr]">
       <div className="overflow-hidden rounded-xl border bg-white">
-        <img src={item.image_url} alt={'Fotografía real de ' + item.title} className="aspect-[4/3] w-full object-contain bg-slate-50" />
-        <p className="p-3 text-xs text-slate-500">Imagen de referencia de esta unidad específica. Consultá si necesitás más fotografías de los componentes.</p>
+        <img src={selectedImage || item.image_url} alt={'Fotografía real de ' + item.title} className="aspect-[4/3] w-full object-contain bg-slate-50" />
+        {item.images.length > 1 ? <div className="grid grid-cols-4 gap-2 p-3">
+          {item.images.map((image, index) => <button className={'overflow-hidden rounded border-2 ' + ((selectedImage || item.image_url) === image ? 'border-slate-900' : 'border-transparent')} type="button" key={image} onClick={() => setSelectedImage(image)} aria-label={'Ver fotografía ' + (index + 1)}>
+            <img src={image} alt={'Vista ' + (index + 1) + ' del equipo'} className="aspect-square w-full object-cover" loading="lazy" />
+          </button>)}
+        </div> : null}
+        <p className="p-3 text-xs text-slate-500">Fotografías de esta unidad específica. Consultá por sus condiciones antes de comprar.</p>
       </div>
       <div className="grid content-start gap-3 rounded-xl border bg-white p-5">
         <p className="w-fit rounded bg-amber-50 px-2 py-1 text-xs font-bold text-amber-900">Equipo con falla · Solo para repuestos</p>

@@ -4,6 +4,7 @@ import { adminFetch, adminToken } from '@/auth/adminApiSession';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { PageShell } from '@/shell/PageShell';
 import { ApiValuationGateway } from '../infrastructure/ApiValuationGateway';
+import { ValuationPhotoUpload } from '@/features/media-storage/presentation/ValuationPhotoUpload';
 import type { DeviceValuation, FaultType, PublicationStatus, ScreenCondition, PowerState, ValuationPayload } from '../application/valuation.types';
 
 type Form = {
@@ -237,10 +238,13 @@ export function ValuPhonePage() {
               <h3 className="text-sm font-bold text-slate-900">Ficha pública para compartir en Facebook</h3>
               <p className="mt-1 text-xs text-slate-700">Esta publicación es independiente del estado del anuncio de Facebook. No se activa hasta que la autorices y cumplas los requisitos de seguridad.</p>
             </div>
+            {id ? <ValuationPhotoUpload key={id} valuationId={id} currentPrimaryUrl={form.publicImageUrl} onPrimaryChange={(url) => change('publicImageUrl', url)} /> : (
+              <p className="rounded bg-white p-2 text-xs text-slate-700">Primero guardá esta valoración como <strong>borrador</strong>. Después podrás subir fotografías directamente a Cloudflare desde aquí.</p>
+            )}
             <label className={label}>URL HTTPS de foto REAL de esta unidad
               <input className={input} type="url" placeholder="https://.../iphone-real.jpg" value={form.publicImageUrl} onChange={(e) => change('publicImageUrl', e.target.value)} />
             </label>
-            <p className="text-[11px] text-slate-600">Usá una foto tuya con enlace HTTPS público. No se admiten imágenes genéricas ni enlaces a carpetas privadas. La carga directa de imágenes queda para el próximo bloque.</p>
+            <p className="text-[11px] text-slate-600">La subida directa a R2 es la opción recomendada. Este campo sigue disponible para imágenes comerciales HTTPS cargadas previamente.</p>
             <label className={label}>Descripción pública del estado (sin datos privados)
               <textarea className={input + ' min-h-24 py-2'} maxLength={1500} placeholder="Ej.: iPhone 11 para repuestos. Bloqueo de activación iCloud. Enciende, pantalla comprobada... No se garantiza uso como teléfono." value={form.publicDescription} onChange={(e) => change('publicDescription', e.target.value)} />
             </label>

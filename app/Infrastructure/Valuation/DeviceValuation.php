@@ -5,6 +5,8 @@ namespace App\Infrastructure\Valuation;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Infrastructure\Media\DeviceValuationPhoto;
 use App\Infrastructure\Inventory\InventoryItem;
 
 final class DeviceValuation extends Model
@@ -26,6 +28,12 @@ final class DeviceValuation extends Model
         'asking_price_minor' => 'integer',
         'minimum_price_minor' => 'integer',
     ];
+    public function verifiedPhotos(): HasMany
+    {
+        return $this->hasMany(DeviceValuationPhoto::class, 'device_valuation_id')
+            ->where('status', 'confirmed')->orderBy('created_at')->orderBy('id');
+    }
+
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class, 'inventory_item_id');

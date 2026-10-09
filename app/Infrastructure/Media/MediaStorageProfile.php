@@ -18,7 +18,7 @@ final class MediaStorageProfile extends Model
 
     protected $hidden = ['access_key_id_encrypted', 'secret_access_key_encrypted'];
 
-    protected $casts = ['is_selected' => 'boolean'];
+    protected $casts = ['is_selected' => 'boolean', 'verified_at' => 'datetime'];
 
     public function safeSummary(): array
     {
@@ -33,7 +33,7 @@ final class MediaStorageProfile extends Model
             'is_selected' => $this->is_selected,
             'has_credentials' => filled($this->access_key_id_encrypted) && filled($this->secret_access_key_encrypted),
             // A saved profile is not proof of a working R2 connection.
-            'connection_status' => 'not_tested',
+            'connection_status' => $this->verified_at ? 'verified' : 'not_tested',
             'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
