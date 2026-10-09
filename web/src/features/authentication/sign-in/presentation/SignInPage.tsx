@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import type { SignInContentProvider, SignInGateway } from '@/features/authentication/sign-in/application/contracts/signIn.contracts';
 import type {
   SignInCredentialsDto,
@@ -87,6 +87,7 @@ function BrandIdentity({ branding }: { branding: SignInViewDto['branding'] }) {
 }
 
 export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
+  const navigate = useNavigate();
   const view = loadSignInView(contentProvider);
   const [credentials, setCredentials] = useState<SignInCredentialsDto>(initialCredentials);
   const [errors, setErrors] = useState<SignInValidationErrorsDto>({});
@@ -121,6 +122,7 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
 
       if (result.status === 'success') {
         setSubmissionState('success');
+        navigate('/admin/valuations');
         return;
       }
 

@@ -35,6 +35,7 @@ export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
     items: [
       { label: 'Clientes', to: '/applications/management/customers' },
       { label: 'Pedidos', to: '/applications/management/orders' },
+      { label: 'ValuPhone · Tasaciones', to: '/admin/valuations' },
       { label: 'Lotes de adquisición', planned: true },
       { label: 'Consignaciones', planned: true }
     ]
