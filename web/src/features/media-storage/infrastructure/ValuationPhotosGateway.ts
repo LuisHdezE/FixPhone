@@ -13,7 +13,7 @@ async function result<T>(response: Response): Promise<T> {
   return body;
 }
 
-export type UploadStep = 'authorization' | 'r2' | 'verification';
+export type UploadStep = 'authorization' | 'r2' | 'fallback' | 'verification';
 
 function messageOf(reason: unknown): string {
   return reason instanceof Error ? reason.message : 'Error inesperado.';
@@ -64,10 +64,27 @@ export class ValuationPhotosGateway {
       });
     } catch (reason) {
       if (isNetworkError(reason)) {
-        throw new Error(
-          'El navegador no pudo enviar la foto a Cloudflare R2. Puede ser CORS, una extensión del navegador o un problema de red. ' +
-          'Revisá la política CORS de fixphone-imagenes y probá la conexión R2 desde Administración → Almacenamiento de imágenes.'
-        );
+        // Same authorized reservation and object key. Never expose the signed
+        // R2 URL to the relay API or permanently save photos on the hosting.
+        onStep?.('fallback');
+        const multipart = new FormData();
+        multipart.append('photo', image, 'fixphone-photo.webp');
+        try {
+          return (await result<{ data: ValuationPhoto }>(await adminFetch(
+            base + '/' + encodeURIComponent(grant.id) + '/relay',
+            { method: 'POST', body: multipart },
+          ))).data;
+        } catch (fallbackReason) {
+          if (isNetworkError(fallbackReason)) {
+            throw new Error(
+              'Ni la subida directa a R2 ni la ruta alternativa de FixPhone respondieron. ' +
+              'Revisá tu conexión y probá «Probar conexión» en Administración → Almacenamiento de imágenes.'
+            );
+          }
+          throw new Error(
+            'El navegador no pudo conectar con R2; la alternativa por FixPhone también falló: ' + messageOf(fallbackReason)
+          );
+        }
       }
       throw new Error('Falló la transferencia a Cloudflare R2: ' + messageOf(reason));
     }
