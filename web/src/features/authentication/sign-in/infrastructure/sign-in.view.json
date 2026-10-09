@@ -13,7 +13,7 @@
       {
         "id": "secure-access",
         "title": "Acceso protegido",
-        "description": "La interfaz queda preparada para conectarse a un servicio de autenticación real sin acoplar la vista a la infraestructura."
+        "description": "Acceso administrativo validado por la API de FixPhone con permisos."
       },
       {
         "id": "responsive",
@@ -64,7 +64,7 @@
     },
     "feedback": {
       "successTitle": "Acceso correcto",
-      "successMessage": "Las credenciales fueron validadas en el modo local actual.",
+      "successMessage": "Tu sesión de FixPhone fue autenticada.",
       "invalidCredentials": "El correo o la contraseña no son válidos.",
       "unavailable": "No se pudo completar el acceso en este momento. Inténtalo nuevamente."
     }
