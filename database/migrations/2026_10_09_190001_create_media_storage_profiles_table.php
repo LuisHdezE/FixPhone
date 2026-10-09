@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('bucket', 63);
             $table->string('endpoint_url', 2048);
             $table->string('public_base_url', 2048)->nullable();
-            $table->string('object_prefix', 160)->default('fixphone');
+            $table->string('object_prefix', 160)->default('media');
             $table->text('access_key_id_encrypted')->nullable();
             $table->text('secret_access_key_encrypted')->nullable();
             $table->boolean('is_selected')->default(false)->index();
