@@ -40,7 +40,7 @@ export class ApiSignInGateway implements SignInGateway {
       }).catch(() => undefined);
       return { status: 'failure', reason: 'unavailable' };
     }
-    setAdminToken(token);
+    setAdminToken(token, credentials.rememberMe);
     return { status: 'success' };
   }
 }
