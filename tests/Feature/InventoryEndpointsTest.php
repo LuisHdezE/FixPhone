@@ -274,4 +274,29 @@ final class InventoryEndpointsTest extends TestCase
           ->assertJsonPath('data.sku', 'DEV-LEGACY');
     }
 
+
+    public function test_intake_operator_cannot_change_physical_dismantling_state(): void
+    {
+        $this->actingAsOwner();
+        $deviceId = $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload())
+            ->assertCreated()->json('id');
+
+        $operator = User::query()->create([
+            'id' => (string) Str::ulid(),
+            'name' => 'Intake',
+            'email' => 'intake@fixphone.test',
+            'password' => Hash::make('test-secret-intake'),
+            'active' => true,
+        ]);
+        DB::table('user_roles')->insert(['user_id' => $operator->id, 'role_slug' => 'intake_operator']);
+        Sanctum::actingAs($operator);
+
+        $this->getJson('/api/v1/admin/inventory')->assertOk();
+        $this->patchJson('/api/v1/admin/inventory/'.$deviceId.'/dismantling', [
+            'dismantling_status' => 'partial',
+        ])->assertForbidden();
+
+        $this->assertSame('not_started', InventoryItem::query()->findOrFail($deviceId)->dismantling_status);
+    }
+
 }
