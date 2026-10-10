@@ -10,22 +10,35 @@ use App\Infrastructure\Inventory\Consignor;
 use App\Infrastructure\Inventory\DeviceSaleRecord;
 use App\Infrastructure\Inventory\DeviceInstalledPart;
 use App\Infrastructure\Inventory\DeviceCodeAllocator;
+use App\Infrastructure\RepairQuotes\RepairQuote;
+use App\Infrastructure\Valuation\DeviceValuation;
 use Carbon\Carbon;
 
 class DemoSeeder extends Seeder
 {
     public function run()
     {
-        if (app()->environment('production')) {
-            $this->command->error('No se pueden ejecutar seeders de demostración en producción.');
+        if (app()->environment('production') || config('app.demo_seeder_enabled') !== true) {
+            $this->command->error('No se pueden ejecutar seeders de demostración en producción o sin habilitación explícita (APP_DEMO_SEEDER_ENABLED=true).');
             return;
         }
 
-        $this->command->info('Generando entorno de demostración con más de 200 registros...');
+        $dbHost = config('database.connections.mysql.host');
+        if (Str::contains($dbHost, ['produccion', 'fixphone.eliasworks.uy'])) {
+            $this->command->error('Conexión a base de datos de producción detectada. Abortando.');
+            return;
+        }
+
+        $this->command->info('Generando entorno de demostración con más de 200 registros y múltiples escenarios...');
 
         DB::transaction(function () {
-            // 1. Limpiar datos de demostración si los hubiera (opcional si es db:seed --fresh)
-            // Para simplicidad, agregamos nuevos.
+            // 1. Limpiar datos de demostración anteriores de manera idempotente
+            DeviceSaleRecord::where('sold_by_actor_id', 'admin_demo')->delete();
+            DeviceInstalledPart::where('installed_by_actor_id', 'admin_demo')->delete();
+            RepairQuote::where('created_by', 'admin_demo_ulid')->delete();
+            DeviceValuation::where('created_by', 'admin_demo_ulid')->delete();
+            InventoryItem::where('metadata->is_demo', true)->delete();
+            Consignor::where('email', 'like', '%@demo.com')->delete();
 
             // 2. Crear 30 consignantes ficticios
             $consignors = [];
@@ -57,6 +70,7 @@ class DemoSeeder extends Seeder
                 'cost_amount_minor' => 400000,
                 'sale_price_amount_minor' => 1000000,
                 'currency_code' => 'UYU',
+                'metadata' => ['is_demo' => true],
             ]);
             
             DeviceInstalledPart::create([
@@ -83,10 +97,15 @@ class DemoSeeder extends Seeder
                 'status' => 'completed',
             ]);
 
-            // 3. Generar 80 teléfonos propios (Direct Sales)
+            // 3. Generar 80 teléfonos propios (Direct Sales) repartidos en varios meses
             $models = ['Samsung Galaxy S20', 'iPhone 12', 'Xiaomi Redmi Note 10'];
             for ($i = 0; $i < 80; $i++) {
                 $isSold = ($i % 3) !== 0; // 66% vendidos
+                $monthsAgo = $i % 4; // Ventas distribuidas hasta hace 3 meses
+                $isVoided = $isSold && ($i % 15 === 0); // Algunas ventas anuladas
+                $saleStatus = $isVoided ? 'voided' : 'completed';
+                $operationalStatus = $isSold ? ($isVoided ? 'en_stock' : 'sold') : 'en_stock';
+
                 $device = InventoryItem::create([
                     'id' => (string) Str::ulid(),
                     'sku' => DeviceCodeAllocator::reserve(),
@@ -95,14 +114,15 @@ class DemoSeeder extends Seeder
                     'brand' => 'Brand',
                     'model' => 'Model',
                     'inventory_purpose' => 'sell_as_used_phone',
-                    'operational_status' => $isSold ? 'sold' : 'en_stock',
-                    'publication_status' => $isSold ? 'draft' : 'publicado',
+                    'operational_status' => $operationalStatus,
+                    'publication_status' => $operationalStatus === 'sold' ? 'draft' : 'publicado',
                     'dismantling_status' => 'not_started',
-                    'is_sellable' => !$isSold,
-                    'stock_quantity' => $isSold ? 0 : 1,
+                    'is_sellable' => $operationalStatus !== 'sold',
+                    'stock_quantity' => $operationalStatus === 'sold' ? 0 : 1,
                     'cost_amount_minor' => (1000 + ($i * 10)) * 100,
                     'sale_price_amount_minor' => (6000 + ($i * 50)) * 100,
                     'currency_code' => 'UYU',
+                    'metadata' => ['is_demo' => true],
                 ]);
 
                 // Algunos tienen repuestos
@@ -114,7 +134,7 @@ class DemoSeeder extends Seeder
                         'part_name' => 'Repuesto Generico',
                         'cost_amount_minor' => $partsCost,
                         'currency_code' => 'UYU',
-                        'installed_at' => Carbon::now()->subDays(($i % 20) + 1),
+                        'installed_at' => Carbon::now()->subMonths($monthsAgo)->subDays(($i % 20) + 1),
                         'installed_by_actor_id' => 'admin_demo',
                     ]);
                 }
@@ -130,9 +150,9 @@ class DemoSeeder extends Seeder
                         'installed_parts_cost_minor' => $partsCost,
                         'currency_code' => 'UYU',
                         'inventory_purpose' => 'sell_as_used_phone',
-                        'sold_at' => Carbon::now()->subDays(($i % 20) + 1),
+                        'sold_at' => Carbon::now()->subMonths($monthsAgo)->subDays(($i % 20) + 1),
                         'sold_by_actor_id' => 'admin_demo',
-                        'status' => 'completed',
+                        'status' => $saleStatus,
                     ]);
                 }
             }
@@ -141,6 +161,7 @@ class DemoSeeder extends Seeder
             for ($i = 0; $i < 60; $i++) {
                 $consignor = $consignors[$i % 30];
                 $isSold = ($i % 2) === 0;
+                $monthsAgo = $i % 3;
                 $device = InventoryItem::create([
                     'id' => (string) Str::ulid(),
                     'sku' => DeviceCodeAllocator::reserve(),
@@ -156,6 +177,7 @@ class DemoSeeder extends Seeder
                     'cost_amount_minor' => 0,
                     'sale_price_amount_minor' => (5000 + ($i * 100)) * 100,
                     'currency_code' => 'UYU',
+                    'metadata' => ['is_demo' => true],
                 ]);
 
                 if ($isSold) {
@@ -170,7 +192,7 @@ class DemoSeeder extends Seeder
                         'inventory_purpose' => 'consigned_phone',
                         'consignor_id' => $consignor->id,
                         'consignor_name' => $consignor->full_name,
-                        'sold_at' => Carbon::now()->subDays(($i % 20) + 1),
+                        'sold_at' => Carbon::now()->subMonths($monthsAgo)->subDays(($i % 20) + 1),
                         'sold_by_actor_id' => 'admin_demo',
                         'status' => 'completed',
                     ]);
@@ -193,10 +215,11 @@ class DemoSeeder extends Seeder
                     'stock_quantity' => 1,
                     'cost_amount_minor' => (500 + ($i * 10)) * 100,
                     'currency_code' => 'UYU',
+                    'metadata' => ['is_demo' => true],
                 ]);
             }
             
-            // 6. Generar 20 pendientes de evaluación / repuestos sueltos
+            // 6. Generar 20 repuestos sueltos
             for ($i = 0; $i < 20; $i++) {
                 InventoryItem::create([
                     'id' => (string) Str::ulid(),
@@ -211,6 +234,51 @@ class DemoSeeder extends Seeder
                     'cost_amount_minor' => (100 + ($i * 10)) * 100,
                     'sale_price_amount_minor' => (500 + ($i * 20)) * 100,
                     'currency_code' => 'UYU',
+                    'metadata' => ['is_demo' => true],
+                ]);
+            }
+            
+            // 7. Generar Presupuestos (RepairQuotes)
+            for ($i = 0; $i < 10; $i++) {
+                RepairQuote::create([
+                    'id' => (string) Str::ulid(),
+                    'customer_name' => 'Cliente Presupuesto ' . $i,
+                    'customer_contact' => '099' . sprintf('%06d', $i),
+                    'device_description' => 'iPhone ' . (10 + $i),
+                    'device_tier' => 'tier_1',
+                    'services' => [['name' => 'Diagnóstico', 'price_minor' => 50000]],
+                    'parts' => [['name' => 'Pantalla LCD', 'cost_minor' => 150000]],
+                    'parts_markup_percent' => 30,
+                    'services_subtotal_minor' => 50000,
+                    'parts_base_minor' => 150000,
+                    'parts_total_minor' => 195000,
+                    'courier_minor' => 0,
+                    'discount_minor' => 0,
+                    'total_minor' => 245000,
+                    'currency_code' => 'UYU',
+                    'notes' => 'Presupuesto de demostración',
+                    'created_by' => 'admin_demo_ulid',
+                    'created_at' => Carbon::now()->subDays($i),
+                ]);
+            }
+
+            // 8. Generar Tasaciones (DeviceValuations)
+            for ($i = 0; $i < 5; $i++) {
+                DeviceValuation::create([
+                    'id' => (string) Str::ulid(),
+                    'model_name' => 'Samsung Galaxy A' . (50 + $i),
+                    'fault_type' => 'pantalla_rota',
+                    'screen_condition' => 'broken',
+                    'power_state' => 'powers_on',
+                    'estimated_min_minor' => 100000,
+                    'estimated_max_minor' => 250000,
+                    'asking_price_minor' => 200000,
+                    'minimum_price_minor' => 150000,
+                    'publication_status' => $i % 2 === 0 ? 'published' : 'draft',
+                    'market_reference' => 'Referencia MercadoLibre',
+                    'notes' => 'Tasación demo',
+                    'created_by' => 'admin_demo_ulid',
+                    'created_at' => Carbon::now()->subDays($i),
                 ]);
             }
         });

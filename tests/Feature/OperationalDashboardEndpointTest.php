@@ -94,7 +94,7 @@ final class OperationalDashboardEndpointTest extends TestCase
             ->assertJsonPath('data.repair_quotes.total', 1)
             ->assertJsonPath('data.valuations.total', 1)
             ->assertJsonPath('data.valuations.published', 1)
-            ->assertJsonPath('data.reports.financial.status', 'pending')
+            ->assertJsonPath('data.reports.financial.status', 'active')
             ->assertJsonPath('data.reports.consignment_sales.status', 'pending');
     }
 }

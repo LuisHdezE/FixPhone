@@ -60,15 +60,58 @@ final class OperationalDashboardController extends Controller
                 'repair_quotes' => [
                     'total' => $quotesCount,
                 ],
+                'analytics' => [
+                    'trend' => [
+                        'title' => 'Nuevos dispositivos',
+                        'description' => 'Dispositivos agregados en los últimos 7 días',
+                        'periodLabel' => 'Últimos 7 días',
+                        'series' => [
+                            [
+                                'id' => 'new_devices',
+                                'label' => 'Equipos',
+                                'tone' => 'brand',
+                                'points' => collect(range(0, 6))->map(function ($days) {
+                                    $date = now()->subDays(6 - $days)->startOfDay();
+                                    return [
+                                        'label' => $date->format('d/m'),
+                                        'value' => \App\Infrastructure\Inventory\InventoryItem::whereIn('item_type', ['device', 'used_phone'])
+                                            ->whereDate('created_at', $date)
+                                            ->count()
+                                    ];
+                                })->all(),
+                            ]
+                        ]
+                    ],
+                    'distribution' => [
+                        'title' => 'Distribución por tipo',
+                        'description' => 'Composición del inventario',
+                        'centerLabel' => 'Total',
+                        'segments' => [
+                            ['id' => 'phones', 'label' => 'Teléfonos', 'value' => $devices->count(), 'tone' => 'brand'],
+                            ['id' => 'parts', 'label' => 'Repuestos', 'value' => $inventory->where('item_type', 'spare_part')->count(), 'tone' => 'info'],
+                            ['id' => 'other', 'label' => 'Otros', 'value' => $inventory->whereNotIn('item_type', ['device', 'used_phone', 'spare_part'])->count(), 'tone' => 'neutral'],
+                        ]
+                    ],
+                    'funnel' => [
+                        'title' => 'Embudo de Operación',
+                        'description' => 'De ingreso a venta',
+                        'stages' => [
+                            ['id' => 'total', 'label' => 'Total equipos', 'value' => $devices->count(), 'note' => 'Todos'],
+                            ['id' => 'available', 'label' => 'En stock', 'value' => $devices->where('operational_status', 'en_stock')->count(), 'note' => 'Disponibles'],
+                            ['id' => 'sold', 'label' => 'Vendidos', 'value' => $devices->where('operational_status', 'sold')->count(), 'note' => 'Salida'],
+                        ]
+                    ]
+                ],
                 'valuations' => [
                     'total' => (int) ($valuations?->total ?? 0),
                     'published' => (int) ($valuations?->published ?? 0),
                 ],
                 'reports' => [
                     'financial' => [
-                        'status' => 'pending',
-                        'label' => 'Pendiente de habilitar',
-                        'reason' => 'Los reportes financieros de ingresos, costos, pagos y saldos se activan con #54.',
+                        'status' => 'active',
+                        'label' => 'Liquidaciones de ventas directas',
+                        'reason' => 'Ver gastos de repuestos y liquidación del 50% por equipo.',
+                        'url' => '/admin/finance/settlements'
                     ],
                     'consignment_sales' => [
                         'status' => 'pending',

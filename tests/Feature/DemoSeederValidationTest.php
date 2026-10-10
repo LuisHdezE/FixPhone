@@ -23,6 +23,7 @@ class DemoSeederValidationTest extends TestCase
     public function test_demo_seeder_populates_data_and_financial_reports_are_correct(): void
     {
         // 1. Run Seeder
+        config(['app.demo_seeder_enabled' => true]);
         $this->seed(DemoSeeder::class);
 
         // 2. Validate counts
