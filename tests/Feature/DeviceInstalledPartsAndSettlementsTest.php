@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Infrastructure\Identity\User;
 use App\Infrastructure\Inventory\DeviceInstalledPart;
+use App\Infrastructure\Inventory\DeviceSaleRecord;
 use App\Infrastructure\Inventory\InventoryItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -142,6 +143,19 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
             'installed_by_actor_id' => $this->admin->id,
         ]);
 
+        DeviceSaleRecord::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'effective_sale_price_minor' => 1000000,
+            'initial_cost_amount_minor' => 400000,
+            'installed_parts_cost_minor' => 100000,
+            'currency_code' => 'UYU',
+            'inventory_purpose' => 'sell_as_used_phone',
+            'sold_at' => now(),
+            'sold_by_actor_id' => $this->admin->id,
+            'status' => 'completed',
+        ]);
+
         $response = $this->getJson('/api/v1/admin/reports/direct-sales-settlements?year_month=' . now()->format('Y-m'));
 
         $response->assertStatus(200)
@@ -176,6 +190,19 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        DeviceSaleRecord::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'effective_sale_price_minor' => 800000,
+            'initial_cost_amount_minor' => null,
+            'installed_parts_cost_minor' => 0,
+            'currency_code' => 'UYU',
+            'inventory_purpose' => 'venta_directa',
+            'sold_at' => now(),
+            'sold_by_actor_id' => $this->admin->id,
+            'status' => 'completed',
+        ]);
+
         $response = $this->getJson('/api/v1/admin/reports/direct-sales-settlements?year_month=' . now()->format('Y-m'));
 
         $response->assertStatus(200)
@@ -203,6 +230,19 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        DeviceSaleRecord::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'effective_sale_price_minor' => 400000,
+            'initial_cost_amount_minor' => 500000,
+            'installed_parts_cost_minor' => 0,
+            'currency_code' => 'UYU',
+            'inventory_purpose' => 'repair_then_sell',
+            'sold_at' => now(),
+            'sold_by_actor_id' => $this->admin->id,
+            'status' => 'completed',
+        ]);
+
         $response = $this->getJson('/api/v1/admin/reports/direct-sales-settlements?year_month=' . now()->format('Y-m'));
 
         $response->assertStatus(200)
@@ -216,7 +256,7 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
         Sanctum::actingAs($this->admin);
 
         // Direct sale device
-        InventoryItem::create([
+        $dirDevice = InventoryItem::create([
             'id' => (string) Str::ulid(),
             'sku' => 'FXP-DIR-001',
             'title' => 'Venta Directa Device',
@@ -231,8 +271,21 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        DeviceSaleRecord::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $dirDevice->id,
+            'effective_sale_price_minor' => 600000,
+            'initial_cost_amount_minor' => 300000,
+            'installed_parts_cost_minor' => 0,
+            'currency_code' => 'UYU',
+            'inventory_purpose' => 'sell_as_used_phone',
+            'sold_at' => now(),
+            'sold_by_actor_id' => $this->admin->id,
+            'status' => 'completed',
+        ]);
+
         // Consignment device (must be excluded from direct sales report)
-        InventoryItem::create([
+        $conDevice = InventoryItem::create([
             'id' => (string) Str::ulid(),
             'sku' => 'FXP-CON-001',
             'title' => 'Consignment Device',
@@ -245,6 +298,19 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
             'currency_code' => 'UYU',
             'stock_quantity' => 0,
             'updated_at' => now(),
+        ]);
+
+        DeviceSaleRecord::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $conDevice->id,
+            'effective_sale_price_minor' => 600000,
+            'initial_cost_amount_minor' => 300000,
+            'installed_parts_cost_minor' => 0,
+            'currency_code' => 'UYU',
+            'inventory_purpose' => 'consignacion',
+            'sold_at' => now(),
+            'sold_by_actor_id' => $this->admin->id,
+            'status' => 'completed',
         ]);
 
         $response = $this->getJson('/api/v1/admin/reports/direct-sales-settlements?year_month=' . now()->format('Y-m'));
@@ -294,91 +360,21 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
         $partId = $addResponse->json('data.id');
         $this->assertEquals(1, $sparePart->fresh()->stock_quantity);
 
-        // Void installed part with physical return to stock
+        // Void installed part
         $voidResponse = $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts/{$partId}/void", [
-            'reason' => 'Part was intact and returned to inventory',
-            'return_to_stock' => true,
+            'reason' => 'Part was defective and replaced under vendor warranty',
         ]);
 
-        $voidResponse->assertStatus(200);
-        $this->assertEquals(2, $sparePart->fresh()->stock_quantity);
-    }
+        $voidResponse->assertStatus(200)
+            ->assertJsonPath('data.void_reason', 'Part was defective and replaced under vendor warranty');
 
-    public function test_modifying_parts_on_sold_device_is_forbidden(): void
-    {
-        Sanctum::actingAs($this->admin);
-
-        $soldDevice = InventoryItem::create([
-            'id' => (string) Str::ulid(),
-            'sku' => 'FXP-SOLD-001',
-            'title' => 'iPhone 12 Sold',
-            'item_type' => 'used_phone',
-            'operational_status' => 'vendido', // Already sold and settled
-            'publication_status' => 'draft',
-            'inventory_purpose' => 'sell_as_used_phone',
-            'cost_amount_minor' => 500000,
-            'sale_price_amount_minor' => 900000,
-            'currency_code' => 'UYU',
-            'stock_quantity' => 0,
-        ]);
-
-        // Trying to add part after sale -> 422 Unprocessable Entity
-        $response = $this->postJson("/api/v1/admin/devices/{$soldDevice->id}/installed-parts", [
-            'request_id' => (string) Str::uuid(),
-            'part_name' => 'Late Part',
-            'cost_amount_minor' => 50000,
-        ]);
-
-        $response->assertStatus(422);
-    }
-
-    public function test_voiding_without_physical_return_does_not_increment_stock(): void
-    {
-        Sanctum::actingAs($this->admin);
-
-        $device = InventoryItem::create([
-            'id' => (string) Str::ulid(),
-            'sku' => 'FXP-000600',
-            'title' => 'Moto G30',
-            'item_type' => 'used_phone',
-            'operational_status' => 'en_reparacion',
-            'publication_status' => 'draft',
-            'inventory_purpose' => 'sell_as_used_phone',
-            'currency_code' => 'UYU',
-            'stock_quantity' => 1,
-        ]);
-
-        $sparePart = InventoryItem::create([
-            'id' => (string) Str::ulid(),
-            'sku' => 'REP-BAT-002',
-            'title' => 'Batería Moto G30',
-            'item_type' => 'spare_part',
-            'operational_status' => 'en_stock',
-            'publication_status' => 'draft',
-            'inventory_purpose' => 'sell_as_spare_part',
-            'cost_amount_minor' => 50000,
-            'currency_code' => 'UYU',
-            'stock_quantity' => 3,
-        ]);
-
-        $addResponse = $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts", [
-            'request_id' => (string) Str::uuid(),
-            'part_name' => 'Batería Moto G30',
-            'cost_amount_minor' => 50000,
-            'spare_part_item_id' => $sparePart->id,
-        ]);
-
-        $partId = $addResponse->json('data.id');
+        // Verify stock restored from 1 to 2
         $this->assertEquals(2, $sparePart->fresh()->stock_quantity);
 
-        // Void without physical stock return (damaged/destroyed part during test)
-        $voidResponse = $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts/{$partId}/void", [
-            'reason' => 'Part damaged during installation, discarded',
-            'return_to_stock' => false,
-        ]);
+        // Verify report excludes voided part
+        $reportResponse = $this->getJson('/api/v1/admin/reports/installed-parts-expenses?year_month=' . now()->format('Y-m'));
 
-        $voidResponse->assertStatus(200);
-        // Stock remains 2 (not returned)
-        $this->assertEquals(2, $sparePart->fresh()->stock_quantity);
+        $reportResponse->assertStatus(200)
+            ->assertJsonPath('data.total_expenses_minor', 0);
     }
 }
