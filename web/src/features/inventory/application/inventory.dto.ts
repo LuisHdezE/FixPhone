@@ -107,9 +107,10 @@ export interface InventoryDashboardDto {
 }
 
 export type OperationalDashboardReportStatusDto = {
-  status: 'pending';
+  status: 'pending' | 'active';
   label: string;
   reason: string;
+  url?: string;
 };
 
 export type OperationalDashboardLatestDeviceDto = {
@@ -145,6 +146,7 @@ export type OperationalDashboardDto = {
     total: number;
     published: number;
   };
+  analytics: InventoryAnalyticsDto;
   reports: {
     financial: OperationalDashboardReportStatusDto;
     consignment_sales: OperationalDashboardReportStatusDto;

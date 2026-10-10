@@ -105,6 +105,13 @@ final class FinancialReportsController extends Controller
         $deviceIds = $salesRecords->pluck('inventory_item_id')->all();
         $devices = InventoryItem::query()->whereIn('id', $deviceIds)->get()->keyBy('id');
 
+        $partsCounts = DB::table('device_installed_parts')
+            ->whereIn('inventory_item_id', $deviceIds)
+            ->whereNull('voided_at')
+            ->select('inventory_item_id', DB::raw('count(*) as parts_count'))
+            ->groupBy('inventory_item_id')
+            ->pluck('parts_count', 'inventory_item_id');
+
         $settlements = [];
         $totalSalesMinor = 0;
         $totalInitialCostsMinor = 0;
@@ -160,6 +167,7 @@ final class FinancialReportsController extends Controller
                 'sale_price_amount_minor' => $salePriceMinor,
                 'initial_cost_amount_minor' => $initialCostMinor,
                 'installed_parts_cost_minor' => $installedPartsCostMinor,
+                'installed_parts_count' => (int) ($partsCounts[$sale->inventory_item_id] ?? 0),
                 'settlable_profit_minor' => $settlableProfitMinor,
                 'liquidation_percentage' => 50,
                 'liquidation_amount_minor' => $liquidationAmountMinor,
@@ -195,6 +203,7 @@ final class FinancialReportsController extends Controller
                 'sale_price_amount_minor' => (int) ($legacy->sale_price_amount_minor ?? 0),
                 'initial_cost_amount_minor' => $legacy->cost_amount_minor !== null ? (int) $legacy->cost_amount_minor : null,
                 'installed_parts_cost_minor' => 0,
+                'installed_parts_count' => 0,
                 'settlable_profit_minor' => null,
                 'liquidation_percentage' => 50,
                 'liquidation_amount_minor' => 0,

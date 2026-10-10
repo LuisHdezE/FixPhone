@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { DataTable, type DataTableColumn } from '@/components/data-display/DataTable';
+import { DonutChartCard } from '@/components/data-display/DonutChartCard';
+import { FunnelChartCard } from '@/components/data-display/FunnelChartCard';
 import { MetricCard } from '@/components/data-display/MetricCard';
 import { StatusBadge, type StatusBadgeTone } from '@/components/data-display/StatusBadge';
+import { TrendChartCard } from '@/components/data-display/TrendChartCard';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { PageShell } from '@/shell/PageShell';
 import type { OperationalDashboardGateway } from '../application/inventory.contracts';
@@ -17,7 +20,7 @@ const stockLabels: Record<keyof OperationalDashboardDto['inventory']['stock_heal
   healthy: 'Saludable',
   reorder: 'Reponer pronto',
   out_of_stock: 'Agotado',
-  available_without_minimum: 'En stock sin minimo',
+  available_without_minimum: 'En stock sin mínimo',
 };
 
 function formatDate(value: string | null): string {
@@ -56,13 +59,13 @@ export function InventoryDashboardPage({ gateway }: { gateway: OperationalDashbo
   ], []);
 
   if (state.status === 'loading') {
-    return <PageShell breadcrumbs={[{ label: 'Operacion' }, { label: 'Panel operativo' }]} description="Cargando indicadores desde datos persistidos." title="Panel operativo">
+    return <PageShell breadcrumbs={[{ label: 'Operación' }, { label: 'Panel operativo' }]} description="Cargando indicadores desde datos persistidos." title="Panel operativo">
       <SurfaceCard><p className="text-sm font-semibold text-slate-600">Cargando datos reales...</p></SurfaceCard>
     </PageShell>;
   }
 
   if (state.status === 'error') {
-    return <PageShell breadcrumbs={[{ label: 'Operacion' }, { label: 'Panel operativo' }]} description="No se muestran indicadores alternativos cuando el backend no responde." title="Panel operativo">
+    return <PageShell breadcrumbs={[{ label: 'Operación' }, { label: 'Panel operativo' }]} description="No se muestran indicadores alternativos cuando el backend no responde." title="Panel operativo">
       <SurfaceCard className="border-rose-200 bg-rose-50"><p className="text-sm font-semibold text-rose-800">{state.message}</p></SurfaceCard>
     </PageShell>;
   }
@@ -72,13 +75,13 @@ export function InventoryDashboardPage({ gateway }: { gateway: OperationalDashbo
   const deviceStatusEntries = Object.entries(dashboard.devices.by_status);
 
   return <PageShell
-    breadcrumbs={[{ label: 'Operacion' }, { label: 'Panel operativo' }]}
+    breadcrumbs={[{ label: 'Operación' }, { label: 'Panel operativo' }]}
     description="Indicadores calculados desde inventario, equipos, presupuestos y tasaciones persistidos. Sin datos simulados."
     title="Panel operativo"
   >
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-operational-dashboard-metrics>
-      <MetricCard icon="package" label="Articulos reales" note={`${dashboard.inventory.total_units} unidades registradas`} value={String(dashboard.inventory.total_items)} />
-      <MetricCard icon="device" label="Equipos" note="Telefonos y dispositivos" value={String(dashboard.devices.total)} />
+      <MetricCard icon="package" label="Artículos reales" note={`${dashboard.inventory.total_units} unidades registradas`} value={String(dashboard.inventory.total_items)} />
+      <MetricCard icon="device" label="Equipos" note="Teléfonos y dispositivos" value={String(dashboard.devices.total)} />
       <MetricCard icon="document" label="Presupuestos" note="Registros guardados" value={String(dashboard.repair_quotes.total)} />
       <MetricCard icon="store" label="Tasaciones" note={`${dashboard.valuations.published} publicadas`} value={String(dashboard.valuations.total)} />
     </div>
@@ -109,12 +112,43 @@ export function InventoryDashboardPage({ gateway }: { gateway: OperationalDashbo
       <SurfaceCard>
         <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-600">Reportes financieros</p>
         <div className="mt-3 grid gap-3">
-          {[dashboard.reports.financial, dashboard.reports.consignment_sales].map((report) => <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3" key={report.reason}>
-            <p className="text-sm font-semibold text-slate-900">{report.label}</p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">{report.reason}</p>
-          </div>)}
+          {[dashboard.reports.financial, dashboard.reports.consignment_sales].map((report) => report.status === 'active' ? (
+            <Link className="block rounded-md border border-brand-200 bg-brand-50 p-3 transition-colors hover:bg-brand-100" key={report.reason} to={report.url ?? '#'}>
+              <p className="text-sm font-semibold text-brand-900">{report.label}</p>
+              <p className="mt-1 text-xs leading-5 text-brand-700">{report.reason}</p>
+            </Link>
+          ) : (
+            <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3" key={report.reason}>
+              <p className="text-sm font-semibold text-slate-900">{report.label}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">{report.reason}</p>
+            </div>
+          ))}
         </div>
       </SurfaceCard>
+    </div>
+
+    <div className="mt-4 grid gap-3 xl:grid-cols-3" data-inventory-analytics>
+      <div className="xl:col-span-2">
+        <TrendChartCard
+          description={dashboard.analytics.trend.description}
+          periodLabel={dashboard.analytics.trend.periodLabel}
+          series={dashboard.analytics.trend.series}
+          title={dashboard.analytics.trend.title}
+        />
+      </div>
+      <DonutChartCard
+        centerLabel={dashboard.analytics.distribution.centerLabel}
+        description={dashboard.analytics.distribution.description}
+        segments={dashboard.analytics.distribution.segments}
+        title={dashboard.analytics.distribution.title}
+      />
+      <div className="xl:col-span-3">
+        <FunnelChartCard
+          description={dashboard.analytics.funnel.description}
+          stages={dashboard.analytics.funnel.stages}
+          title={dashboard.analytics.funnel.title}
+        />
+      </div>
     </div>
 
     <div className="mt-4">
@@ -122,15 +156,15 @@ export function InventoryDashboardPage({ gateway }: { gateway: OperationalDashbo
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-600">Actividad reciente</p>
-            <h2 className="mt-1 text-base font-semibold text-slate-950">Ultimos equipos modificados</h2>
-            <p className="mt-1 max-w-2xl text-xs text-slate-500">Lista real desde inventario. Si no hay equipos, el panel queda vacio de forma explicita.</p>
+            <h2 className="mt-1 text-base font-semibold text-slate-950">Últimos equipos modificados</h2>
+            <p className="mt-1 max-w-2xl text-xs text-slate-500">Lista real desde inventario. Si no hay equipos, el panel queda vacío de forma explícita.</p>
           </div>
           <span className="text-xs font-semibold text-slate-500">Actualizado {formatDate(dashboard.generated_at)}</span>
         </div>
 
         <div className="mt-3" data-operational-dashboard-latest-devices>
           <DataTable
-            caption="Ultimos equipos modificados"
+            caption="Últimos equipos modificados"
             columns={columns}
             emptyMessage="No hay equipos reales para mostrar."
             getRowId={(item) => item.id}

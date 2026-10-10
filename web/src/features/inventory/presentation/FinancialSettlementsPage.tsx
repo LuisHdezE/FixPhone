@@ -27,24 +27,27 @@ export function FinancialSettlementsPage() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
   const [activeTab, setActiveTab] = useState<'settlements' | 'expenses'>('settlements');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [settlementsLoading, setSettlementsLoading] = useState(true);
+  const [settlementsError, setSettlementsError] = useState<string | null>(null);
+  const [expensesLoading, setExpensesLoading] = useState(true);
+  const [expensesError, setExpensesError] = useState<string | null>(null);
   const [settlementsReport, setSettlementsReport] = useState<DirectSalesSettlementReportDto | null>(null);
   const [expensesReport, setExpensesReport] = useState<InstalledPartsExpenseReportDto | null>(null);
 
   const loadData = (month: string) => {
-    setLoading(true);
-    setError(null);
-    Promise.all([
-      gateway.getDirectSalesSettlementsReport(month),
-      gateway.getInstalledPartsExpensesReport(month),
-    ])
-      .then(([settlements, expenses]) => {
-        setSettlementsReport(settlements);
-        setExpensesReport(expenses);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : 'Error al cargar reportes financieros.'))
-      .finally(() => setLoading(false));
+    setSettlementsLoading(true);
+    setSettlementsError(null);
+    gateway.getDirectSalesSettlementsReport(month)
+      .then(setSettlementsReport)
+      .catch((e) => setSettlementsError(e instanceof Error ? e.message : 'Error al cargar liquidaciones.'))
+      .finally(() => setSettlementsLoading(false));
+
+    setExpensesLoading(true);
+    setExpensesError(null);
+    gateway.getInstalledPartsExpensesReport(month)
+      .then(setExpensesReport)
+      .catch((e) => setExpensesError(e instanceof Error ? e.message : 'Error al cargar gastos.'))
+      .finally(() => setExpensesLoading(false));
   };
 
   useEffect(() => {
@@ -173,19 +176,31 @@ export function FinancialSettlementsPage() {
         </div>
       </div>
 
-      {loading && (
+      {activeTab === 'settlements' && settlementsLoading && (
         <SurfaceCard>
-          <p className="text-sm font-semibold text-slate-600">Calculando reporte financiero desde MySQL real...</p>
+          <p className="text-sm font-semibold text-slate-600">Calculando reporte de liquidaciones desde MySQL real...</p>
         </SurfaceCard>
       )}
 
-      {error && (
+      {activeTab === 'settlements' && settlementsError && (
         <SurfaceCard className="border-rose-200 bg-rose-50">
-          <p className="text-sm font-semibold text-rose-800">{error}</p>
+          <p className="text-sm font-semibold text-rose-800">{settlementsError}</p>
         </SurfaceCard>
       )}
 
-      {!loading && !error && activeTab === 'settlements' && settlementsReport && (
+      {activeTab === 'expenses' && expensesLoading && (
+        <SurfaceCard>
+          <p className="text-sm font-semibold text-slate-600">Calculando reporte de gastos desde MySQL real...</p>
+        </SurfaceCard>
+      )}
+
+      {activeTab === 'expenses' && expensesError && (
+        <SurfaceCard className="border-rose-200 bg-rose-50">
+          <p className="text-sm font-semibold text-rose-800">{expensesError}</p>
+        </SurfaceCard>
+      )}
+
+      {!settlementsLoading && !settlementsError && activeTab === 'settlements' && settlementsReport && (
         <>
           <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 text-xs text-blue-900 shadow-sm">
             <strong>Fórmula Financiera Oficial (Opción A):</strong>
@@ -236,7 +251,7 @@ export function FinancialSettlementsPage() {
         </>
       )}
 
-      {!loading && !error && activeTab === 'expenses' && expensesReport && (
+      {!expensesLoading && !expensesError && activeTab === 'expenses' && expensesReport && (
         <>
           <div className="grid gap-3 sm:grid-cols-3 mb-4">
             <MetricCard
