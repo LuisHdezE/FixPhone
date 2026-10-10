@@ -174,6 +174,8 @@ export function InventoryDevicesPage({
           value={device.dismantlingStatus}
           onChange={(event) => {
             const next = event.target.value as Exclude<DismantlingStatus, 'unknown'>;
+            // Reset the native select while confirmation/API validation is pending.
+            event.currentTarget.value = device.dismantlingStatus;
             void updateDismantling(device, next);
           }}
         >
