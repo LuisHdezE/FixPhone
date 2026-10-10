@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Infrastructure\Identity\User;
+use App\Infrastructure\Inventory\Consignor;
 use App\Infrastructure\Inventory\DeviceInstalledPart;
 use App\Infrastructure\Inventory\DeviceSaleRecord;
 use App\Infrastructure\Inventory\InventoryItem;
@@ -286,11 +287,60 @@ class DeviceSalesAndSettlementsTest extends TestCase
         ])->assertStatus(422)
           ->assertJsonValidationErrors(['consignor_id']);
 
+        $consignor = Consignor::create([
+            'id' => (string) Str::ulid(),
+            'full_name' => 'John Doe Consignor',
+            'document_number' => '12345678',
+        ]);
+
         // Attempt with consignor_id (success)
         $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
             'request_id' => $requestId,
             'effective_sale_price_minor' => 800000,
-            'consignor_id' => $this->admin->id,
-        ])->assertStatus(201);
+            'consignor_id' => $consignor->id,
+        ])->assertStatus(201)
+          ->assertJsonPath('data.consignor_id', $consignor->id)
+          ->assertJsonPath('data.consignor_name', 'John Doe Consignor');
+    }
+
+    public function test_consignor_historical_name_is_preserved_after_consignor_update(): void
+    {
+        Sanctum::actingAs($this->admin);
+
+        $device = InventoryItem::create([
+            'id' => (string) Str::ulid(),
+            'sku' => 'FXP-CONS-002',
+            'title' => 'Samsung A52s Consigned',
+            'item_type' => 'used_phone',
+            'operational_status' => 'en_stock',
+            'publication_status' => 'draft',
+            'inventory_purpose' => 'consigned_phone',
+            'cost_amount_minor' => 0,
+            'sale_price_amount_minor' => 500000,
+            'currency_code' => 'UYU',
+            'stock_quantity' => 1,
+        ]);
+
+        $consignor = Consignor::create([
+            'id' => (string) Str::ulid(),
+            'full_name' => 'Original Name',
+        ]);
+
+        $saleRes = $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
+            'request_id' => (string) Str::uuid(),
+            'effective_sale_price_minor' => 500000,
+            'consignor_id' => $consignor->id,
+        ]);
+
+        $saleRes->assertStatus(201)
+            ->assertJsonPath('data.consignor_name', 'Original Name');
+
+        // Update consignor
+        $consignor->update(['full_name' => 'New Name Changed']);
+
+        // Check if the sale still returns 'Original Name'
+        $getRes = $this->getJson("/api/v1/admin/devices/{$device->id}/sales");
+        $getRes->assertStatus(200)
+            ->assertJsonPath('data.sales.0.consignor_name', 'Original Name');
     }
 }

@@ -20,6 +20,7 @@ class DeviceSaleRecord extends Model
         'currency_code',
         'inventory_purpose',
         'consignor_id',
+        'consignor_name',
         'sold_at',
         'sold_by_actor_id',
         'receipt_number',

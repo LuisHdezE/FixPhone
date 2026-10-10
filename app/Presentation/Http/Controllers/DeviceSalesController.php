@@ -45,7 +45,7 @@ final class DeviceSalesController extends Controller
             'request_id' => ['required', 'uuid'],
             'effective_sale_price_minor' => ['required', 'integer', 'between:0,100000000000'],
             'receipt_number' => ['nullable', 'string', 'max:100'],
-            'consignor_id' => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::exists('users', 'id')],
+            'consignor_id' => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::exists('consignors', 'id')],
             'notes' => ['nullable', 'string', 'max:1000'],
             'sold_at' => ['sometimes', 'nullable', 'date'],
         ]);
@@ -95,6 +95,11 @@ final class DeviceSalesController extends Controller
 
             $soldAt = !empty($validated['sold_at']) ? Carbon::parse($validated['sold_at']) : now();
 
+            $consignorName = null;
+            if (!empty($validated['consignor_id'])) {
+                $consignorName = \App\Infrastructure\Inventory\Consignor::find($validated['consignor_id'])?->full_name;
+            }
+
             $saleRecord = DeviceSaleRecord::create([
                 'id' => (string) Str::ulid(),
                 'inventory_item_id' => $device->id,
@@ -104,6 +109,7 @@ final class DeviceSalesController extends Controller
                 'currency_code' => $device->currency_code ?? 'UYU',
                 'inventory_purpose' => $device->inventory_purpose,
                 'consignor_id' => $validated['consignor_id'] ?? null,
+                'consignor_name' => $consignorName,
                 'sold_at' => $soldAt,
                 'sold_by_actor_id' => (string) $request->user()->getAuthIdentifier(),
                 'receipt_number' => $validated['receipt_number'] ?? null,
@@ -198,6 +204,7 @@ final class DeviceSalesController extends Controller
             'currency_code' => $sale->currency_code,
             'inventory_purpose' => $sale->inventory_purpose,
             'consignor_id' => $sale->consignor_id,
+            'consignor_name' => $sale->consignor_name,
             'sold_at' => $sale->sold_at?->toIso8601String(),
             'sold_by_actor_id' => $sale->sold_by_actor_id,
             'receipt_number' => $sale->receipt_number,

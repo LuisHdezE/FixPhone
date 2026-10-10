@@ -18,6 +18,7 @@ return new class extends Migration
 
             $table->string('inventory_purpose');
             $table->string('consignor_id')->nullable();
+            $table->string('consignor_name')->nullable();
 
             $table->timestamp('sold_at');
             $table->string('sold_by_actor_id');
@@ -37,6 +38,11 @@ return new class extends Migration
             $table->foreign('inventory_item_id')
                 ->references('id')
                 ->on('inventory_items')
+                ->onDelete('restrict');
+
+            $table->foreign('consignor_id')
+                ->references('id')
+                ->on('consignors')
                 ->onDelete('restrict');
 
             $table->index(['inventory_item_id', 'sold_at']);
