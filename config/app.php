@@ -7,4 +7,5 @@ return [
   'maintenance'=>['driver'=>env('APP_MAINTENANCE_DRIVER','file'),'store'=>env('APP_MAINTENANCE_STORE','database')],
   'demo_seeder_enabled' => env('APP_DEMO_SEEDER_ENABLED', false),
   'demo_seeder_allowed_databases' => array_filter(explode(',', (string) env('APP_DEMO_SEEDER_ALLOWED_DATABASES', ''))),
+  'mvp_seeder_enabled' => filter_var(env('MVP_SEEDER_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
 ];
