@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use App\Infrastructure\Inventory\InventoryItem;
 use App\Infrastructure\Inventory\DeviceCodeAllocator;
+use App\Infrastructure\Valuation\PublishedPartsDonor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,21 @@ class InventoryController extends Controller
             ->latest('created_at')
             ->get();
 
-        return response()->json(['data' => $items]);
+        // Present only actually accessible public listings, never infer visibility
+        // from inventory flags or a stale valuation publication status.
+        $visible = PublishedPartsDonor::query()
+            ->whereIn('inventory_item_id', $items->pluck('id'))
+            ->get(['id', 'inventory_item_id'])
+            ->keyBy('inventory_item_id');
+
+        return response()->json(['data' => $items->map(function (InventoryItem $item) use ($visible): array {
+            $publication = $visible->get($item->id);
+            return [
+                ...$item->toArray(),
+                'public_listing_status' => $publication ? 'published' : 'draft',
+                'public_valuation_id' => $publication?->id,
+            ];
+        })]);
     }
 
     public function create(Request $request)
@@ -52,6 +67,10 @@ class InventoryController extends Controller
                 $validated['sku'] = DeviceCodeAllocator::reserve();
             }
 
+            if (in_array($validated['item_type'], ['device', 'used_phone'], true)) {
+                // Existing imported devices are deliberately left as unknown.
+                $validated['dismantling_status'] = 'not_started';
+            }
             $item = InventoryItem::create($validated);
 
             DB::table('audit_events')->insert([
