@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router';
-import { adminFetch, adminToken, clearAdminToken } from '@/auth/adminApiSession';
+import { ADMIN_REMEMBERED_KEY, ADMIN_SESSION_CHANGED, adminFetch, adminToken, clearAdminToken } from '@/auth/adminApiSession';
 import { FixPhoneAdminShell } from '@/shell/FixPhoneAdminShell';
 
 export interface AdminPrincipal {
@@ -86,6 +86,19 @@ export function AuthenticatedAdminShell() {
     void validate(() => current);
     return () => { current = false; };
   }, [attempt, validate]);
+
+  useEffect(() => {
+    const changed = () => setAttempt((value) => value + 1);
+    const otherTabChanged = (event: StorageEvent) => {
+      if (event.key === ADMIN_REMEMBERED_KEY || event.key === null) changed();
+    };
+    window.addEventListener(ADMIN_SESSION_CHANGED, changed);
+    window.addEventListener('storage', otherTabChanged);
+    return () => {
+      window.removeEventListener(ADMIN_SESSION_CHANGED, changed);
+      window.removeEventListener('storage', otherTabChanged);
+    };
+  }, []);
 
   if (session.kind === 'unauthenticated') {
     return <Navigate to="/authentication/sign-in" replace state={{ from: location.pathname + location.search }} />;
