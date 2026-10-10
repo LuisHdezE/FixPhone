@@ -9,6 +9,8 @@ use App\Presentation\Http\Controllers\DeviceDismantlingController;
 use App\Presentation\Http\Controllers\MasterDataController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
 use App\Presentation\Http\Controllers\RepairQuoteController;
+use App\Presentation\Http\Controllers\DeviceInstalledPartsController;
+use App\Presentation\Http\Controllers\FinancialReportsController;
 use App\Presentation\Http\Controllers\MediaStorageSettingsController;
 use App\Presentation\Http\Controllers\ValuationPhotosController;
 use App\Presentation\Http\Controllers\PartsDonorStorefrontController;
@@ -42,6 +44,13 @@ Route::prefix('v1')->group(function (): void {
   Route::patch('/admin/inventory/items/{id}',[OperationalInventoryController::class, 'update'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.items.update');
   Route::get('/admin/inventory/items/{id}/adjustments',[OperationalInventoryController::class, 'adjustments'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.adjustments.index');
   Route::post('/admin/inventory/items/{id}/adjustments',[OperationalInventoryController::class, 'adjust'])->middleware('permission:inventory.adjust')->name('api.v1.admin.inventory.items.adjustments.store');
+
+  Route::get('/admin/devices/{id}/installed-parts', [DeviceInstalledPartsController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.devices.installed-parts.index');
+  Route::post('/admin/devices/{id}/installed-parts', [DeviceInstalledPartsController::class, 'store'])->middleware('permission:inventory.adjust')->name('api.v1.admin.devices.installed-parts.store');
+  Route::post('/admin/devices/{id}/installed-parts/{partId}/void', [DeviceInstalledPartsController::class, 'void'])->middleware('permission:inventory.adjust')->name('api.v1.admin.devices.installed-parts.void');
+
+  Route::get('/admin/reports/installed-parts-expenses', [FinancialReportsController::class, 'installedPartsExpenses'])->middleware('permission:inventory.view')->name('api.v1.admin.reports.installed-parts-expenses');
+  Route::get('/admin/reports/direct-sales-settlements', [FinancialReportsController::class, 'directSalesSettlements'])->middleware('permission:inventory.view')->name('api.v1.admin.reports.direct-sales-settlements');
 
   Route::post('/admin/inventory',[InventoryController::class, 'create'])->middleware('permission:devices.intake')->name('api.v1.admin.inventory.store');
   Route::patch('/admin/inventory/{id}/dismantling',[DeviceDismantlingController::class, 'update'])->middleware('permission:workshop.dismantle')->name('api.v1.admin.inventory.dismantling.update');

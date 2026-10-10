@@ -60,7 +60,7 @@ export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
     items: [
       { label: 'Usuarios y roles', planned: true },
       { label: 'Gastos', planned: true },
-      { label: 'Liquidaciones', planned: true },
+      { label: 'Liquidaciones 50%', to: '/admin/finance/settlements' },
       { label: 'Rentabilidad', planned: true },
       { label: 'Aging inventario', planned: true },
       { label: 'Integraciones', planned: true },
