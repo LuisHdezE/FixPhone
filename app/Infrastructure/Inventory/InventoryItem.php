@@ -21,6 +21,7 @@ class InventoryItem extends Model
         'operational_status',
         'publication_status',
         'inventory_purpose',
+        'dismantling_status',
         'is_sellable',
         'stock_quantity',
         'cost_amount_minor',

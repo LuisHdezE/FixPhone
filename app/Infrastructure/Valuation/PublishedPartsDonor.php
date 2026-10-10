@@ -18,7 +18,13 @@ final class PublishedPartsDonor
             ->whereHas('inventoryItem', static function (Builder $query): void {
                 $query->whereIn('item_type', ['device', 'used_phone'])
                     ->where('inventory_purpose', 'parts_donor')
-                    ->where('stock_quantity', '>', 0);
+                    ->where('stock_quantity', '>', 0)
+                    ->where(function (Builder $query): void {
+                        // Legacy NULL is not backfilled with an invented assessment.
+                        // Partial/exhausted devices cannot remain advertised as units.
+                        $query->whereNull('dismantling_status')
+                            ->orWhereNotIn('dismantling_status', ['partial', 'exhausted']);
+                    });
             });
     }
 

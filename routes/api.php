@@ -4,6 +4,7 @@ use App\Presentation\Http\Controllers\AuthLogoutController;
 use App\Presentation\Http\Controllers\AuthMeController;
 use App\Presentation\Http\Controllers\IamController;
 use App\Presentation\Http\Controllers\InventoryController;
+use App\Presentation\Http\Controllers\DeviceDismantlingController;
 use App\Presentation\Http\Controllers\MasterDataController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
 use App\Presentation\Http\Controllers\RepairQuoteController;
@@ -35,6 +36,7 @@ Route::prefix('v1')->group(function (): void {
  Route::middleware('auth:sanctum')->group(function (): void {
   Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.index');
   Route::post('/admin/inventory',[InventoryController::class, 'create'])->middleware('permission:devices.intake')->name('api.v1.admin.inventory.store');
+  Route::patch('/admin/inventory/{id}/dismantling',[DeviceDismantlingController::class, 'update'])->middleware('permission:workshop.dismantle')->name('api.v1.admin.inventory.dismantling.update');
   Route::prefix('admin/media/storage-profiles')->middleware('permission:integrations.manage')->group(function (): void {
    Route::get('/', [MediaStorageSettingsController::class, 'index'])->name('api.v1.admin.media.storage.index');
    Route::post('/', [MediaStorageSettingsController::class, 'store'])->name('api.v1.admin.media.storage.store');

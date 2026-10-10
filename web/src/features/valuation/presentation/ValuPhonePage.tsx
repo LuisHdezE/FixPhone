@@ -14,7 +14,7 @@ type Form = {
   publicStatus: 'draft' | 'published'; publicImageUrl: string;
   publicDescription: string; provenanceConfirmed: boolean;
 };
-type DeviceOption = { id: string; sku?: string; model?: string; title: string; item_type?: string; inventory_purpose?: string; stock_quantity?: number };
+type DeviceOption = { id: string; sku?: string; model?: string; title: string; item_type?: string; inventory_purpose?: string; stock_quantity?: number; dismantling_status?: string | null };
 const gateway = new ApiValuationGateway();
 const initial: Form = {
   model: 'iPhone 11', inventoryId: '', fault: 'icloud', screen: 'unknown', power: 'unknown',
@@ -93,12 +93,14 @@ function publicationChecks(form: Form, saved: boolean, device: DeviceOption | un
     device &&
     (device.item_type === 'device' || device.item_type === 'used_phone') &&
     device.inventory_purpose === 'parts_donor' &&
+    device.dismantling_status !== 'partial' &&
+    device.dismantling_status !== 'exhausted' &&
     Number(device.stock_quantity) > 0
   );
   const askingPrice = Number(form.asking.replace(',', '.'));
   return [
     { key: 'saved', label: 'Ficha guardada en FixPhone', ok: saved },
-    { key: 'inventory', label: 'Equipo real de inventario para repuestos, con stock', ok: hasEligibleDevice },
+    { key: 'inventory', label: 'Equipo donante con stock y sin despiece parcial o agotado', ok: hasEligibleDevice },
     { key: 'price', label: 'Precio de publicación mayor que cero', ok: Boolean(form.asking.trim()) && Number.isFinite(askingPrice) && askingPrice > 0 },
     { key: 'image', label: 'Fotografía real con enlace HTTPS', ok: /^https:\/\/[^\s]+$/i.test(form.publicImageUrl.trim()) },
     { key: 'description', label: 'Descripción pública de al menos 20 caracteres', ok: form.publicDescription.trim().length >= 20 },
