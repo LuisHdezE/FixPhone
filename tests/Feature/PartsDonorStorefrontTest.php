@@ -174,4 +174,56 @@ final class PartsDonorStorefrontTest extends TestCase
             }
         }
     }
+
+    public function test_started_dismantling_withdraws_public_listing_and_prevents_republication(): void
+    {
+        $this->login();
+        $inventory = $this->device();
+        $id = $this->postJson('/api/v1/admin/valuations', [
+            ...$this->valuation($inventory->id), 'public_listing_status' => 'published',
+        ])->assertCreated()->json('data.id');
+
+        $this->getJson('/api/v1/store/parts-donors')->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson('/api/v1/admin/inventory')->assertOk()
+            ->assertJsonPath('data.0.public_listing_status', 'published')
+            ->assertJsonPath('data.0.public_valuation_id', $id);
+
+        $this->patchJson('/api/v1/admin/inventory/'.$inventory->id.'/dismantling', [
+            'dismantling_status' => 'partial',
+        ])->assertOk();
+
+        $this->assertSame(1, $inventory->fresh()->stock_quantity);
+        $this->assertDatabaseHas('device_valuations', [
+            'id' => $id, 'public_listing_status' => 'draft',
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'entity_id' => $id, 'event_type' => 'VALUATION.UNPUBLISHED_DUE_TO_DISMANTLING',
+        ]);
+
+        $this->getJson('/api/v1/store/parts-donors')->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/store/parts-donors/'.$id)->assertNotFound();
+        $this->getJson('/api/v1/admin/inventory')->assertOk()
+            ->assertJsonPath('data.0.public_listing_status', 'draft')
+            ->assertJsonPath('data.0.public_valuation_id', null);
+
+        $this->patchJson('/api/v1/admin/valuations/'.$id, [
+            'public_listing_status' => 'published',
+        ])->assertUnprocessable()->assertJsonValidationErrors('inventory_item_id');
+        $this->getJson('/api/v1/store/parts-donors')->assertJsonCount(0, 'data');
+    }
+
+    public function test_exhausted_device_is_hidden_even_if_legacy_record_was_manually_published(): void
+    {
+        $this->login();
+        $inventory = $this->device();
+        $id = $this->postJson('/api/v1/admin/valuations', [
+            ...$this->valuation($inventory->id), 'public_listing_status' => 'published',
+        ])->assertCreated()->json('data.id');
+
+        // Simulate legacy/manual database change bypassing the controlled endpoint.
+        $inventory->update(['dismantling_status' => 'exhausted']);
+        $this->getJson('/api/v1/store/parts-donors')->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/store/parts-donors/'.$id)->assertNotFound();
+    }
+
 }
