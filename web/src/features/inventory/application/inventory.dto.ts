@@ -105,3 +105,48 @@ export interface InventoryDashboardDto {
   queue: readonly InventoryQueueItemDto[];
   queueFilters: readonly InventoryQueueFilterDto[];
 }
+
+export type OperationalDashboardReportStatusDto = {
+  status: 'pending';
+  label: string;
+  reason: string;
+};
+
+export type OperationalDashboardLatestDeviceDto = {
+  id: string;
+  sku: string | null;
+  title: string;
+  status: string;
+  updated_at: string | null;
+};
+
+export type OperationalDashboardDto = {
+  generated_at: string;
+  inventory: {
+    total_items: number;
+    total_units: number;
+    stock_health: {
+      healthy: number;
+      reorder: number;
+      out_of_stock: number;
+      available_without_minimum: number;
+    };
+    by_type: Record<string, number>;
+  };
+  devices: {
+    total: number;
+    by_status: Record<string, number>;
+    latest: readonly OperationalDashboardLatestDeviceDto[];
+  };
+  repair_quotes: {
+    total: number;
+  };
+  valuations: {
+    total: number;
+    published: number;
+  };
+  reports: {
+    financial: OperationalDashboardReportStatusDto;
+    consignment_sales: OperationalDashboardReportStatusDto;
+  };
+};
