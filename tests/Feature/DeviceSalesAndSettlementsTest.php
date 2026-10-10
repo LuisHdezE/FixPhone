@@ -203,9 +203,20 @@ class DeviceSalesAndSettlementsTest extends TestCase
         $response = $this->getJson('/api/v1/admin/reports/direct-sales-settlements?year_month=' . now()->format('Y-m'));
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.settlements.0.status', 'pending_review')
-            ->assertJsonPath('data.settlements.0.status_label', 'Venta legacy pendiente de conciliación')
-            ->assertJsonPath('data.settlements.0.liquidation_amount_minor', 0);
+            ->assertJsonPath('data.legacy_pending_conciliation.0.status', 'pending_review')
+            ->assertJsonPath('data.legacy_pending_conciliation.0.status_label', 'Venta legacy pendiente de conciliación')
+            ->assertJsonPath('data.legacy_pending_conciliation.0.liquidation_amount_minor', 0)
+            ->assertJsonPath('data.legacy_pending_conciliation.0.sold_at', null);
+
+        // Edit legacy device (which updates `updated_at`)
+        $legacyDevice = InventoryItem::where('sku', 'FXP-LEGACY-001')->first();
+        $legacyDevice->update(['title' => 'iPhone 7 Legacy Edited']);
+
+        // Assert it remains in legacy_pending_conciliation with null sold_at
+        $response2 = $this->getJson('/api/v1/admin/reports/direct-sales-settlements?year_month=' . now()->format('Y-m'));
+        $response2->assertStatus(200)
+            ->assertJsonPath('data.legacy_pending_conciliation.0.status', 'pending_review')
+            ->assertJsonPath('data.legacy_pending_conciliation.0.sold_at', null);
     }
 
     public function test_idempotent_sale_replay_returns_success_and_different_data_fails(): void
@@ -279,7 +290,7 @@ class DeviceSalesAndSettlementsTest extends TestCase
         $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
             'request_id' => $requestId,
             'effective_sale_price_minor' => 800000,
-            'consignor_id' => (string) Str::ulid(),
+            'consignor_id' => $this->admin->id,
         ])->assertStatus(201);
     }
 }

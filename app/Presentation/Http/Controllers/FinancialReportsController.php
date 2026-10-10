@@ -179,11 +179,11 @@ final class FinancialReportsController extends Controller
             ->whereIn('inventory_purpose', ['sell_as_used_phone', 'repair_then_sell', 'venta_directa', 'direct_sale'])
             ->whereIn('operational_status', ['vendido', 'sold'])
             ->whereNotIn('id', $recordedDeviceIds)
-            ->whereBetween('updated_at', [$startOfMonth, $endOfMonth])
             ->get();
 
+        $legacySettlements = [];
         foreach ($legacySoldDevices as $legacy) {
-            $settlements[] = [
+            $legacySettlements[] = [
                 'sale_id' => null,
                 'device_id' => $legacy->id,
                 'sku' => $legacy->sku,
@@ -201,9 +201,9 @@ final class FinancialReportsController extends Controller
                 'currency_code' => $legacy->currency_code ?? 'UYU',
                 'status' => 'pending_review',
                 'status_label' => 'Venta legacy pendiente de conciliación',
-                'status_reason' => 'El equipo figura vendido sin registro transaccional en device_sale_records. Requiere registrar la operación de venta.',
+                'status_reason' => 'El equipo figura vendido sin registro transaccional en device_sale_records. Requiere asentar la venta histórica.',
                 'receipt_number' => null,
-                'sold_at' => $legacy->updated_at?->toIso8601String(),
+                'sold_at' => null,
             ];
         }
 
@@ -221,6 +221,7 @@ final class FinancialReportsController extends Controller
                     'currency_code' => 'UYU',
                 ],
                 'settlements' => $settlements,
+                'legacy_pending_conciliation' => $legacySettlements,
             ],
         ]);
     }

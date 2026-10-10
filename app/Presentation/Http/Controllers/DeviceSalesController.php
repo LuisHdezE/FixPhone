@@ -45,7 +45,7 @@ final class DeviceSalesController extends Controller
             'request_id' => ['required', 'uuid'],
             'effective_sale_price_minor' => ['required', 'integer', 'between:0,100000000000'],
             'receipt_number' => ['nullable', 'string', 'max:100'],
-            'consignor_id' => ['nullable', 'string', 'max:255'],
+            'consignor_id' => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::exists('users', 'id')],
             'notes' => ['nullable', 'string', 'max:1000'],
             'sold_at' => ['sometimes', 'nullable', 'date'],
         ]);
