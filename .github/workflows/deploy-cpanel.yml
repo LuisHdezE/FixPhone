@@ -121,4 +121,16 @@ jobs:
 
       - name: Trigger Post-Deploy Migrations
         run: |
-          curl -X POST -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" -H "Accept: application/json" --silent --show-error --fail --retry 3 --max-time 60 "https://fixphone.eliasworks.uy/api/_deploy/run-migrations"
+          HTTP_STATUS=$(curl -s -o response.txt -w "%{http_code}" -X POST -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" -H "Accept: application/json" -H "User-Agent: FixPhone-Deploy/1.0" --max-time 60 "https://fixphone.eliasworks.uy/api/_deploy/run-migrations")
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ]; then
+            echo "Migrations executed successfully (HTTP $HTTP_STATUS)."
+            cat response.txt
+            exit 0
+          elif [ "$HTTP_STATUS" -eq 401 ] || [ "$HTTP_STATUS" -eq 403 ]; then
+            echo "::error::Authentication or WAF blocked the request (HTTP $HTTP_STATUS)."
+            exit 1
+          else
+            echo "::error::Unexpected server error (HTTP $HTTP_STATUS)."
+            cat response.txt || true
+            exit 1
+          fi

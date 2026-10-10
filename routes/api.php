@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
     $token = env('DEPLOY_TOKEN');
-    if (!$token || $request->header('X-Deploy-Token') !== $token) {
+    if (!$token || !hash_equals($token, (string) $request->header('X-Deploy-Token'))) {
         abort(401, 'Unauthorized');
     }
     \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
