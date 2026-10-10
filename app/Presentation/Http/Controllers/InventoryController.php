@@ -5,6 +5,7 @@ namespace App\Presentation\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use App\Infrastructure\Inventory\InventoryItem;
+use App\Infrastructure\Inventory\DeviceCodeAllocator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -44,6 +45,13 @@ class InventoryController extends Controller
         ]);
 
         $item = DB::transaction(function () use ($validated, $request) {
+            // New physical devices receive an immutable human-readable reference.
+            // Imported items with a pre-existing SKU remain backward compatible.
+            if (in_array($validated['item_type'], ['device', 'used_phone'], true)
+                && empty($validated['sku'])) {
+                $validated['sku'] = DeviceCodeAllocator::reserve();
+            }
+
             $item = InventoryItem::create($validated);
 
             DB::table('audit_events')->insert([
