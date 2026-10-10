@@ -29,8 +29,8 @@ Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $reque
 });
 
 Route::post('/_deploy/mvp-action', function (\Illuminate\Http\Request $request) {
-    if (env('MVP_SEEDER_ENABLED') !== true) {
-        abort(403, 'MVP endpoints are currently disabled.');
+    if (config('app.mvp_seeder_enabled') !== true) {
+        return response()->json(['message' => 'MVP endpoints are currently disabled.'], 403);
     }
 
     $deployToken = env('DEPLOY_TOKEN');
@@ -44,9 +44,9 @@ Route::post('/_deploy/mvp-action', function (\Illuminate\Http\Request $request) 
     // Status can be done with DEPLOY_TOKEN, others require MVP_TOKEN
     $token = $request->header('X-Deploy-Token');
     if ($action === 'status') {
-        if (!$deployToken || !hash_equals($deployToken, (string) $token)) abort(401, 'Unauthorized');
+        if (!$deployToken || !hash_equals($deployToken, (string) $token)) return response()->json(['message' => 'Unauthorized'], 401);
     } else {
-        if (!$mvpToken || !hash_equals($mvpToken, (string) $token)) abort(401, 'Unauthorized for data alteration');
+        if (!$mvpToken || !hash_equals($mvpToken, (string) $token)) return response()->json(['message' => 'Unauthorized for data alteration'], 401);
     }
     
     $exitCode = \Illuminate\Support\Facades\Artisan::call('fixphone:seed-mvp', ['--'.$action => true, '--force' => true]);

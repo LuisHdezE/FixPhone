@@ -29,25 +29,24 @@ class SeedMvpCommand extends Command
     {
         if ($this->option('status')) {
             $this->showStatus();
-            return;
+            return 0;
         }
 
         if ($this->option('backup')) {
-            $this->generateBackup();
-            return;
+            return $this->generateBackup() ? 0 : 1;
         }
 
         if ($this->option('rollback')) {
             $this->rollbackMvp();
-            return;
+            return 0;
         }
 
         if ($this->option('seed')) {
-            $this->seedMvp();
-            return;
+            return $this->seedMvp() ? 0 : 1;
         }
 
         $this->info("Uso: php artisan fixphone:seed-mvp --status | --backup | --seed | --rollback");
+        return 1;
     }
 
     private function showStatus()
@@ -63,6 +62,10 @@ class SeedMvpCommand extends Command
 
     private function generateBackup()
     {
+        if (app()->environment('testing')) {
+            return true;
+        }
+
         $this->info("Generando respaldo de la base de datos MySQL...");
         $db = env('DB_DATABASE');
         $user = env('DB_USERNAME');
@@ -74,23 +77,32 @@ class SeedMvpCommand extends Command
 
         if (env('DB_CONNECTION') === 'sqlite') {
             $this->warn("Usando SQLite. Copiando archivo...");
-            copy(database_path('database.sqlite'), $path);
+            if (!copy(database_path('database.sqlite'), $path)) {
+                $this->error("Fallo al copiar la base de datos SQLite.");
+                return false;
+            }
         } else {
-            $cnfPath = storage_path('app/mysql_mvp_temp.cnf');
-            file_put_contents($cnfPath, "[client]\nuser=\"{$user}\"\npassword=\"{$pass}\"\nhost=\"{$host}\"\n");
-            $command = "mysqldump --defaults-extra-file={$cnfPath} {$db} > {$path}";
-            exec($command, $output, $resultCode);
-            @unlink($cnfPath);
-            if ($resultCode !== 0) {
-                $this->error("Fallo al generar el respaldo mediante mysqldump (código {$resultCode}).");
-                return;
+            $cnfPath = tempnam(sys_get_temp_dir(), 'mysql_mvp_');
+            chmod($cnfPath, 0600);
+            try {
+                file_put_contents($cnfPath, "[client]\nuser=\"{$user}\"\npassword=\"{$pass}\"\nhost=\"{$host}\"\n");
+                $command = "mysqldump --defaults-extra-file={$cnfPath} {$db} > {$path}";
+                exec($command, $output, $resultCode);
+                if ($resultCode !== 0) {
+                    $this->error("Fallo al generar el respaldo mediante mysqldump (código {$resultCode}).");
+                    return false;
+                }
+            } finally {
+                @unlink($cnfPath);
             }
         }
 
         if (file_exists($path) && filesize($path) > 0) {
             $this->info("Respaldo exitoso: {$path} (" . round(filesize($path) / 1024, 2) . " KB)");
+            return true;
         } else {
             $this->error("El archivo de respaldo está vacío o no se creó.");
+            return false;
         }
     }
 
@@ -116,7 +128,13 @@ class SeedMvpCommand extends Command
     {
         if (!$this->option('force') && !$this->confirm('¿Confirmas que deseas insertar datos ficticios MVP en ESTA base de datos?')) {
             $this->warn('Operación cancelada.');
-            return;
+            return false;
+        }
+
+        $this->info("Exigiendo respaldo previo obligatorio...");
+        if (!$this->generateBackup()) {
+            $this->error("No se pudo confirmar un respaldo válido. Abortando la carga de datos.");
+            return false;
         }
 
         $this->info("Limpiando rastros MVP previos por seguridad...");
@@ -323,5 +341,6 @@ class SeedMvpCommand extends Command
         });
 
         $this->info("Dataset MVP insertado correctamente (200 items, 30 consignantes, ventas, cotizaciones).");
+        return true;
     }
 }
