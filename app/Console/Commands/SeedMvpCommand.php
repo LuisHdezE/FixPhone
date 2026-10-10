@@ -63,6 +63,10 @@ class SeedMvpCommand extends Command
     private function generateBackup()
     {
         if (app()->environment('testing')) {
+            if (config('app.mock_backup_fail', false)) {
+                $this->error("Fallo simulado del respaldo en testing.");
+                return false;
+            }
             return true;
         }
 

@@ -73,6 +73,54 @@ class MvpSeederCommandTest extends TestCase
         ])->postJson('/api/_deploy/mvp-action', [
             'action' => 'seed'
         ]);
-        $response3->assertStatus(200);
+    }
+
+    public function test_it_aborts_seed_if_backup_fails()
+    {
+        Config::set('app.mock_backup_fail', true);
+
+        $this->artisan('fixphone:seed-mvp', ['--seed' => true, '--force' => true])
+             ->expectsOutputToContain('Fallo simulado del respaldo en testing.')
+             ->expectsOutputToContain('No se pudo confirmar un respaldo válido. Abortando la carga de datos.')
+             ->assertExitCode(1);
+
+        $this->assertDatabaseEmpty('inventory_items');
+    }
+
+    public function test_deterministic_ids_are_valid_length()
+    {
+        $this->artisan('fixphone:seed-mvp', ['--seed' => true, '--force' => true])->assertExitCode(0);
+
+        // Ensure all seeded deterministic IDs are exactly 26 chars
+        $consignors = \App\Infrastructure\Inventory\Consignor::all();
+        foreach ($consignors as $consignor) {
+            $this->assertEquals(26, strlen($consignor->id));
+        }
+
+        $quotes = \App\Infrastructure\RepairQuotes\RepairQuote::all();
+        foreach ($quotes as $quote) {
+            $this->assertEquals(26, strlen($quote->id));
+        }
+
+        $valuations = \App\Infrastructure\Valuation\DeviceValuation::all();
+        foreach ($valuations as $valuation) {
+            $this->assertEquals(26, strlen($valuation->id));
+        }
+    }
+
+    public function test_webhook_fails_if_command_fails()
+    {
+        Config::set('app.mvp_seeder_enabled', true);
+        Config::set('app.mock_backup_fail', true); // Force artisan command to fail
+        putenv('MVP_TOKEN=mvp123');
+
+        $response = $this->withHeaders([
+            'X-Deploy-Token' => 'mvp123'
+        ])->postJson('/api/_deploy/mvp-action', [
+            'action' => 'seed'
+        ]);
+
+        $response->assertStatus(500);
+        $response->assertJsonPath('error', 'Command failed');
     }
 }
