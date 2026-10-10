@@ -2,6 +2,7 @@ import { adminFetch } from '@/auth/adminApiSession';
 import type { InventoryDevicesGateway } from '../application/inventory.contracts';
 import type {
   DeviceDestination,
+  DismantlingStatus,
   DevicePhysicalCondition,
   DevicePowerState,
   InventoryDeviceListItemDto,
@@ -16,6 +17,9 @@ type ApiInventoryItem = {
   model?: string | null;
   operational_status: string;
   inventory_purpose: string;
+  dismantling_status?: string | null;
+  public_listing_status?: 'draft' | 'published';
+  public_valuation_id?: string | null;
   cost_amount_minor?: number | null;
   currency_code?: string | null;
   metadata?: Record<string, unknown> | null;
@@ -91,12 +95,21 @@ function money(amountMinor?: number | null, currencyCode?: string | null): strin
   }
 }
 
+function isDismantlingStatus(value: unknown): value is DismantlingStatus {
+  return value === 'unknown' || value === 'not_started' || value === 'partial' || value === 'exhausted';
+}
+
 function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
   const mappedDestination = destination(item);
   const accountLock = stringMeta(item.metadata, 'account_lock');
 
   return {
     id: item.sku?.trim() || item.id,
+    inventoryId: item.id,
+    isDonor: item.inventory_purpose === 'parts_donor',
+    dismantlingStatus: isDismantlingStatus(item.dismantling_status) ? item.dismantling_status : 'unknown',
+    publicListingStatus: item.public_listing_status === 'published' ? 'published' : 'draft',
+    publicValuationId: item.public_valuation_id ?? null,
     manufacturer: item.brand?.trim() || 'Sin marca',
     model: item.model?.trim() || item.title,
     serialOrImei: stringMeta(item.metadata, 'serial_or_imei', 'imei', 'serial') || '—',
@@ -113,6 +126,20 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
 }
 
 export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
+  async updateDismantling(inventoryId: string, status: Exclude<DismantlingStatus, 'unknown'>): Promise<void> {
+    const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId) + '/dismantling', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dismantling_status: status }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as
+        | { message?: string; errors?: Record<string, string[]> } | null;
+      const error = payload?.errors ? Object.values(payload.errors).flat().join(' ') : '';
+      throw new Error(error || payload?.message || 'No se pudo cambiar el estado de despiece (' + response.status + ').');
+    }
+  }
+
   async listDevices(): Promise<readonly InventoryDeviceListItemDto[]> {
     const response = await adminFetch('/api/v1/admin/inventory', {
       headers: { Accept: 'application/json' },
