@@ -40,6 +40,7 @@ import { ValuPhonePage } from '@/features/valuation/presentation/ValuPhonePage';
 import { RepairQuotesPage } from '@/features/repair-quotes/presentation/RepairQuotesPage';
 import { MediaStorageSettingsPage } from '@/features/media-storage/presentation/MediaStorageSettingsPage';
 import { FinancialSettlementsPage } from '@/features/inventory/presentation/FinancialSettlementsPage';
+import { ConsignedPhonesSoldPage } from '@/features/inventory/presentation/ConsignedPhonesSoldPage';
 import { AccountSettingsPage } from '@/features/user/presentation/AccountSettingsPage';
 import { UserProfilePage } from '@/features/user/presentation/UserProfilePage';
 import { CustomerDirectoryView } from '@/customers/CustomerDirectoryView';
@@ -163,6 +164,7 @@ export function AppRouter() {
         <Route path="admin/repair-quotes" element={<RepairQuotesPage />} />
         <Route path="admin/settings/media-storage" element={<MediaStorageSettingsPage />} />
         <Route path="admin/finance/settlements" element={<FinancialSettlementsPage />} />
+        <Route path="admin/finance/consignment-sales" element={<ConsignedPhonesSoldPage />} />
         <Route path="user/profile" element={<UserProfilePage />} />
         <Route path="user/account-settings" element={<AccountSettingsPage />} />
       </Route>

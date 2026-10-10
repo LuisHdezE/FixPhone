@@ -94,4 +94,27 @@ export interface DirectSalesSettlementReportDto {
     currency_code: string;
   };
   settlements: DirectSaleSettlementItemDto[];
+  legacy_pending_conciliation: DirectSaleSettlementItemDto[];
+}
+
+export interface ConsignedPhoneReportItemDto {
+  sale_id: string | null;
+  device_id: string;
+  sku: string | null;
+  title: string;
+  brand: string | null;
+  model: string | null;
+  sold_at: string | null;
+  receipt_number: string | null;
+  consignor_name: string;
+  status: string;
+}
+
+export interface ConsignedPhonesSoldReportDto {
+  period: string;
+  totals: {
+    total_consigned_sold_count: number;
+  };
+  reports: ConsignedPhoneReportItemDto[];
+  legacy_pending_conciliation: ConsignedPhoneReportItemDto[];
 }
