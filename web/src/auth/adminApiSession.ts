@@ -1,7 +1,8 @@
 /**
  * FixPhone administrative API session.
- * Default: sessionStorage (tab-scoped). "Recordarme" explicitly opts into a
- * browser-shared token, with a bounded lifetime and logout/401 cleanup.
+ * Default sign-in UI enables browser-shared persistence ("Recordarme") for
+ * 12 hours across tabs. Explicitly unchecking it opts into per-tab storage.
+ * Logout/401 always clear both storage mechanisms.
  * The Laravel API remains authoritative for validity and permissions.
  */
 const SESSION_KEY = 'fixphone.admin.accessToken';

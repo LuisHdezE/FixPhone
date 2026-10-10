@@ -4,7 +4,7 @@
 
 El usuario abría `/admin/settings/media-storage` y veía «Iniciá sesión…» aunque el marco con el menú administrativo seguía apareciendo. Antes de este cambio, `FixPhoneAdminShell` se montaba **sin comprobar autenticación**; ValuPhone, Presupuestos y Almacenamiento de imágenes hacían sus propias comprobaciones `Boolean(adminToken())`, independientes del shell.
 
-La presencia de la barra lateral nunca equivalía a una sesión validada. El token se almacena en `sessionStorage` por defecto y únicamente en la pestaña que hizo login. Con la opción «Recordarme», está en `localStorage` por hasta 12 horas; es un comportamiento consciente de seguridad y no se cambia en este bloque.
+La presencia de la barra lateral nunca equivalía a una sesión validada. Tras la corrección posterior de preferencia de navegador, «Recordarme» está **marcado de forma predeterminada**: el token se guarda en `localStorage` por hasta 12 horas y se comparte entre pestañas. Si el usuario desmarca expresamente la casilla, se guarda en `sessionStorage` y se limita a la pestaña donde hizo login. Laravel mantiene la autoridad para revocar tokens.
 
 ## Corrección
 

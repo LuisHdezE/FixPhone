@@ -26,7 +26,7 @@ type SubmissionState = 'idle' | 'submitting' | 'success' | 'failure';
 const initialCredentials: SignInCredentialsDto = {
   email: '',
   password: '',
-  rememberMe: false,
+  rememberMe: true,
 };
 
 function validationMessage(
@@ -261,6 +261,11 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
                   {view.form.forgotPassword.label}
                 </Link>
               </div>
+              <p className="-mt-3 text-xs leading-5 text-slate-500">
+                {credentials.rememberMe
+                  ? 'Tu sesión estará disponible en otras pestañas de este navegador durante 12 horas, salvo que cierres sesión.'
+                  : 'Sin esta opción, la sesión se conserva solo en esta pestaña.'}
+              </p>
 
               {submissionState === 'success' ? (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3" role="status" aria-live="polite">
