@@ -6,7 +6,7 @@ La sesión administrativa del frontend se almacenaba exclusivamente en sessionSt
 
 ## Cambios
 
-- La sesión de una pestaña continúa siendo la opción predeterminada al dejar "Recordarme" sin marcar.
+- Desde la corrección de octubre de 2026, la opción «Recordarme» viene **activada de forma predeterminada** para compartir sesión entre pestañas de este navegador durante 12 horas. Desmarcarla conserva la sesión exclusivamente en la pestaña actual.
 - Al marcar "Recordarme en este navegador (12 horas)" se almacena **solo el token** en localStorage con vencimiento absoluto a 12 h. No se almacenan correos ni contraseñas.
 - API Bearer/Sanctum mantiene autoridad: un HTTP 401 limpia ambos almacenamientos; cerrar sesión también los limpia y solicita revocación en el servidor.
 - Los accesos desde ValuPhone y Presupuestos conservan la ruta de origen durante el login y redirigen a esa pantalla después.
@@ -15,8 +15,8 @@ La sesión administrativa del frontend se almacenaba exclusivamente en sessionSt
 
 ## Plan de prueba manual
 
-1. Sin marcar Recordarme: acceder, abrir ValuPhone y Presupuestos desde el menú de la **misma pestaña**. Ninguna debe pedir otro login.
-2. Abrir una pestaña nueva sin Recordarme: requerir login allí es esperado por diseño.
+1. Con la opción Recordarme activada por defecto: acceder, abrir ValuPhone y Presupuestos desde el menú de la **misma pestaña**. Ninguna debe pedir otro login.
+2. Desmarcar explícitamente Recordarme antes de iniciar sesión y abrir una pestaña nueva: requerir login allí es esperado por diseño.
 3. Acceder marcando Recordarme, abrir otra pestaña nueva de la misma instalación y entrar directamente a /admin/repair-quotes y /admin/valuations. Ambas deben permitir el acceso sin pedir otro login.
 4. Desde una pestaña nueva, cerrar sesión. Abrir de nuevo la herramienta y confirmar que requiere iniciar sesión.
 5. En ValuPhone, abrir el selector, recorrer modelos desde iPhone 6 hasta iPhone 17; probar iPhone 11 Pro Max y iPhone 16 Pro Max.
