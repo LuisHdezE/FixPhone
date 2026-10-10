@@ -82,10 +82,16 @@ final class DeviceSalesController extends Controller
                 ]);
             }
 
-            if (in_array($device->inventory_purpose, ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'], true) && empty($validated['consignor_id'])) {
-                throw ValidationException::withMessages([
-                    'consignor_id' => 'El equipo en consignación requiere identificar al consignante.',
-                ]);
+            if (in_array($device->inventory_purpose, ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'], true)) {
+                if (empty($device->consignor_id)) {
+                    throw ValidationException::withMessages(['consignor_id' => 'El equipo no tiene propietario registrado en el inventario. Regularice el equipo antes de venderlo.']);
+                }
+                if (!empty($validated['consignor_id']) && $validated['consignor_id'] !== $device->consignor_id) {
+                    throw ValidationException::withMessages(['consignor_id' => 'El consignante proporcionado no coincide con el propietario registrado del equipo.']);
+                }
+                $validated['consignor_id'] = $device->consignor_id;
+            } else {
+                $validated['consignor_id'] = null;
             }
 
             $installedPartsCostMinor = (int) DeviceInstalledPart::query()

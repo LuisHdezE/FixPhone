@@ -16,6 +16,7 @@ use App\Presentation\Http\Controllers\FinancialReportsController;
 use App\Presentation\Http\Controllers\MediaStorageSettingsController;
 use App\Presentation\Http\Controllers\ValuationPhotosController;
 use App\Presentation\Http\Controllers\PartsDonorStorefrontController;
+use App\Presentation\Http\Controllers\ConsignorsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -41,6 +42,8 @@ Route::prefix('v1')->group(function (): void {
  Route::middleware('auth:sanctum')->group(function (): void {
   Route::get('/admin/dashboard/operational',[OperationalDashboardController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.dashboard.operational.show');
   Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.index');
+  Route::apiResource('admin/consignors', ConsignorsController::class)->except(['destroy'])->middleware('permission:catalog.manage');
+  
   // Operational inventory: one persisted source, separate permissions per action.
   Route::get('/admin/inventory/items',[OperationalInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.index');
   Route::get('/admin/inventory/items/{id}',[OperationalInventoryController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.show');

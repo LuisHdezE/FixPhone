@@ -264,6 +264,12 @@ class DeviceSalesAndSettlementsTest extends TestCase
     {
         Sanctum::actingAs($this->admin);
 
+        $consignor = Consignor::create([
+            'id' => (string) Str::ulid(),
+            'full_name' => 'John Doe Consignor',
+            'document_number' => '12345678',
+        ]);
+
         $device = InventoryItem::create([
             'id' => (string) Str::ulid(),
             'sku' => 'FXP-CONS-001',
@@ -272,6 +278,7 @@ class DeviceSalesAndSettlementsTest extends TestCase
             'operational_status' => 'en_stock',
             'publication_status' => 'draft',
             'inventory_purpose' => 'consigned_phone',
+            'consignor_id' => $consignor->id,
             'cost_amount_minor' => 0,
             'sale_price_amount_minor' => 800000,
             'currency_code' => 'UYU',
@@ -280,18 +287,28 @@ class DeviceSalesAndSettlementsTest extends TestCase
 
         $requestId = (string) Str::uuid();
 
-        // Attempt without consignor_id (fails)
+        // Attempt when device has no consignor_id
+        $device->update(['consignor_id' => null]);
         $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
             'request_id' => $requestId,
             'effective_sale_price_minor' => 800000,
         ])->assertStatus(422)
-          ->assertJsonValidationErrors(['consignor_id']);
+          ->assertJsonValidationErrors(['consignor_id'])
+          ->assertJsonPath('errors.consignor_id.0', 'El equipo no tiene propietario registrado en el inventario. Regularice el equipo antes de venderlo.');
 
-        $consignor = Consignor::create([
+        $device->update(['consignor_id' => $consignor->id]);
+
+        // Attempt mismatch
+        $otherConsignor = Consignor::create([
             'id' => (string) Str::ulid(),
-            'full_name' => 'John Doe Consignor',
-            'document_number' => '12345678',
+            'full_name' => 'Other',
         ]);
+        $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
+            'request_id' => $requestId,
+            'effective_sale_price_minor' => 800000,
+            'consignor_id' => $otherConsignor->id,
+        ])->assertStatus(422)
+          ->assertJsonValidationErrors(['consignor_id']);
 
         // Attempt with consignor_id (success)
         $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
@@ -307,6 +324,11 @@ class DeviceSalesAndSettlementsTest extends TestCase
     {
         Sanctum::actingAs($this->admin);
 
+        $consignor = Consignor::create([
+            'id' => (string) Str::ulid(),
+            'full_name' => 'Original Name',
+        ]);
+
         $device = InventoryItem::create([
             'id' => (string) Str::ulid(),
             'sku' => 'FXP-CONS-002',
@@ -315,15 +337,11 @@ class DeviceSalesAndSettlementsTest extends TestCase
             'operational_status' => 'en_stock',
             'publication_status' => 'draft',
             'inventory_purpose' => 'consigned_phone',
+            'consignor_id' => $consignor->id,
             'cost_amount_minor' => 0,
             'sale_price_amount_minor' => 500000,
             'currency_code' => 'UYU',
             'stock_quantity' => 1,
-        ]);
-
-        $consignor = Consignor::create([
-            'id' => (string) Str::ulid(),
-            'full_name' => 'Original Name',
         ]);
 
         $saleRes = $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [

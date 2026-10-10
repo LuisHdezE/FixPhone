@@ -32,6 +32,7 @@ final class OperationalInventoryController extends Controller
             'description' => ['sometimes', 'nullable', 'string', 'max:4000'],
             'brand' => ['sometimes', 'nullable', 'string', 'max:150'],
             'model' => ['sometimes', 'nullable', 'string', 'max:150'],
+            'consignor_id' => ['sometimes', 'nullable', 'string', \Illuminate\Validation\Rule::exists('consignors', 'id')],
         ]);
         if ($validated === []) {
             throw ValidationException::withMessages(['title' => 'Indicá al menos un campo para editar.']);
@@ -152,6 +153,7 @@ final class OperationalInventoryController extends Controller
             'inventory_purpose' => $item->inventory_purpose,
             'operational_status' => $item->operational_status,
             'publication_status' => $item->publication_status,
+            'consignor_id' => $item->consignor_id,
             'stock_quantity' => (int) $item->stock_quantity,
             'reorder_point' => $point,
             'updated_at' => $item->updated_at?->toIso8601String(),
