@@ -39,16 +39,16 @@ class DemoSeeder extends Seeder
             DeviceInstalledPart::whereIn('inventory_item_id', $demoItemIds)->delete();
             InventoryItem::where('metadata->is_demo', true)->delete();
 
-            RepairQuote::where('customer_name', 'like', 'DEMO - %')->delete();
-            DeviceValuation::where('notes', 'Tasación demo')->delete();
-            Consignor::where('full_name', 'like', 'DEMO - %')->delete();
+            RepairQuote::where('id', 'like', '01J00DEM01%')->delete();
+            DeviceValuation::where('id', 'like', '01J00DEM02%')->delete();
+            Consignor::where('id', 'like', '01J00DEM00%')->delete();
 
             // 2. Crear 30 consignantes ficticios
             $consignors = [];
             for ($i = 0; $i < 30; $i++) {
                 $consignors[] = Consignor::create([
-                    'id' => (string) Str::ulid(),
-                    'full_name' => 'DEMO - Consignante ' . $i . ' ' . Str::random(5),
+                    'id' => '01J00DEM0000000000000000' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                    'full_name' => 'Consignante ' . $i . ' ' . Str::random(5),
                     'document_number' => '1234567' . $i,
                     'phone' => '099000' . sprintf('%03d', $i),
                     'email' => 'consignante' . $i . '@demo.com',
@@ -244,8 +244,8 @@ class DemoSeeder extends Seeder
             // 7. Generar Presupuestos (RepairQuotes)
             for ($i = 0; $i < 10; $i++) {
                 RepairQuote::create([
-                    'id' => (string) Str::ulid(),
-                    'customer_name' => 'DEMO - Cliente Presupuesto ' . $i,
+                    'id' => '01J00DEM0100000000000000' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                    'customer_name' => 'Cliente Presupuesto ' . $i,
                     'customer_contact' => '099' . sprintf('%06d', $i),
                     'device_description' => 'iPhone ' . (10 + $i),
                     'device_tier' => 'tier_1',
@@ -268,7 +268,7 @@ class DemoSeeder extends Seeder
             // 8. Generar Tasaciones (DeviceValuations)
             for ($i = 0; $i < 5; $i++) {
                 DeviceValuation::create([
-                    'id' => (string) Str::ulid(),
+                    'id' => '01J00DEM0200000000000000' . str_pad($i, 2, '0', STR_PAD_LEFT),
                     'model_name' => 'Samsung Galaxy A' . (50 + $i),
                     'fault_type' => 'pantalla_rota',
                     'screen_condition' => 'broken',
