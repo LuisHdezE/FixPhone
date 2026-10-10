@@ -69,6 +69,12 @@ final class DeviceInstalledPartsController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if (in_array($device->operational_status, ['vendido', 'sold'], true)) {
+                throw ValidationException::withMessages([
+                    'part_name' => 'No se pueden registrar nuevos repuestos instalados en un equipo que ya fue vendido y liquidado.',
+                ]);
+            }
+
             $currency = strtoupper($validated['currency_code'] ?? $device->currency_code ?? 'UYU');
             if ($currency !== strtoupper($device->currency_code ?? 'UYU')) {
                 throw ValidationException::withMessages([
@@ -171,10 +177,20 @@ final class DeviceInstalledPartsController extends Controller
     {
         $validated = $request->validate([
             'reason' => ['required', 'string', 'min:5', 'max:300'],
+            'return_to_stock' => ['sometimes', 'boolean'],
         ]);
 
-        $part = DB::transaction(function () use ($request, $id, $partId, $validated): DeviceInstalledPart {
+        $returnToStock = (bool) ($validated['return_to_stock'] ?? true);
+
+        $part = DB::transaction(function () use ($request, $id, $partId, $validated, $returnToStock): DeviceInstalledPart {
             $device = InventoryItem::query()->whereKey($id)->firstOrFail();
+
+            if (in_array($device->operational_status, ['vendido', 'sold'], true)) {
+                throw ValidationException::withMessages([
+                    'reason' => 'No se pueden anular repuestos instalados de un equipo que ya fue vendido y liquidado.',
+                ]);
+            }
+
             $part = DeviceInstalledPart::query()
                 ->whereKey($partId)
                 ->where('inventory_item_id', $device->id)
@@ -187,7 +203,7 @@ final class DeviceInstalledPartsController extends Controller
                 ]);
             }
 
-            if (!empty($part->spare_part_item_id)) {
+            if ($returnToStock && !empty($part->spare_part_item_id)) {
                 $sparePart = InventoryItem::query()
                     ->whereKey($part->spare_part_item_id)
                     ->lockForUpdate()
@@ -207,7 +223,7 @@ final class DeviceInstalledPartsController extends Controller
                         'quantity_before' => $before,
                         'quantity_delta' => 1,
                         'quantity_after' => $after,
-                        'reason' => 'Anulación de instalación en equipo ' . ($device->sku ?? $device->id) . ': ' . $validated['reason'],
+                        'reason' => 'Anulación con devolución a inventario de equipo ' . ($device->sku ?? $device->id) . ': ' . $validated['reason'],
                         'actor_id' => (string) $request->user()->getAuthIdentifier(),
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -225,13 +241,14 @@ final class DeviceInstalledPartsController extends Controller
 
             $part->voided_at = now();
             $part->voided_by_actor_id = (string) $request->user()->getAuthIdentifier();
-            $part->void_reason = trim($validated['reason']);
+            $part->void_reason = trim($validated['reason']) . ($returnToStock ? '' : ' (Sin devolución física a inventario)');
             $part->save();
 
             $this->audit($request, $part->id, 'DeviceInstalledPart', 'device.part_voided', [
                 'inventory_item_id' => $device->id,
                 'part_name' => $part->part_name,
                 'cost_amount_minor' => $part->cost_amount_minor,
+                'return_to_stock' => $returnToStock,
                 'reason' => $part->void_reason,
             ]);
 

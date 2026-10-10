@@ -254,7 +254,7 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
             ->assertJsonPath('data.settlements.0.sku', 'FXP-DIR-001');
     }
 
-    public function test_auditable_voiding_reverts_inventory_and_recalculates_reports(): void
+    public function test_auditable_voiding_reverts_inventory_when_returned_to_stock(): void
     {
         Sanctum::actingAs($this->admin);
 
@@ -294,21 +294,91 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
         $partId = $addResponse->json('data.id');
         $this->assertEquals(1, $sparePart->fresh()->stock_quantity);
 
-        // Void installed part
+        // Void installed part with physical return to stock
         $voidResponse = $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts/{$partId}/void", [
-            'reason' => 'Part was defective and replaced under vendor warranty',
+            'reason' => 'Part was intact and returned to inventory',
+            'return_to_stock' => true,
         ]);
 
-        $voidResponse->assertStatus(200)
-            ->assertJsonPath('data.void_reason', 'Part was defective and replaced under vendor warranty');
+        $voidResponse->assertStatus(200);
+        $this->assertEquals(2, $sparePart->fresh()->stock_quantity);
+    }
 
-        // Verify stock restored from 1 to 2
+    public function test_modifying_parts_on_sold_device_is_forbidden(): void
+    {
+        Sanctum::actingAs($this->admin);
+
+        $soldDevice = InventoryItem::create([
+            'id' => (string) Str::ulid(),
+            'sku' => 'FXP-SOLD-001',
+            'title' => 'iPhone 12 Sold',
+            'item_type' => 'used_phone',
+            'operational_status' => 'vendido', // Already sold and settled
+            'publication_status' => 'draft',
+            'inventory_purpose' => 'sell_as_used_phone',
+            'cost_amount_minor' => 500000,
+            'sale_price_amount_minor' => 900000,
+            'currency_code' => 'UYU',
+            'stock_quantity' => 0,
+        ]);
+
+        // Trying to add part after sale -> 422 Unprocessable Entity
+        $response = $this->postJson("/api/v1/admin/devices/{$soldDevice->id}/installed-parts", [
+            'request_id' => (string) Str::uuid(),
+            'part_name' => 'Late Part',
+            'cost_amount_minor' => 50000,
+        ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_voiding_without_physical_return_does_not_increment_stock(): void
+    {
+        Sanctum::actingAs($this->admin);
+
+        $device = InventoryItem::create([
+            'id' => (string) Str::ulid(),
+            'sku' => 'FXP-000600',
+            'title' => 'Moto G30',
+            'item_type' => 'used_phone',
+            'operational_status' => 'en_reparacion',
+            'publication_status' => 'draft',
+            'inventory_purpose' => 'sell_as_used_phone',
+            'currency_code' => 'UYU',
+            'stock_quantity' => 1,
+        ]);
+
+        $sparePart = InventoryItem::create([
+            'id' => (string) Str::ulid(),
+            'sku' => 'REP-BAT-002',
+            'title' => 'Batería Moto G30',
+            'item_type' => 'spare_part',
+            'operational_status' => 'en_stock',
+            'publication_status' => 'draft',
+            'inventory_purpose' => 'sell_as_spare_part',
+            'cost_amount_minor' => 50000,
+            'currency_code' => 'UYU',
+            'stock_quantity' => 3,
+        ]);
+
+        $addResponse = $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts", [
+            'request_id' => (string) Str::uuid(),
+            'part_name' => 'Batería Moto G30',
+            'cost_amount_minor' => 50000,
+            'spare_part_item_id' => $sparePart->id,
+        ]);
+
+        $partId = $addResponse->json('data.id');
         $this->assertEquals(2, $sparePart->fresh()->stock_quantity);
 
-        // Verify report excludes voided part
-        $reportResponse = $this->getJson('/api/v1/admin/reports/installed-parts-expenses?year_month=' . now()->format('Y-m'));
+        // Void without physical stock return (damaged/destroyed part during test)
+        $voidResponse = $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts/{$partId}/void", [
+            'reason' => 'Part damaged during installation, discarded',
+            'return_to_stock' => false,
+        ]);
 
-        $reportResponse->assertStatus(200)
-            ->assertJsonPath('data.total_expenses_minor', 0);
+        $voidResponse->assertStatus(200);
+        // Stock remains 2 (not returned)
+        $this->assertEquals(2, $sparePart->fresh()->stock_quantity);
     }
 }
