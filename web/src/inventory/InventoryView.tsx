@@ -116,20 +116,6 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
     setSelection(null);
   }
 
-  function changeAction(action: Action) {
-    if (!selection) return;
-    const item = selection.item;
-    close();
-    // Open on the next interaction with the same dialog element.
-    setSelection({ item, action });
-    setModalError(null);
-    if (action === 'history') {
-      void repository.adjustments(item.id).then(setHistory).catch((error: unknown) => {
-        setModalError(error instanceof Error ? error.message : 'No se pudo consultar el historial.');
-      });
-    }
-  }
-
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selection || busy) return;
@@ -156,7 +142,8 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
       } else {
         return;
       }
-      close();
+      dialogRef.current?.close();
+      setSelection(null);
       setRefreshToken((current) => current + 1);
     } catch (error) {
       setModalError(error instanceof Error ? error.message : 'No se pudo completar la operación.');
