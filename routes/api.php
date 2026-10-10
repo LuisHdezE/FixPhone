@@ -29,18 +29,35 @@ Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $reque
 });
 
 Route::post('/_deploy/mvp-action', function (\Illuminate\Http\Request $request) {
-    $token = env('DEPLOY_TOKEN');
-    if (!$token || !hash_equals($token, (string) $request->header('X-Deploy-Token'))) {
-        abort(401, 'Unauthorized');
+    if (env('MVP_SEEDER_ENABLED') !== true) {
+        abort(403, 'MVP endpoints are currently disabled.');
     }
-    $action = $request->input('action');
+
+    $deployToken = env('DEPLOY_TOKEN');
+    $mvpToken = env('MVP_TOKEN'); // Separate token for data alteration
     
+    $action = $request->input('action');
     if (!in_array($action, ['status', 'backup', 'seed', 'rollback'])) {
         return response()->json(['error' => 'Invalid action'], 400);
     }
+
+    // Status can be done with DEPLOY_TOKEN, others require MVP_TOKEN
+    $token = $request->header('X-Deploy-Token');
+    if ($action === 'status') {
+        if (!$deployToken || !hash_equals($deployToken, (string) $token)) abort(401, 'Unauthorized');
+    } else {
+        if (!$mvpToken || !hash_equals($mvpToken, (string) $token)) abort(401, 'Unauthorized for data alteration');
+    }
     
-    \Illuminate\Support\Facades\Artisan::call('fixphone:seed-mvp', ['--'.$action => true, '--force' => true]);
+    $exitCode = \Illuminate\Support\Facades\Artisan::call('fixphone:seed-mvp', ['--'.$action => true, '--force' => true]);
     
+    if ($exitCode !== 0) {
+        return response()->json([
+            'error' => 'Command failed',
+            'output' => \Illuminate\Support\Facades\Artisan::output()
+        ], 500);
+    }
+
     return response()->json([
         'message' => 'Action executed',
         'output' => \Illuminate\Support\Facades\Artisan::output()

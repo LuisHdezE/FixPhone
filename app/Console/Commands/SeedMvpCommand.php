@@ -76,10 +76,13 @@ class SeedMvpCommand extends Command
             $this->warn("Usando SQLite. Copiando archivo...");
             copy(database_path('database.sqlite'), $path);
         } else {
-            $command = "mysqldump -u {$user} -p{$pass} -h {$host} {$db} > {$path}";
+            $cnfPath = storage_path('app/mysql_mvp_temp.cnf');
+            file_put_contents($cnfPath, "[client]\nuser=\"{$user}\"\npassword=\"{$pass}\"\nhost=\"{$host}\"\n");
+            $command = "mysqldump --defaults-extra-file={$cnfPath} {$db} > {$path}";
             exec($command, $output, $resultCode);
+            @unlink($cnfPath);
             if ($resultCode !== 0) {
-                $this->error("Fallo al generar el respaldo mediante mysqldump.");
+                $this->error("Fallo al generar el respaldo mediante mysqldump (código {$resultCode}).");
                 return;
             }
         }
