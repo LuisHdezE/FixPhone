@@ -27,6 +27,10 @@ export interface InventoryDeviceListItemDto {
   destinationTone: StatusBadgeTone;
 }
 
+// Static presentation reference data is not a persisted inventory record.
+export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
+  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId'>;
+
 export interface InventoryFilterOptionDto {
   value: string;
   label: string;
@@ -58,7 +62,7 @@ export interface InventoryDevicesViewDto {
     allConditionsLabel: string;
     conditionOptions: readonly InventoryFilterOptionDto[];
   };
-  devices: readonly InventoryDeviceListItemDto[];
+  devices: readonly InventoryDeviceReferenceDto[];
 }
 
 export interface InventoryDeviceIntakeViewDto {
@@ -145,7 +149,7 @@ export interface InventoryDeviceEvaluationViewDto {
   description: string;
   breadcrumbs: readonly string[];
   backLabel: string;
-  device: InventoryDeviceListItemDto;
+  device: InventoryDeviceReferenceDto;
   summaryTitle: string;
   metrics: readonly DeviceEvaluationMetricDto[];
   identitySectionTitle: string;
