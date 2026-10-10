@@ -28,6 +28,25 @@ Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $reque
     return response()->json(['message' => 'Migrations run successfully.']);
 });
 
+Route::post('/_deploy/mvp-action', function (\Illuminate\Http\Request $request) {
+    $token = env('DEPLOY_TOKEN');
+    if (!$token || !hash_equals($token, (string) $request->header('X-Deploy-Token'))) {
+        abort(401, 'Unauthorized');
+    }
+    $action = $request->input('action');
+    
+    if (!in_array($action, ['status', 'backup', 'seed', 'rollback'])) {
+        return response()->json(['error' => 'Invalid action'], 400);
+    }
+    
+    \Illuminate\Support\Facades\Artisan::call('fixphone:seed-mvp', ['--'.$action => true, '--force' => true]);
+    
+    return response()->json([
+        'message' => 'Action executed',
+        'output' => \Illuminate\Support\Facades\Artisan::output()
+    ]);
+});
+
 Route::prefix('v1')->group(function (): void {
  Route::post('/auth/login',AuthLoginController::class)->name('api.v1.auth.login');
  Route::get('/store/parts-donors', [PartsDonorStorefrontController::class, 'index'])->name('api.v1.store.parts-donors.index');
