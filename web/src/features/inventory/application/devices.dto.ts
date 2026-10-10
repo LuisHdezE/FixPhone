@@ -4,9 +4,15 @@ export type DeviceDestination = 'Pending Evaluation' | 'Donor' | 'Refurbish' | '
 export type DevicePhysicalCondition = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Damaged' | 'Unknown';
 export type DevicePowerState = 'Yes' | 'No' | 'Unknown';
 export type DeviceAccountLock = 'Clear' | 'Locked' | 'Unknown';
+export type DismantlingStatus = 'unknown' | 'not_started' | 'partial' | 'exhausted';
 
 export interface InventoryDeviceListItemDto {
   id: string;
+  inventoryId: string;
+  isDonor: boolean;
+  dismantlingStatus: DismantlingStatus;
+  publicListingStatus: 'draft' | 'published';
+  publicValuationId: string | null;
   manufacturer: string;
   model: string;
   serialOrImei: string;
