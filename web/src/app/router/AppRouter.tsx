@@ -43,7 +43,7 @@ import { UserProfilePage } from '@/features/user/presentation/UserProfilePage';
 import { CustomerDirectoryView } from '@/customers/CustomerDirectoryView';
 import { InventoryView } from '@/inventory/InventoryView';
 import { OrderListView } from '@/orders/OrderListView';
-import { FixPhoneAdminShell } from '@/shell/FixPhoneAdminShell';
+import { AuthenticatedAdminShell } from '@/auth/AuthenticatedAdminShell';
 import { StorefrontShell } from '@/shell/StorefrontShell';
 
 const passwordResetContentProvider = new JsonPasswordResetContentProvider();
@@ -138,7 +138,7 @@ export function AppRouter() {
         <Route path="store/account/register" element={<StorefrontCustomerIdentityPage mode="register" provider={storefrontProvider} />} />
       </Route>
 
-      <Route element={<FixPhoneAdminShell />}>
+      <Route element={<AuthenticatedAdminShell />}>
         <Route index element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="dashboard" element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="apps/inventory/dashboard" element={<InventoryDashboardPage provider={inventoryDemoProvider} />} />

@@ -90,7 +90,9 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const requestedPage = (location.state as { from?: string } | null)?.from;
-  const landingPage = requestedPage?.startsWith('/admin/') ? requestedPage : '/apps/inventory/dashboard';
+  const safeInternalPath = typeof requestedPage === 'string' &&
+    ['/admin/', '/apps/', '/applications/', '/user/'].some((prefix) => requestedPage.startsWith(prefix));
+  const landingPage = safeInternalPath ? requestedPage : '/apps/inventory/dashboard';
   const view = loadSignInView(contentProvider);
   const [credentials, setCredentials] = useState<SignInCredentialsDto>(initialCredentials);
   const [errors, setErrors] = useState<SignInValidationErrorsDto>({});

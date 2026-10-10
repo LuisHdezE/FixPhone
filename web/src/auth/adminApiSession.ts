@@ -5,7 +5,13 @@
  * The Laravel API remains authoritative for validity and permissions.
  */
 const SESSION_KEY = 'fixphone.admin.accessToken';
-const REMEMBERED_KEY = 'fixphone.admin.rememberedAccessToken';
+export const ADMIN_REMEMBERED_KEY = 'fixphone.admin.rememberedAccessToken';
+export const ADMIN_SESSION_CHANGED = 'fixphone:admin-session-changed';
+const REMEMBERED_KEY = ADMIN_REMEMBERED_KEY;
+
+function notifySessionChanged(): void {
+  window.dispatchEvent(new Event(ADMIN_SESSION_CHANGED));
+}
 const REMEMBER_DURATION_MS = 12 * 60 * 60 * 1000;
 
 interface RememberedToken {
@@ -41,6 +47,7 @@ export function adminToken(): string | null {
 export function clearAdminToken(): void {
   sessionStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(REMEMBERED_KEY);
+  notifySessionChanged();
 }
 
 export function setAdminToken(token: string, rememberMe: boolean = false): void {
@@ -54,6 +61,7 @@ export function setAdminToken(token: string, rememberMe: boolean = false): void 
   } else {
     sessionStorage.setItem(SESSION_KEY, token);
   }
+  notifySessionChanged();
 }
 
 export async function adminFetch(url: string, init: RequestInit = {}): Promise<Response> {
