@@ -19,7 +19,7 @@ class DeviceSaleRecord extends Model
         'installed_parts_cost_minor',
         'currency_code',
         'inventory_purpose',
-        'consignor_name',
+        'consignor_id',
         'sold_at',
         'sold_by_actor_id',
         'receipt_number',

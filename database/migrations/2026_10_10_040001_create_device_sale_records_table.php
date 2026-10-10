@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('currency_code', 3)->default('UYU');
 
             $table->string('inventory_purpose');
-            $table->string('consignor_name')->nullable();
+            $table->string('consignor_id')->nullable();
 
             $table->timestamp('sold_at');
             $table->string('sold_by_actor_id');

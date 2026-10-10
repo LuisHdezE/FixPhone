@@ -45,7 +45,7 @@ final class DeviceSalesController extends Controller
             'request_id' => ['required', 'uuid'],
             'effective_sale_price_minor' => ['required', 'integer', 'between:0,100000000000'],
             'receipt_number' => ['nullable', 'string', 'max:100'],
-            'consignor_name' => ['nullable', 'string', 'max:150'],
+            'consignor_id' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'sold_at' => ['sometimes', 'nullable', 'date'],
         ]);
@@ -56,17 +56,6 @@ final class DeviceSalesController extends Controller
                 ->whereIn('item_type', ['device', 'used_phone'])
                 ->lockForUpdate()
                 ->firstOrFail();
-
-            $activeSale = DeviceSaleRecord::query()
-                ->where('inventory_item_id', $device->id)
-                ->whereNull('voided_at')
-                ->first();
-
-            if (in_array($device->operational_status, ['vendido', 'sold'], true) || $activeSale !== null) {
-                throw ValidationException::withMessages([
-                    'effective_sale_price_minor' => 'El equipo ya posee una venta registrada activa. No se puede vender nuevamente.',
-                ]);
-            }
 
             $existing = DeviceSaleRecord::query()
                 ->where('request_id', $validated['request_id'])
@@ -80,6 +69,23 @@ final class DeviceSalesController extends Controller
                     ]);
                 }
                 return ['sale' => $existing, 'replayed' => true];
+            }
+
+            $activeSale = DeviceSaleRecord::query()
+                ->where('inventory_item_id', $device->id)
+                ->whereNull('voided_at')
+                ->first();
+
+            if (in_array($device->operational_status, ['vendido', 'sold'], true) || $activeSale !== null) {
+                throw ValidationException::withMessages([
+                    'effective_sale_price_minor' => 'El equipo ya posee una venta registrada activa. No se puede vender nuevamente.',
+                ]);
+            }
+
+            if (in_array($device->inventory_purpose, ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'], true) && empty($validated['consignor_id'])) {
+                throw ValidationException::withMessages([
+                    'consignor_id' => 'El equipo en consignación requiere identificar al consignante.',
+                ]);
             }
 
             $installedPartsCostMinor = (int) DeviceInstalledPart::query()
@@ -97,7 +103,7 @@ final class DeviceSalesController extends Controller
                 'installed_parts_cost_minor' => $installedPartsCostMinor,
                 'currency_code' => $device->currency_code ?? 'UYU',
                 'inventory_purpose' => $device->inventory_purpose,
-                'consignor_name' => $validated['consignor_name'] ?? null,
+                'consignor_id' => $validated['consignor_id'] ?? null,
                 'sold_at' => $soldAt,
                 'sold_by_actor_id' => (string) $request->user()->getAuthIdentifier(),
                 'receipt_number' => $validated['receipt_number'] ?? null,
@@ -191,7 +197,7 @@ final class DeviceSalesController extends Controller
             'installed_parts_cost_minor' => (int) $sale->installed_parts_cost_minor,
             'currency_code' => $sale->currency_code,
             'inventory_purpose' => $sale->inventory_purpose,
-            'consignor_name' => $sale->consignor_name,
+            'consignor_id' => $sale->consignor_id,
             'sold_at' => $sale->sold_at?->toIso8601String(),
             'sold_by_actor_id' => $sale->sold_by_actor_id,
             'receipt_number' => $sale->receipt_number,

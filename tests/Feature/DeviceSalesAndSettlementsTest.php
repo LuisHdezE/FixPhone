@@ -207,4 +207,79 @@ class DeviceSalesAndSettlementsTest extends TestCase
             ->assertJsonPath('data.settlements.0.status_label', 'Venta legacy pendiente de conciliación')
             ->assertJsonPath('data.settlements.0.liquidation_amount_minor', 0);
     }
+
+    public function test_idempotent_sale_replay_returns_success_and_different_data_fails(): void
+    {
+        Sanctum::actingAs($this->admin);
+
+        $device = InventoryItem::create([
+            'id' => (string) Str::ulid(),
+            'sku' => 'FXP-IDEM-001',
+            'title' => 'iPhone 12',
+            'item_type' => 'used_phone',
+            'operational_status' => 'en_stock',
+            'publication_status' => 'draft',
+            'inventory_purpose' => 'sell_as_used_phone',
+            'cost_amount_minor' => 500000,
+            'sale_price_amount_minor' => 900000,
+            'currency_code' => 'UYU',
+            'stock_quantity' => 1,
+        ]);
+
+        $requestId = (string) Str::uuid();
+
+        // First attempt (success)
+        $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
+            'request_id' => $requestId,
+            'effective_sale_price_minor' => 900000,
+        ])->assertStatus(201)->assertJsonPath('replayed', false);
+
+        // Second attempt with exact same request_id and data (success, replayed)
+        $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
+            'request_id' => $requestId,
+            'effective_sale_price_minor' => 900000,
+        ])->assertStatus(200)->assertJsonPath('replayed', true);
+
+        // Third attempt with same request_id but different data (fails)
+        $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
+            'request_id' => $requestId,
+            'effective_sale_price_minor' => 800000,
+        ])->assertStatus(422)
+          ->assertJsonValidationErrors(['request_id']);
+    }
+
+    public function test_consigned_device_requires_consignor_id_on_sale(): void
+    {
+        Sanctum::actingAs($this->admin);
+
+        $device = InventoryItem::create([
+            'id' => (string) Str::ulid(),
+            'sku' => 'FXP-CONS-001',
+            'title' => 'Samsung S21 Consigned',
+            'item_type' => 'used_phone',
+            'operational_status' => 'en_stock',
+            'publication_status' => 'draft',
+            'inventory_purpose' => 'consigned_phone',
+            'cost_amount_minor' => 0,
+            'sale_price_amount_minor' => 800000,
+            'currency_code' => 'UYU',
+            'stock_quantity' => 1,
+        ]);
+
+        $requestId = (string) Str::uuid();
+
+        // Attempt without consignor_id (fails)
+        $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
+            'request_id' => $requestId,
+            'effective_sale_price_minor' => 800000,
+        ])->assertStatus(422)
+          ->assertJsonValidationErrors(['consignor_id']);
+
+        // Attempt with consignor_id (success)
+        $this->postJson("/api/v1/admin/devices/{$device->id}/sell", [
+            'request_id' => $requestId,
+            'effective_sale_price_minor' => 800000,
+            'consignor_id' => (string) Str::ulid(),
+        ])->assertStatus(201);
+    }
 }
