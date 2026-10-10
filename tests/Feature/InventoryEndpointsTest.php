@@ -117,4 +117,92 @@ final class InventoryEndpointsTest extends TestCase
             ->assertJsonPath('data.0.id', $id)
             ->assertJsonPath('data.0.metadata.destination', 'Pending Evaluation');
     }
+
+    private function minimalDevicePayload(string $model = 'iPhone 11'): array
+    {
+        return [
+            'title' => 'Apple '.$model,
+            'item_type' => 'used_phone',
+            'brand' => 'Apple',
+            'model' => $model,
+            'operational_status' => 'para_deshuesar',
+            'publication_status' => 'no_publicable',
+            'inventory_purpose' => 'parts_donor',
+            'is_sellable' => false,
+            'stock_quantity' => 1,
+            'metadata' => [
+                'destination' => 'Donor',
+                'serial_or_imei' => null,
+                'physical_condition' => 'Unknown',
+            ],
+        ];
+    }
+
+    public function test_registering_two_devices_without_imei_allocates_distinct_permanent_fxp_codes(): void
+    {
+        $this->actingAsOwner();
+
+        $first = $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload())
+            ->assertCreated()
+            ->assertJsonPath('sku', 'FXP-0001')
+            ->assertJsonPath('publication_status', 'no_publicable')
+            ->assertJsonPath('is_sellable', false)
+            ->assertJsonPath('metadata.serial_or_imei', null);
+
+        $second = $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload('iPhone XR'))
+            ->assertCreated()
+            ->assertJsonPath('sku', 'FXP-0002');
+
+        $this->assertNotSame($first->json('id'), $second->json('id'));
+        $this->assertSame(2, InventoryItem::query()->where('sku', 'like', 'FXP-%')->count());
+
+        $this->getJson('/api/v1/admin/inventory')
+            ->assertOk()
+            ->assertJsonPath('data.0.sku', 'FXP-0002')
+            ->assertJsonPath('data.1.sku', 'FXP-0001');
+    }
+
+    public function test_automatic_counter_skips_preexisting_code_without_reusing_it(): void
+    {
+        $this->actingAsOwner();
+
+        $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload())
+            ->assertCreated()->assertJsonPath('sku', 'FXP-0001');
+
+        // Simulates a pre-existing or imported legacy FXP code.
+        InventoryItem::query()->create([
+            'sku' => 'FXP-0002',
+            'title' => 'Equipo histórico',
+            'item_type' => 'used_phone',
+            'operational_status' => 'ingresado',
+            'publication_status' => 'no_publicable',
+            'inventory_purpose' => 'internal_use',
+            'stock_quantity' => 1,
+        ]);
+
+        $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload('iPhone 12'))
+            ->assertCreated()->assertJsonPath('sku', 'FXP-0003');
+
+        // A removed historical record must not cause the issued number to be recycled.
+        InventoryItem::query()->where('sku', 'FXP-0001')->delete();
+        $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload('iPhone 13'))
+            ->assertCreated()->assertJsonPath('sku', 'FXP-0004');
+    }
+
+    public function test_spare_part_creation_does_not_consume_device_reference(): void
+    {
+        $this->actingAsOwner();
+        $this->postJson('/api/v1/admin/inventory', [
+            'title' => 'Pantalla de iPhone 11',
+            'item_type' => 'spare_part',
+            'operational_status' => 'en_stock',
+            'publication_status' => 'no_publicable',
+            'inventory_purpose' => 'sell_as_spare_part',
+            'stock_quantity' => 1,
+        ])->assertCreated()->assertJsonPath('sku', null);
+
+        $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload())
+            ->assertCreated()->assertJsonPath('sku', 'FXP-0001');
+    }
+
 }
