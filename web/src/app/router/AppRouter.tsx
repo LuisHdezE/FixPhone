@@ -11,6 +11,7 @@ import { JsonTwoFactorContentProvider } from '@/features/authentication/two-fact
 import { MockTwoFactorGateway } from '@/features/authentication/two-factor/infrastructure/MockTwoFactorGateway';
 import { TwoFactorPage } from '@/features/authentication/two-factor/presentation/TwoFactorPage';
 import { ApiInventoryDevicesGateway } from '@/features/inventory/infrastructure/ApiInventoryDevicesGateway';
+import { ApiOperationalDashboardGateway } from '@/features/inventory/infrastructure/ApiOperationalDashboardGateway';
 import { JsonInventoryDemoProvider } from '@/features/inventory/infrastructure/JsonInventoryDemoProvider';
 import { InventoryDashboardPage } from '@/features/inventory/presentation/InventoryDashboardPage';
 import { InventoryDeviceEvaluationPage } from '@/features/inventory/presentation/InventoryDeviceEvaluationPage';
@@ -55,6 +56,7 @@ const twoFactorContentProvider = new JsonTwoFactorContentProvider();
 const twoFactorGateway = new MockTwoFactorGateway();
 const inventoryDemoProvider = new JsonInventoryDemoProvider();
 const inventoryDevicesGateway = new ApiInventoryDevicesGateway();
+const operationalDashboardGateway = new ApiOperationalDashboardGateway();
 const defaultMasterDataProvider = new JsonMasterDataProvider();
 const masterDataGateway = new ApiMasterDataGateway();
 const masterDataAdminViewProvider = new JsonMasterDataAdminViewProvider();
@@ -142,7 +144,7 @@ export function AppRouter() {
       <Route element={<AuthenticatedAdminShell />}>
         <Route index element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="dashboard" element={<Navigate to="/apps/inventory/dashboard" replace />} />
-        <Route path="apps/inventory/dashboard" element={<InventoryDashboardPage provider={inventoryDemoProvider} />} />
+        <Route path="apps/inventory/dashboard" element={<InventoryDashboardPage gateway={operationalDashboardGateway} />} />
         <Route path="apps/inventory/devices" element={<InventoryDevicesPage provider={inventoryDemoProvider} gateway={inventoryDevicesGateway} />} />
         <Route path="apps/inventory/devices/new" element={<InventoryDeviceIntakePage provider={inventoryDemoProvider} masterDataProvider={masterDataProvider} />} />
         <Route path="apps/inventory/devices/evaluation" element={<InventoryDeviceEvaluationPage provider={inventoryDemoProvider} />} />

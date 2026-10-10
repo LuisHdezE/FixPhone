@@ -5,6 +5,7 @@ use App\Presentation\Http\Controllers\AuthMeController;
 use App\Presentation\Http\Controllers\IamController;
 use App\Presentation\Http\Controllers\InventoryController;
 use App\Presentation\Http\Controllers\OperationalInventoryController;
+use App\Presentation\Http\Controllers\OperationalDashboardController;
 use App\Presentation\Http\Controllers\DeviceDismantlingController;
 use App\Presentation\Http\Controllers\MasterDataController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
@@ -37,6 +38,7 @@ Route::prefix('v1')->group(function (): void {
  Route::delete('/admin/master-data/{kind}/{id}',[MasterDataController::class, 'destroy'])->name('api.v1.admin.master-data.destroy');
 
  Route::middleware('auth:sanctum')->group(function (): void {
+  Route::get('/admin/dashboard/operational',[OperationalDashboardController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.dashboard.operational.show');
   Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.index');
   // Operational inventory: one persisted source, separate permissions per action.
   Route::get('/admin/inventory/items',[OperationalInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.index');
