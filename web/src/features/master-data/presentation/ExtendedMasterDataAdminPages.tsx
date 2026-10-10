@@ -200,10 +200,10 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
     if (config.supportsSlug && !slug) { setError('El slug es obligatorio.'); return; }
     if (!value) { setError(`${config.valueLabel} es obligatorio.`); return; }
     if ((config.kind === 'storageCapacities' || config.kind === 'ramCapacities') && (!Number.isInteger(Number(value)) || Number(value) <= 0)) {
-      setError('La capacidad debe ser un nÃºmero entero mayor que cero.');
+      setError('La capacidad debe ser un número entero mayor que cero.');
       return;
     }
-    if (config.supportsParent && form.id && parentId === form.id) { setError('Un elemento no puede ser padre de sÃ­ mismo.'); return; }
+    if (config.supportsParent && form.id && parentId === form.id) { setError('Un elemento no puede ser padre de sí mismo.'); return; }
     if (config.supportsSlug && items.some((item) => item.slug === slug && item.id !== form.id)) { setError('Ya existe un elemento con ese slug.'); return; }
 
     const simplePayload = { name, slug, value, description: form.description.trim(), parentId, active: form.active, sortOrder: form.sortOrder };
@@ -226,7 +226,7 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
   function requestToggle(item: SimpleMasterDataItem) {
     setConfirmAction({
       title: item.active ? `Desactivar ${config.singularLabel.toLocaleLowerCase()}` : `Activar ${config.singularLabel.toLocaleLowerCase()}`,
-      message: `${item.active ? 'Desactivar' : 'Activar'} ${item.name} en el catÃ¡logo maestro.`,
+      message: `${item.active ? 'Desactivar' : 'Activar'} ${item.name} en el catálogo maestro.`,
       confirmLabel: item.active ? 'Desactivar' : 'Activar',
       tone: 'warning',
       onConfirm: async () => {
@@ -268,9 +268,9 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
 
   const columns: readonly DataTableColumn<SimpleMasterDataItem>[] = [
     { id: 'name', header: 'Nombre', cell: (item) => <div><strong className="text-slate-900">{item.name}</strong><div className="text-xs text-slate-400">{item.id}</div></div>, sortable: true, sortValue: (item) => item.name, searchValue: (item) => textSearch([item.name, item.slug, item.id]) },
-    ...(config.supportsParent ? [{ id: 'parent', header: config.parentLabel ?? 'Padre', cell: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : 'RaÃ­z', sortable: true, sortValue: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : '', searchValue: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : '' }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
+    ...(config.supportsParent ? [{ id: 'parent', header: config.parentLabel ?? 'Padre', cell: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : 'Raíz', sortable: true, sortValue: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : '', searchValue: (item: SimpleMasterDataItem) => item.parentId ? itemsById.get(item.parentId)?.name ?? item.parentId : '' }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
     { id: 'value', header: config.valueLabel, cell: (item) => <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{item.value}</code>, sortable: true, sortValue: (item) => item.value, searchValue: (item) => item.value },
-    ...(config.supportsDescription ? [{ id: 'description', header: config.descriptionLabel ?? 'DescripciÃ³n', cell: (item: SimpleMasterDataItem) => <span className="text-xs leading-5 text-slate-500">{item.description || 'Sin descripciÃ³n'}</span>, searchValue: (item: SimpleMasterDataItem) => item.description }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
+    ...(config.supportsDescription ? [{ id: 'description', header: config.descriptionLabel ?? 'Descripción', cell: (item: SimpleMasterDataItem) => <span className="text-xs leading-5 text-slate-500">{item.description || 'Sin descripción'}</span>, searchValue: (item: SimpleMasterDataItem) => item.description }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
     ...(config.supportsSlug ? [{ id: 'slug', header: 'Slug', cell: (item: SimpleMasterDataItem) => <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{item.slug}</code>, sortable: true, sortValue: (item: SimpleMasterDataItem) => item.slug, searchValue: (item: SimpleMasterDataItem) => item.slug }] satisfies readonly DataTableColumn<SimpleMasterDataItem>[] : []),
     { id: 'status', header: 'Estado', cell: (item) => status(item.active), sortable: true, sortValue: (item) => Number(item.active), searchValue: (item) => (item.active ? 'activo' : 'inactivo') },
     { id: 'sortOrder', header: 'Orden', cell: (item) => item.sortOrder, align: 'right', sortable: true, sortValue: (item) => item.sortOrder, searchValue: (item) => String(item.sortOrder) },
@@ -286,7 +286,7 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
         <TextField id={`${config.kind}-name`} label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id={`${config.kind}-value`} label={config.valueLabel} onChange={(value) => setForm((current) => current ? { ...current, value } : current)} placeholder={config.valuePlaceholder} value={form.value} />
         {config.supportsSlug ? <TextField id={`${config.kind}-slug`} label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} /> : null}
-        {config.supportsDescription ? <div className="md:col-span-2"><TextAreaField id={`${config.kind}-description`} label={config.descriptionLabel ?? 'DescripciÃ³n'} onChange={(value) => setForm((current) => current ? { ...current, description: value } : current)} value={form.description} /></div> : null}
+        {config.supportsDescription ? <div className="md:col-span-2"><TextAreaField id={`${config.kind}-description`} label={config.descriptionLabel ?? 'Descripción'} onChange={(value) => setForm((current) => current ? { ...current, description: value } : current)} value={form.description} /></div> : null}
         <TextField id={`${config.kind}-sort-order`} label="Orden" onChange={(value) => setForm((current) => current ? { ...current, sortOrder: toSortOrder(value) } : current)} value={String(form.sortOrder)} />
         <BooleanSelect id={`${config.kind}-active`} label="Estado" onChange={(value) => setForm((current) => current ? { ...current, active: value } : current)} value={form.active} />
       </FormModal> : null}
@@ -299,7 +299,7 @@ export function MasterDataColorsPage({ masterDataProvider, gateway, onChanged }:
   return <SimpleMasterDataPage gateway={gateway} onChanged={onChanged} config={{
     kind: 'colors',
     title: 'Colores',
-    description: 'CatÃ¡logo canÃ³nico de colores para equipos, variantes y filtros comerciales.',
+    description: 'Catálogo canónico de colores para equipos, variantes y filtros comerciales.',
     createLabel: 'Nuevo color',
     singularLabel: 'Color',
     dataAttribute: 'master-data-colors',
@@ -342,13 +342,13 @@ export function MasterDataConditionsPage({ masterDataProvider, gateway, onChange
   return <SimpleMasterDataPage gateway={gateway} onChanged={onChanged} config={{
     kind: 'conditions',
     title: 'Condiciones',
-    description: 'Estados comerciales y operativos normalizados para inventario y catÃ¡logo.',
-    createLabel: 'Nueva condiciÃ³n',
-    singularLabel: 'CondiciÃ³n',
+    description: 'Estados comerciales y operativos normalizados para inventario y catálogo.',
+    createLabel: 'Nueva condición',
+    singularLabel: 'Condición',
     dataAttribute: 'master-data-conditions',
     valueLabel: 'Grado',
     valuePlaceholder: 'A',
-    descriptionLabel: 'DescripciÃ³n',
+    descriptionLabel: 'Descripción',
     supportsSlug: true,
     supportsDescription: true,
     initialItems: masterDataProvider.getConditions().map((condition) => ({ id: condition.id, name: condition.name, slug: condition.slug, value: condition.grade, description: condition.description, parentId: null, active: condition.active, sortOrder: condition.sortOrder })),

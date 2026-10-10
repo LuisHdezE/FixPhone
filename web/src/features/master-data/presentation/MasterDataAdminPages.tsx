@@ -115,7 +115,7 @@ function BooleanSelect({
   label,
   value,
   onChange,
-  trueLabel = 'SÃ­',
+  trueLabel = 'Sí',
   falseLabel = 'No',
 }: {
   id: string;
@@ -197,7 +197,7 @@ export function MasterDataBrandsPage({ masterDataProvider, viewProvider, gateway
   function requestToggleBrand(brand: MasterDataBrandDto) {
     setConfirmAction({
       title: brand.active ? 'Desactivar marca' : 'Activar marca',
-      message: `${brand.active ? 'Desactivar' : 'Activar'} ${brand.name} en el catÃ¡logo maestro.`,
+      message: `${brand.active ? 'Desactivar' : 'Activar'} ${brand.name} en el catálogo maestro.`,
       confirmLabel: brand.active ? 'Desactivar' : 'Activar',
       tone: 'warning',
       onConfirm: async () => {
@@ -307,7 +307,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
   function requestToggleModel(model: MasterDataDeviceModelDto) {
     setConfirmAction({
       title: model.active ? 'Desactivar modelo' : 'Activar modelo',
-      message: `${model.active ? 'Desactivar' : 'Activar'} ${model.name} en el catÃ¡logo maestro.`,
+      message: `${model.active ? 'Desactivar' : 'Activar'} ${model.name} en el catálogo maestro.`,
       confirmLabel: model.active ? 'Desactivar' : 'Activar',
       tone: 'warning',
       onConfirm: async () => {
@@ -349,7 +349,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
   const columns: readonly DataTableColumn<MasterDataDeviceModelDto>[] = [
     { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'Modelo', cell: (model) => <div><strong className="text-slate-900">{model.name}</strong><div className="text-xs text-slate-400">{model.id}</div></div>, sortable: true, sortValue: (model) => model.name, searchValue: (model) => textSearch([model.name, model.slug, model.id]) },
     { id: 'brand', header: view.columns.find((column) => column.id === 'brand')?.header ?? 'Marca', cell: (model) => brandsById.get(model.brandId)?.name ?? model.brandId, sortable: true, sortValue: (model) => brandsById.get(model.brandId)?.name ?? model.brandId, searchValue: (model) => brandsById.get(model.brandId)?.name ?? model.brandId },
-    { id: 'code', header: view.columns.find((column) => column.id === 'code')?.header ?? 'CÃ³digo', cell: (model) => model.modelCode ?? 'Sin cÃ³digo', sortable: true, sortValue: (model) => model.modelCode ?? '', searchValue: (model) => model.modelCode ?? '' },
+    { id: 'code', header: view.columns.find((column) => column.id === 'code')?.header ?? 'Código', cell: (model) => model.modelCode ?? 'Sin código', sortable: true, sortValue: (model) => model.modelCode ?? '', searchValue: (model) => model.modelCode ?? '' },
     { id: 'slug', header: view.columns.find((column) => column.id === 'slug')?.header ?? 'Slug', cell: (model) => <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{model.slug}</code>, sortable: true, sortValue: (model) => model.slug, searchValue: (model) => model.slug },
     { id: 'status', header: view.columns.find((column) => column.id === 'status')?.header ?? 'Estado', cell: (model) => status(model.active), sortable: true, sortValue: (model) => Number(model.active), searchValue: (model) => (model.active ? 'activo' : 'inactivo') },
     { id: 'sortOrder', header: view.columns.find((column) => column.id === 'sortOrder')?.header ?? 'Orden', cell: (model) => model.sortOrder, align: 'right', sortable: true, sortValue: (model) => model.sortOrder, searchValue: (model) => String(model.sortOrder) },
@@ -364,7 +364,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
         <SelectField id="model-brand" label="Marca" onChange={(value) => setForm((current) => current ? { ...current, brandId: value } : current)} options={brands.map((brand) => ({ value: brand.id, label: brand.name }))} value={form.brandId} />
         <TextField id="model-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id="model-slug" label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} />
-        <TextField id="model-code" label="CÃ³digo" onChange={(value) => setForm((current) => current ? { ...current, modelCode: value } : current)} value={form.modelCode ?? ''} />
+        <TextField id="model-code" label="Código" onChange={(value) => setForm((current) => current ? { ...current, modelCode: value } : current)} value={form.modelCode ?? ''} />
         <TextField id="model-sort-order" label="Orden" onChange={(value) => setForm((current) => current ? { ...current, sortOrder: toSortOrder(value) } : current)} value={String(form.sortOrder)} />
         <BooleanSelect id="model-active" label="Estado" onChange={(value) => setForm((current) => current ? { ...current, active: value } : current)} value={form.active} trueLabel="Activo" falseLabel="Inactivo" />
       </FormModal> : null}
@@ -399,8 +399,8 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
     const slug = normalizeSlug(form.slug || name);
     const parentId = form.parentId || null;
     if (!name || !slug) { setError('Nombre y slug son obligatorios.'); return; }
-    if (form.id && parentId === form.id) { setError('Una categorÃ­a no puede ser padre de sÃ­ misma.'); return; }
-    if (categories.some((category) => category.slug === slug && category.id !== form.id)) { setError('Ya existe una categorÃ­a con ese slug.'); return; }
+    if (form.id && parentId === form.id) { setError('Una categoría no puede ser padre de sí misma.'); return; }
+    if (categories.some((category) => category.slug === slug && category.id !== form.id)) { setError('Ya existe una categoría con ese slug.'); return; }
 
     const payload = {
       parentId,
@@ -419,7 +419,7 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
         : await gateway.create<MasterDataCategoryDto>('categories', payload);
       setCategories((current) => form.id ? current.map((category) => category.id === saved.id ? saved : category) : [...current, saved]);
       setForm(null);
-      setNotice({ tone: 'success', message: form.id ? 'CategorÃ­a actualizada.' : 'CategorÃ­a creada.' });
+      setNotice({ tone: 'success', message: form.id ? 'Categoría actualizada.' : 'Categoría creada.' });
       await onChanged();
     } catch (saveError) {
       setError(errorMessage(saveError));
@@ -428,8 +428,8 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
 
   function requestToggleCategory(category: MasterDataCategoryDto) {
     setConfirmAction({
-      title: category.active ? 'Desactivar categorÃ­a' : 'Activar categorÃ­a',
-      message: `${category.active ? 'Desactivar' : 'Activar'} ${category.name} en el catÃ¡logo maestro.`,
+      title: category.active ? 'Desactivar categoría' : 'Activar categoría',
+      message: `${category.active ? 'Desactivar' : 'Activar'} ${category.name} en el catálogo maestro.`,
       confirmLabel: category.active ? 'Desactivar' : 'Activar',
       tone: 'warning',
       onConfirm: async () => {
@@ -437,7 +437,7 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
           const saved = await gateway.update<MasterDataCategoryDto>('categories', category.id, { active: !category.active });
           setCategories((current) => current.map((item) => item.id === category.id ? saved : item));
           setConfirmAction(null);
-          setNotice({ tone: 'success', message: category.active ? 'CategorÃ­a desactivada.' : 'CategorÃ­a activada.' });
+          setNotice({ tone: 'success', message: category.active ? 'Categoría desactivada.' : 'Categoría activada.' });
           await onChanged();
         } catch (toggleError) {
           setConfirmAction(null);
@@ -449,8 +449,8 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
 
   function requestDeleteCategory(category: MasterDataCategoryDto) {
     setConfirmAction({
-      title: 'Eliminar categorÃ­a',
-      message: `Eliminar ${category.name} de forma permanente. Las categorÃ­as hijas conservarÃ¡n su referencia hasta que sean editadas.`,
+      title: 'Eliminar categoría',
+      message: `Eliminar ${category.name} de forma permanente. Las categorías hijas conservarán su referencia hasta que sean editadas.`,
       confirmLabel: 'Eliminar',
       tone: 'danger',
       onConfirm: async () => {
@@ -458,7 +458,7 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
           await gateway.delete('categories', category.id);
           setCategories((current) => current.filter((item) => item.id !== category.id));
           setConfirmAction(null);
-          setNotice({ tone: 'warning', message: 'CategorÃ­a eliminada.' });
+          setNotice({ tone: 'warning', message: 'Categoría eliminada.' });
           await onChanged();
         } catch (deleteError) {
           setConfirmAction(null);
@@ -469,27 +469,27 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
   }
 
   const columns: readonly DataTableColumn<MasterDataCategoryDto>[] = [
-    { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'CategorÃ­a', cell: (category) => <div><strong className="text-slate-900">{category.name}</strong><div className="max-w-md text-xs text-slate-400">{category.description}</div></div>, sortable: true, sortValue: (category) => category.name, searchValue: (category) => textSearch([category.name, category.slug, category.description, category.id]) },
-    { id: 'parent', header: view.columns.find((column) => column.id === 'parent')?.header ?? 'Padre', cell: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'RaÃ­z', sortable: true, sortValue: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'RaÃ­z', searchValue: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'RaÃ­z' },
+    { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'Categoría', cell: (category) => <div><strong className="text-slate-900">{category.name}</strong><div className="max-w-md text-xs text-slate-400">{category.description}</div></div>, sortable: true, sortValue: (category) => category.name, searchValue: (category) => textSearch([category.name, category.slug, category.description, category.id]) },
+    { id: 'parent', header: view.columns.find((column) => column.id === 'parent')?.header ?? 'Padre', cell: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'Raíz', sortable: true, sortValue: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'Raíz', searchValue: (category) => category.parentId ? categoriesById.get(category.parentId)?.name ?? category.parentId : 'Raíz' },
     { id: 'storefront', header: view.columns.find((column) => column.id === 'storefront')?.header ?? 'Storefront', cell: (category) => yesNo(category.showInStorefront), sortable: true, sortValue: (category) => Number(category.showInStorefront), searchValue: (category) => (category.showInStorefront ? 'visible' : 'oculto') },
     { id: 'status', header: view.columns.find((column) => column.id === 'status')?.header ?? 'Estado', cell: (category) => status(category.active), sortable: true, sortValue: (category) => Number(category.active), searchValue: (category) => (category.active ? 'activo' : 'inactivo') },
     { id: 'sortOrder', header: view.columns.find((column) => column.id === 'sortOrder')?.header ?? 'Orden', cell: (category) => category.sortOrder, align: 'right', sortable: true, sortValue: (category) => category.sortOrder, searchValue: (category) => String(category.sortOrder) },
     { id: 'actions', header: 'Acciones', cell: (category) => <div className="flex flex-wrap gap-1"><ActionButton onClick={() => editCategory(category)}>Editar</ActionButton><ActionButton onClick={() => requestToggleCategory(category)} tone="warning">{category.active ? 'Desactivar' : 'Activar'}</ActionButton><ActionButton onClick={() => requestDeleteCategory(category)} tone="danger">Eliminar</ActionButton></div> },
   ];
 
-  return <PageShell actions={<PrimaryAction onClick={newCategory}>Nueva categorÃ­a</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
+  return <PageShell actions={<PrimaryAction onClick={newCategory}>Nueva categoría</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
     <div className="grid gap-3" data-master-data-categories>
       <PersistenceNote /><AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(category) => category.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={categories} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
-      {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveCategory(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar categorÃ­a' : 'Nueva categorÃ­a'}>
-        <SelectField id="category-parent" label="Padre" onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={[{ value: '', label: 'RaÃ­z' }, ...categories.filter((category) => category.id !== form.id).map((category) => ({ value: category.id, label: category.name }))]} value={form.parentId ?? ''} />
+      {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveCategory(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar categoría' : 'Nueva categoría'}>
+        <SelectField id="category-parent" label="Padre" onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={[{ value: '', label: 'Raíz' }, ...categories.filter((category) => category.id !== form.id).map((category) => ({ value: category.id, label: category.name }))]} value={form.parentId ?? ''} />
         <TextField id="category-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id="category-slug" label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} />
         <TextField id="category-icon" label="Icono opcional" onChange={(value) => setForm((current) => current ? { ...current, imageOrIcon: value } : current)} value={form.imageOrIcon ?? ''} />
         <TextField id="category-sort-order" label="Orden" onChange={(value) => setForm((current) => current ? { ...current, sortOrder: toSortOrder(value) } : current)} value={String(form.sortOrder)} />
         <BooleanSelect id="category-active" label="Estado" onChange={(value) => setForm((current) => current ? { ...current, active: value } : current)} value={form.active} trueLabel="Activa" falseLabel="Inactiva" />
         <BooleanSelect id="category-storefront" label="Storefront" onChange={(value) => setForm((current) => current ? { ...current, showInStorefront: value } : current)} value={form.showInStorefront} trueLabel="Visible" falseLabel="Oculta" />
-        <div className="md:col-span-2"><TextAreaField id="category-description" label="DescripciÃ³n" onChange={(value) => setForm((current) => current ? { ...current, description: value } : current)} value={form.description} /></div>
+        <div className="md:col-span-2"><TextAreaField id="category-description" label="Descripción" onChange={(value) => setForm((current) => current ? { ...current, description: value } : current)} value={form.description} /></div>
       </FormModal> : null}
       <ConfirmDialog action={confirmAction} onCancel={() => setConfirmAction(null)} />
     </div>

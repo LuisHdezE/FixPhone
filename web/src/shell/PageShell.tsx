@@ -52,9 +52,9 @@ export function PendingViewCard() {
           <AppIcon className="size-[18px]" name="layers" />
         </div>
         <div>
-          <h2 className="text-[13px] font-semibold text-slate-900">Vista preparada para construcciÃ³n</h2>
+          <h2 className="text-[13px] font-semibold text-slate-900">Vista preparada para construcción</h2>
           <p className="mt-1 max-w-2xl text-[12px] leading-5 text-slate-500">
-            La ruta ya forma parte de FixPhone. Sus componentes se incorporarÃ¡n por etapas y se habilitarÃ¡n cuando exista flujo funcional real.
+            La ruta ya forma parte de FixPhone. Sus componentes se incorporarán por etapas y se habilitarán cuando exista flujo funcional real.
           </p>
         </div>
       </div>
