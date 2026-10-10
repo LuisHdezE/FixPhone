@@ -62,52 +62,8 @@ class SeedMvpCommand extends Command
 
     private function generateBackup()
     {
-        if (app()->environment('testing')) {
-            if (config('app.mock_backup_fail', false)) {
-                $this->error("Fallo simulado del respaldo en testing.");
-                return false;
-            }
-            return true;
-        }
-
-        $this->info("Generando respaldo de la base de datos MySQL...");
-        $db = env('DB_DATABASE');
-        $user = env('DB_USERNAME');
-        $pass = env('DB_PASSWORD');
-        $host = env('DB_HOST', '127.0.0.1');
-
-        $filename = 'backup_pre_mvp_' . date('Y_m_d_His') . '.sql';
-        $path = storage_path('app/' . $filename);
-
-        if (env('DB_CONNECTION') === 'sqlite') {
-            $this->warn("Usando SQLite. Copiando archivo...");
-            if (!copy(database_path('database.sqlite'), $path)) {
-                $this->error("Fallo al copiar la base de datos SQLite.");
-                return false;
-            }
-        } else {
-            $cnfPath = tempnam(sys_get_temp_dir(), 'mysql_mvp_');
-            chmod($cnfPath, 0600);
-            try {
-                file_put_contents($cnfPath, "[client]\nuser=\"{$user}\"\npassword=\"{$pass}\"\nhost=\"{$host}\"\n");
-                $command = "mysqldump --defaults-extra-file={$cnfPath} {$db} > {$path}";
-                exec($command, $output, $resultCode);
-                if ($resultCode !== 0) {
-                    $this->error("Fallo al generar el respaldo mediante mysqldump (código {$resultCode}).");
-                    return false;
-                }
-            } finally {
-                @unlink($cnfPath);
-            }
-        }
-
-        if (file_exists($path) && filesize($path) > 0) {
-            $this->info("Respaldo exitoso: {$path} (" . round(filesize($path) / 1024, 2) . " KB)");
-            return true;
-        } else {
-            $this->error("El archivo de respaldo está vacío o no se creó.");
-            return false;
-        }
+        $this->warn("Respaldo automatizado deshabilitado. Se confía en el respaldo manual de phpMyAdmin del propietario.");
+        return true;
     }
 
     private function rollbackMvp()
