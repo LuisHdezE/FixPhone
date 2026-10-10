@@ -26,7 +26,7 @@ type SubmissionState = 'idle' | 'submitting' | 'success' | 'failure';
 const initialCredentials: SignInCredentialsDto = {
   email: '',
   password: '',
-  rememberMe: false,
+  rememberMe: true,
 };
 
 function validationMessage(
