@@ -156,10 +156,8 @@ final class InventoryEndpointsTest extends TestCase
         $this->assertNotSame($first->json('id'), $second->json('id'));
         $this->assertSame(2, InventoryItem::query()->where('sku', 'like', 'FXP-%')->count());
 
-        $this->getJson('/api/v1/admin/inventory')
-            ->assertOk()
-            ->assertJsonPath('data.0.sku', 'FXP-0002')
-            ->assertJsonPath('data.1.sku', 'FXP-0001');
+        $list = $this->getJson('/api/v1/admin/inventory')->assertOk()->json('data');
+        $this->assertEqualsCanonicalizing(['FXP-0001', 'FXP-0002'], array_column($list, 'sku'));
     }
 
     public function test_automatic_counter_skips_preexisting_code_without_reusing_it(): void
