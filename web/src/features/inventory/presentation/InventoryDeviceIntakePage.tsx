@@ -116,6 +116,7 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
   const [form, setForm] = useState<IntakeFormState>(initialForm);
   const [saving, setSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const brandOptions = useMemo(() => [
@@ -165,27 +166,22 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
   const selectedCondition = conditions.find((condition) => condition.id === form.conditionId);
 
   const canSubmit = Boolean(
-    selectedBrand &&
-    selectedModel &&
-    selectedStorage &&
-    selectedColor &&
-    selectedCondition &&
-    form.serialOrImei.trim() &&
-    !saving,
+    selectedBrand && selectedModel && Boolean(form.destination) && !saving,
   );
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!canSubmit || !selectedBrand || !selectedModel || !selectedStorage || !selectedColor || !selectedCondition) return;
+    if (!canSubmit || !selectedBrand || !selectedModel) return;
 
     setSaving(true);
     setCreatedId(null);
+    setCreatedCode(null);
     setError(null);
 
     try {
       const { amountMinor, currencyCode } = parseAcquisitionCost(form.acquisitionCost);
       const payload = {
-        title: `${selectedBrand.name} ${selectedModel.name} ${selectedStorage.label}`,
+        title: [selectedBrand.name, selectedModel.name, selectedStorage?.label].filter(Boolean).join(' '),
         item_type: 'used_phone',
         brand: selectedBrand.name,
         model: selectedModel.name,
@@ -201,15 +197,15 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
         metadata: {
           brand_id: selectedBrand.id,
           device_model_id: selectedModel.id,
-          serial_or_imei: form.serialOrImei.trim(),
-          storage_capacity_id: selectedStorage.id,
-          storage: selectedStorage.label,
-          color_id: selectedColor.id,
-          color: selectedColor.name,
-          condition_id: selectedCondition.id,
-          condition_grade: selectedCondition.grade,
-          condition_name: selectedCondition.name,
-          physical_condition: mapCondition(selectedCondition.grade),
+          serial_or_imei: form.serialOrImei.trim() || null,
+          storage_capacity_id: selectedStorage?.id ?? null,
+          storage: selectedStorage?.label ?? null,
+          color_id: selectedColor?.id ?? null,
+          color: selectedColor?.name ?? null,
+          condition_id: selectedCondition?.id ?? null,
+          condition_grade: selectedCondition?.grade ?? null,
+          condition_name: selectedCondition?.name ?? null,
+          physical_condition: mapCondition(selectedCondition?.grade),
           powers_on: form.powersOn,
           account_lock: form.accountLock,
           acquisition_source: form.acquisitionSource.trim() || null,
@@ -232,8 +228,9 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
         throw new Error(body || `No se pudo registrar el dispositivo (${response.status}).`);
       }
 
-      const created = await response.json() as { id?: string };
+      const created = await response.json() as { id?: string; sku?: string | null };
       setCreatedId(created.id ?? 'registrado');
+      setCreatedCode(created.sku ?? null);
       setForm(initialForm());
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'No se pudo registrar el dispositivo.');
@@ -246,20 +243,28 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]" data-device-intake>
       <form className="grid gap-4" onSubmit={submit}>
         <SurfaceCard>
-          <h2 className="text-base font-semibold text-slate-950">{view.identitySectionTitle}</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <h2 className="text-base font-semibold text-slate-950">Ingreso rápido de dispositivo</h2>
+          <p className="mt-1 text-xs text-slate-600">Marca, modelo y destino son suficientes para registrar el equipo. FixPhone le asignará un código FXP único. No necesitás IMEI.</p>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
             <SelectField id="device-brand" label={view.fields.brandId} onChange={setBrand} options={brandOptions} value={form.brandId} />
             <SelectField id="device-model" label={view.fields.deviceModelId} onChange={(value) => setField('deviceModelId', value)} options={filteredModelOptions} value={form.deviceModelId} />
-            <TextField id="device-identity" label={view.fields.serialOrImei} onChange={(value) => setField('serialOrImei', value)} placeholder={view.placeholders.serialOrImei} value={form.serialOrImei} />
-            <SelectField id="device-storage" label={view.fields.storageCapacityId} onChange={(value) => setField('storageCapacityId', value)} options={storageOptions} value={form.storageCapacityId} />
-            <SelectField id="device-color" label={view.fields.colorId} onChange={(value) => setField('colorId', value)} options={colorOptions} value={form.colorId} />
+            <SelectField id="device-destination" label={view.fields.destination} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
           </div>
-          {selectedBrand || selectedModel || selectedStorage || selectedColor ? <p className="mt-3 text-xs text-slate-500" data-device-master-data-hint>
-            Referencia canónica: {[selectedBrand?.name, selectedModel?.name, selectedStorage?.label, selectedColor?.name].filter(Boolean).join(' · ')}
-          </p> : null}
+          <p className="mt-2 text-[11px] text-slate-500">El dispositivo ingresa con stock inicial 1, sin habilitar venta ni publicación. Podrás completar identificación y diagnóstico después.</p>
         </SurfaceCard>
 
-        <SurfaceCard>
+        <details className="rounded-lg border border-slate-200 bg-white" data-device-optional-details>
+          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Completar datos opcionales: IMEI, características, condición y costo</summary>
+          <div className="grid gap-3 p-3 pt-0">
+          <SurfaceCard>
+            <h2 className="text-base font-semibold text-slate-950">{view.identitySectionTitle}</h2>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <TextField id="device-identity" label={view.fields.serialOrImei} onChange={(value) => setField('serialOrImei', value)} placeholder={view.placeholders.serialOrImei} value={form.serialOrImei} />
+              <SelectField id="device-storage" label={view.fields.storageCapacityId} onChange={(value) => setField('storageCapacityId', value)} options={storageOptions} value={form.storageCapacityId} />
+              <SelectField id="device-color" label={view.fields.colorId} onChange={(value) => setField('colorId', value)} options={colorOptions} value={form.colorId} />
+            </div>
+          </SurfaceCard>
+          <SurfaceCard>
           <h2 className="text-base font-semibold text-slate-950">{view.conditionSectionTitle}</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <SelectField id="device-powers-on" label={view.fields.powersOn} onChange={(value) => setField('powersOn', value as DevicePowerState)} options={view.options.powersOn} value={form.powersOn} />
@@ -280,10 +285,11 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
         <SurfaceCard>
           <h2 className="text-base font-semibold text-slate-950">{view.routingSectionTitle}</h2>
           <div className="mt-4 grid gap-4">
-            <SelectField id="device-destination" label={view.fields.destination} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
             <TextAreaField id="device-notes" label={view.fields.notes} onChange={(value) => setField('notes', value)} placeholder={view.placeholders.notes} value={form.notes} />
           </div>
         </SurfaceCard>
+          </div>
+        </details>
 
         <div className="flex flex-wrap items-center gap-3">
           <button className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={!canSubmit} type="submit">
@@ -303,7 +309,7 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
 
         {createdId ? <SurfaceCard>
           <div role="status" data-device-intake-success>
-            <p className="text-sm font-semibold text-emerald-700">Dispositivo registrado</p>
+            <p className="text-sm font-semibold text-emerald-700">Dispositivo registrado{createdCode ? ' · ' + createdCode : ''}</p>
             <p className="mt-1 text-sm leading-6 text-slate-600">El equipo fue guardado en MySQL y ya puede verse en la lista de dispositivos.</p>
             <Link className="mt-3 inline-flex text-sm font-semibold text-brand-700 hover:text-brand-800" to="/apps/inventory/devices">Ver dispositivos</Link>
           </div>
