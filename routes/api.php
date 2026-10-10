@@ -4,6 +4,7 @@ use App\Presentation\Http\Controllers\AuthLogoutController;
 use App\Presentation\Http\Controllers\AuthMeController;
 use App\Presentation\Http\Controllers\IamController;
 use App\Presentation\Http\Controllers\InventoryController;
+use App\Presentation\Http\Controllers\OperationalInventoryController;
 use App\Presentation\Http\Controllers\DeviceDismantlingController;
 use App\Presentation\Http\Controllers\MasterDataController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
@@ -35,6 +36,13 @@ Route::prefix('v1')->group(function (): void {
 
  Route::middleware('auth:sanctum')->group(function (): void {
   Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.index');
+  // Operational inventory: one persisted source, separate permissions per action.
+  Route::get('/admin/inventory/items',[OperationalInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.index');
+  Route::get('/admin/inventory/items/{id}',[OperationalInventoryController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.show');
+  Route::patch('/admin/inventory/items/{id}',[OperationalInventoryController::class, 'update'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.items.update');
+  Route::get('/admin/inventory/items/{id}/adjustments',[OperationalInventoryController::class, 'adjustments'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.adjustments.index');
+  Route::post('/admin/inventory/items/{id}/adjustments',[OperationalInventoryController::class, 'adjust'])->middleware('permission:inventory.adjust')->name('api.v1.admin.inventory.items.adjustments.store');
+
   Route::post('/admin/inventory',[InventoryController::class, 'create'])->middleware('permission:devices.intake')->name('api.v1.admin.inventory.store');
   Route::patch('/admin/inventory/{id}/dismantling',[DeviceDismantlingController::class, 'update'])->middleware('permission:workshop.dismantle')->name('api.v1.admin.inventory.dismantling.update');
   Route::prefix('admin/media/storage-profiles')->middleware('permission:integrations.manage')->group(function (): void {
