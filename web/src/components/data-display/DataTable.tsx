@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { SearchField } from '@/components/forms/SearchField';
 import { SelectField } from '@/components/forms/SelectField';
 
@@ -44,7 +44,7 @@ export function DataTable<Row>({
   caption,
   searchable = false,
   searchLabel = 'Buscar',
-  searchPlaceholder = 'Buscarâ€¦',
+  searchPlaceholder = 'Buscar...',
   filters = [],
   selectable = false,
   pageSizeOptions = [10, 25, 50],
@@ -165,7 +165,7 @@ export function DataTable<Row>({
               {columns.map((column) => (
                 <th className={`px-2.5 py-2 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id} scope="col">
                   {column.sortable && column.sortValue ? <button className="inline-flex items-center gap-1 font-semibold uppercase tracking-[0.07em] hover:text-slate-800" onClick={() => toggleSort(column)} type="button">
-                    {column.header}<span aria-hidden="true">{sort?.id === column.id ? (sort.direction === 'asc' ? 'â†‘' : 'â†“') : 'â†•'}</span>
+                    {column.header}<span aria-hidden="true">{sort?.id === column.id ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}</span>
                   </button> : column.header}
                 </th>
               ))}
@@ -184,7 +184,7 @@ export function DataTable<Row>({
       </div>
 
       {hasControls ? <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-2.5 py-2 text-xs text-slate-500">
-        <span>PÃ¡gina {safePage} de {pageCount}</span>
+        <span>Página {safePage} de {pageCount}</span>
         <div className="flex items-center gap-1" data-data-table-pagination>
           <button className="rounded-md border border-slate-200 px-2 py-1 disabled:opacity-40" disabled={safePage <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} type="button">Anterior</button>
           {Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button aria-current={number === safePage ? 'page' : undefined} className={`rounded-md border px-2.5 py-1.5 ${number === safePage ? 'border-brand-300 bg-brand-50 font-semibold text-brand-700' : 'border-slate-200 text-slate-600'}`} key={number} onClick={() => setPage(number)} type="button">{number}</button>)}

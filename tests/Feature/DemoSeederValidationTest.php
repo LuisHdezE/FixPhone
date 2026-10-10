@@ -22,20 +22,59 @@ class DemoSeederValidationTest extends TestCase
 
     public function test_demo_seeder_populates_data_and_financial_reports_are_correct(): void
     {
-        // 1. Run Seeder
+        // Insert a non-demo record to verify it is NOT deleted
+        $nonDemoConsignor = Consignor::create([
+            'id' => (string) Str::ulid(),
+            'full_name' => 'Real Customer No Demo',
+            'document_number' => '99999999',
+            'phone' => '099999999',
+            'email' => 'real@example.com',
+        ]);
+        
+        $nonDemoDevice = InventoryItem::create([
+            'id' => (string) Str::ulid(),
+            'sku' => 'FXP-REAL-1',
+            'title' => 'Real Device',
+            'item_type' => 'used_phone',
+            'inventory_purpose' => 'sell_as_used_phone',
+            'operational_status' => 'en_stock',
+            'publication_status' => 'draft',
+            'dismantling_status' => 'not_started',
+            'is_sellable' => true,
+            'stock_quantity' => 1,
+            'cost_amount_minor' => 1000,
+            'sale_price_amount_minor' => 2000,
+            'currency_code' => 'UYU',
+            'metadata' => [],
+        ]);
+
+        // 1. Run Seeder First Time
         config(['app.demo_seeder_enabled' => true]);
+        config(['app.demo_seeder_allowed_databases' => [DB::connection()->getDatabaseName()]]);
         $this->seed(DemoSeeder::class);
 
-        // 2. Validate counts
-        $this->assertDatabaseCount('consignors', 30);
+        // 2. Validate counts after first run
+        $this->assertDatabaseCount('consignors', 31); // 30 demo + 1 real
         
-        // Items: 1 (required) + 80 (own) + 60 (consigned) + 40 (dismantle) + 20 (parts) = 201
-        $this->assertDatabaseCount('inventory_items', 201);
+        // Items: 1 (required) + 80 (own) + 60 (consigned) + 40 (dismantle) + 20 (parts) + 1 real = 202
+        $this->assertDatabaseCount('inventory_items', 202);
         
-        $consignorsCount = Consignor::count();
-        $itemsCount = InventoryItem::count();
-        $salesCount = DeviceSaleRecord::count();
-        $partsCount = DeviceInstalledPart::count();
+        $consignorsCount1 = Consignor::count();
+        $itemsCount1 = InventoryItem::count();
+        $salesCount1 = DeviceSaleRecord::count();
+        $partsCount1 = DeviceInstalledPart::count();
+
+        // 3. Run Seeder Second Time (Idempotency check)
+        $this->seed(DemoSeeder::class);
+
+        $this->assertEquals($consignorsCount1, Consignor::count(), 'Idempotency failed for consignors');
+        $this->assertEquals($itemsCount1, InventoryItem::count(), 'Idempotency failed for inventory_items');
+        $this->assertEquals($salesCount1, DeviceSaleRecord::count(), 'Idempotency failed for device_sale_records');
+        $this->assertEquals($partsCount1, DeviceInstalledPart::count(), 'Idempotency failed for device_installed_parts');
+
+        // Check non-demo data remains
+        $this->assertDatabaseHas('consignors', ['id' => $nonDemoConsignor->id]);
+        $this->assertDatabaseHas('inventory_items', ['id' => $nonDemoDevice->id]);
 
         // Check required financial case:
         $financialCase = InventoryItem::where('title', 'iPhone 11 (Demostración Financiera A)')->first();
@@ -80,10 +119,10 @@ class DemoSeederValidationTest extends TestCase
         // Print final stats for evidence
         echo "\n----------------------------------\n";
         echo "ENTORNO DEMO GENERADO\n";
-        echo "Consignantes: {$consignorsCount}\n";
-        echo "Artículos: {$itemsCount}\n";
-        echo "Ventas Registradas: {$salesCount}\n";
-        echo "Repuestos Instalados: {$partsCount}\n";
+        echo "Consignantes: {$consignorsCount1}\n";
+        echo "Artículos: {$itemsCount1}\n";
+        echo "Ventas Registradas: {$salesCount1}\n";
+        echo "Repuestos Instalados: {$partsCount1}\n";
         echo "Validación caso A: OK - Liquidación calculada en 2.500 UYU correctamente.\n";
         echo "----------------------------------\n";
     }

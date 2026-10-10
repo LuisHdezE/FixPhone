@@ -23,29 +23,32 @@ class DemoSeeder extends Seeder
             return;
         }
 
-        $dbHost = config('database.connections.mysql.host');
-        if (Str::contains($dbHost, ['produccion', 'fixphone.eliasworks.uy'])) {
-            $this->command->error('Conexión a base de datos de producción detectada. Abortando.');
+        $dbName = DB::connection()->getDatabaseName();
+        $allowedDbs = config('app.demo_seeder_allowed_databases', []);
+        
+        if (!is_array($allowedDbs) || !in_array($dbName, $allowedDbs, true)) {
+            $this->command->error("La base de datos actual '{$dbName}' no está autorizada para recibir datos demo (configurar app.demo_seeder_allowed_databases).");
             return;
         }
 
         $this->command->info('Generando entorno de demostración con más de 200 registros y múltiples escenarios...');
 
         DB::transaction(function () {
-            // 1. Limpiar datos de demostración anteriores de manera idempotente
-            DeviceSaleRecord::where('sold_by_actor_id', 'admin_demo')->delete();
-            DeviceInstalledPart::where('installed_by_actor_id', 'admin_demo')->delete();
-            RepairQuote::where('created_by', 'admin_demo_ulid')->delete();
-            DeviceValuation::where('created_by', 'admin_demo_ulid')->delete();
+            $demoItemIds = InventoryItem::where('metadata->is_demo', true)->pluck('id');
+            DeviceSaleRecord::whereIn('inventory_item_id', $demoItemIds)->delete();
+            DeviceInstalledPart::whereIn('inventory_item_id', $demoItemIds)->delete();
             InventoryItem::where('metadata->is_demo', true)->delete();
-            Consignor::where('email', 'like', '%@demo.com')->delete();
+
+            RepairQuote::where('customer_name', 'like', 'DEMO - %')->delete();
+            DeviceValuation::where('notes', 'Tasación demo')->delete();
+            Consignor::where('full_name', 'like', 'DEMO - %')->delete();
 
             // 2. Crear 30 consignantes ficticios
             $consignors = [];
             for ($i = 0; $i < 30; $i++) {
                 $consignors[] = Consignor::create([
                     'id' => (string) Str::ulid(),
-                    'full_name' => 'Consignante ' . $i . ' ' . Str::random(5),
+                    'full_name' => 'DEMO - Consignante ' . $i . ' ' . Str::random(5),
                     'document_number' => '1234567' . $i,
                     'phone' => '099000' . sprintf('%03d', $i),
                     'email' => 'consignante' . $i . '@demo.com',
@@ -242,7 +245,7 @@ class DemoSeeder extends Seeder
             for ($i = 0; $i < 10; $i++) {
                 RepairQuote::create([
                     'id' => (string) Str::ulid(),
-                    'customer_name' => 'Cliente Presupuesto ' . $i,
+                    'customer_name' => 'DEMO - Cliente Presupuesto ' . $i,
                     'customer_contact' => '099' . sprintf('%06d', $i),
                     'device_description' => 'iPhone ' . (10 + $i),
                     'device_tier' => 'tier_1',
