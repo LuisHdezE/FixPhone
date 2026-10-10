@@ -32,6 +32,9 @@ final class InventoryEndpointsTest extends TestCase
     {
         $this->getJson('/api/v1/admin/inventory')->assertUnauthorized();
         $this->postJson('/api/v1/admin/inventory', [])->assertUnauthorized();
+        $this->patchJson('/api/v1/admin/inventory/01ARZ3NDEKTSV4RRFFQ69G5FAV/dismantling', [
+            'dismantling_status' => 'partial',
+        ])->assertUnauthorized();
     }
 
 
@@ -145,6 +148,7 @@ final class InventoryEndpointsTest extends TestCase
         $first = $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload())
             ->assertCreated()
             ->assertJsonPath('sku', 'FXP-0001')
+            ->assertJsonPath('dismantling_status', 'not_started')
             ->assertJsonPath('publication_status', 'no_publicable')
             ->assertJsonPath('is_sellable', false)
             ->assertJsonPath('metadata.serial_or_imei', null);
@@ -201,6 +205,73 @@ final class InventoryEndpointsTest extends TestCase
 
         $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload())
             ->assertCreated()->assertJsonPath('sku', 'FXP-0001');
+    }
+
+
+    public function test_dismantling_is_audited_is_limited_to_donors_and_does_not_change_stock(): void
+    {
+        $this->actingAsOwner();
+        $id = $this->postJson('/api/v1/admin/inventory', $this->minimalDevicePayload())
+            ->assertCreated()->json('id');
+
+        $this->getJson('/api/v1/admin/inventory')
+            ->assertOk()->assertJsonPath('data.0.dismantling_status', 'not_started')
+            ->assertJsonPath('data.0.public_listing_status', 'draft')
+            ->assertJsonPath('data.0.public_valuation_id', null);
+
+        $this->patchJson('/api/v1/admin/inventory/'.$id.'/dismantling', [
+            'dismantling_status' => 'partial',
+        ])->assertOk()->assertJsonPath('data.dismantling_status', 'partial')
+          ->assertJsonPath('data.stock_quantity', 1);
+
+        $this->assertDatabaseHas('audit_events', [
+            'entity_id' => $id,
+            'event_type' => 'INVENTORY.DISMANTLING_STATUS_CHANGED',
+        ]);
+
+        $this->patchJson('/api/v1/admin/inventory/'.$id.'/dismantling', [
+            'dismantling_status' => 'not_started',
+        ])->assertUnprocessable()->assertJsonValidationErrors('dismantling_status');
+
+        $this->patchJson('/api/v1/admin/inventory/'.$id.'/dismantling', [
+            'dismantling_status' => 'exhausted',
+        ])->assertOk()->assertJsonPath('data.dismantling_status', 'exhausted');
+
+        $this->patchJson('/api/v1/admin/inventory/'.$id.'/dismantling', [
+            'dismantling_status' => 'partial',
+        ])->assertUnprocessable();
+
+        $spare = InventoryItem::query()->create([
+            'title' => 'Pantalla',
+            'item_type' => 'spare_part',
+            'operational_status' => 'en_stock',
+            'publication_status' => 'no_publicable',
+            'inventory_purpose' => 'sell_as_spare_part',
+            'stock_quantity' => 1,
+        ]);
+        $this->patchJson('/api/v1/admin/inventory/'.$spare->id.'/dismantling', [
+            'dismantling_status' => 'partial',
+        ])->assertUnprocessable()->assertJsonValidationErrors('dismantling_status');
+    }
+
+    public function test_legacy_donor_dismantling_remains_unknown_until_verified(): void
+    {
+        $this->actingAsOwner();
+        $legacy = InventoryItem::query()->create([
+            'sku' => 'DEV-LEGACY',
+            'title' => 'Equipo anterior',
+            'item_type' => 'used_phone',
+            'operational_status' => 'ingresado',
+            'publication_status' => 'no_publicable',
+            'inventory_purpose' => 'parts_donor',
+            'stock_quantity' => 1,
+        ]);
+
+        $this->assertNull($legacy->fresh()->dismantling_status);
+        $this->patchJson('/api/v1/admin/inventory/'.$legacy->id.'/dismantling', [
+            'dismantling_status' => 'not_started',
+        ])->assertOk()->assertJsonPath('data.dismantling_status', 'not_started')
+          ->assertJsonPath('data.sku', 'DEV-LEGACY');
     }
 
 }
