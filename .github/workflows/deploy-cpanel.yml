@@ -121,16 +121,33 @@ jobs:
 
       - name: Trigger Post-Deploy Migrations
         run: |
-          HTTP_STATUS=$(curl -s -o response.txt -w "%{http_code}" -X POST -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" -H "Accept: application/json" -H "User-Agent: FixPhone-Deploy/1.0" --max-time 60 "https://fixphone.eliasworks.uy/api/_deploy/run-migrations")
+          set +e
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" -H "Accept: application/json" -H "User-Agent: FixPhone-Deploy/1.0" --max-time 60 "https://fixphone.eliasworks.uy/api/_deploy/run-migrations")
+          CURL_EXIT_CODE=$?
+          set -e
+          
+          echo "cURL Exit Code: $CURL_EXIT_CODE"
+          
+          if [ $CURL_EXIT_CODE -ne 0 ]; then
+            echo "::error::Transport error occurred (e.g. DNS, TLS, Timeout). cURL Exit Code: $CURL_EXIT_CODE"
+            exit 1
+          fi
+          
+          echo "HTTP Status: $HTTP_STATUS"
+          
           if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ]; then
             echo "Migrations executed successfully (HTTP $HTTP_STATUS)."
-            cat response.txt
             exit 0
-          elif [ "$HTTP_STATUS" -eq 401 ] || [ "$HTTP_STATUS" -eq 403 ]; then
-            echo "::error::Authentication or WAF blocked the request (HTTP $HTTP_STATUS)."
+          elif [ "$HTTP_STATUS" -eq 401 ]; then
+            echo "::error::Authentication failed (HTTP 401)."
+            exit 1
+          elif [ "$HTTP_STATUS" -eq 403 ]; then
+            echo "::error::Request blocked by WAF or permissions (HTTP 403)."
+            exit 1
+          elif [ "$HTTP_STATUS" -eq 000 ]; then
+            echo "::error::No HTTP response received (HTTP 000). Check server availability."
             exit 1
           else
             echo "::error::Unexpected server error (HTTP $HTTP_STATUS)."
-            cat response.txt || true
             exit 1
           fi
