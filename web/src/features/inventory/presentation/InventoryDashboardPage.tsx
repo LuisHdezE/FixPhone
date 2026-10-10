@@ -114,7 +114,10 @@ export function InventoryDashboardPage({ gateway }: { gateway: OperationalDashbo
         <div className="mt-3 grid gap-3">
           {[dashboard.reports.financial, dashboard.reports.consignment_sales].map((report) => report.status === 'active' ? (
             <Link className="block rounded-md border border-brand-200 bg-brand-50 p-3 transition-colors hover:bg-brand-100" key={report.reason} to={report.url ?? '#'}>
-              <p className="text-sm font-semibold text-brand-900">{report.label}</p>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-brand-900">{report.label}</p>
+                {report.count !== undefined && <span className="inline-flex items-center rounded-full bg-brand-200 px-2.5 py-0.5 text-xs font-semibold text-brand-900">{report.count}</span>}
+              </div>
               <p className="mt-1 text-xs leading-5 text-brand-700">{report.reason}</p>
             </Link>
           ) : (

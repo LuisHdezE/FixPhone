@@ -97,6 +97,7 @@ Route::prefix('v1')->group(function (): void {
 
   Route::get('/admin/reports/installed-parts-expenses', [FinancialReportsController::class, 'installedPartsExpenses'])->middleware('permission:inventory.view')->name('api.v1.admin.reports.installed-parts-expenses');
   Route::get('/admin/reports/direct-sales-settlements', [FinancialReportsController::class, 'directSalesSettlements'])->middleware('permission:inventory.view')->name('api.v1.admin.reports.direct-sales-settlements');
+  Route::get('/admin/reports/consigned-phones-sold', [FinancialReportsController::class, 'consignedPhonesSold'])->middleware('permission:inventory.view')->name('api.v1.admin.reports.consigned-phones-sold');
 
   Route::post('/admin/inventory',[InventoryController::class, 'create'])->middleware('permission:devices.intake')->name('api.v1.admin.inventory.store');
   Route::patch('/admin/inventory/{id}/dismantling',[DeviceDismantlingController::class, 'update'])->middleware('permission:workshop.dismantle')->name('api.v1.admin.inventory.dismantling.update');

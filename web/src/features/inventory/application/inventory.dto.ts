@@ -111,6 +111,7 @@ export type OperationalDashboardReportStatusDto = {
   label: string;
   reason: string;
   url?: string;
+  count?: number;
 };
 
 export type OperationalDashboardLatestDeviceDto = {

@@ -3,6 +3,7 @@ import type {
   DeviceInstalledPartsListDto,
   DirectSalesSettlementReportDto,
   InstalledPartsExpenseReportDto,
+  ConsignedPhonesSoldReportDto,
 } from '../application/installedParts.dto';
 
 export class ApiInstalledPartsGateway {
@@ -85,6 +86,19 @@ export class ApiInstalledPartsGateway {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.message || 'No se pudo cargar el reporte de liquidaciones de ventas directas.');
+    }
+    const body = await res.json();
+    return body.data;
+  }
+
+  async getConsignedPhonesSoldReport(yearMonth?: string): Promise<ConsignedPhonesSoldReportDto> {
+    const query = yearMonth ? `?year_month=${encodeURIComponent(yearMonth)}` : '';
+    const res = await fetch(`/api/v1/admin/reports/consigned-phones-sold${query}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'No se pudo cargar el reporte de consignaciones.');
     }
     const body = await res.json();
     return body.data;

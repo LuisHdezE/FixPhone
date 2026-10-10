@@ -234,4 +234,83 @@ final class FinancialReportsController extends Controller
             ],
         ]);
     }
+
+    public function consignedPhonesSold(Request $request): JsonResponse
+    {
+        $request->validate([
+            'year_month' => ['sometimes', 'nullable', 'regex:/^\d{4}-\d{2}$/'],
+        ]);
+
+        $yearMonth = $request->input('year_month') ?: now()->timezone('America/Montevideo')->format('Y-m');
+        try {
+            $startOfMonth = Carbon::createFromFormat('Y-m-d H:i:s', $yearMonth . '-01 00:00:00', 'America/Montevideo')->startOfMonth();
+            $endOfMonth = (clone $startOfMonth)->endOfMonth();
+        } catch (\Throwable $e) {
+            throw ValidationException::withMessages(['year_month' => 'Formato de período inválido. Use YYYY-MM.']);
+        }
+
+        $salesRecords = DeviceSaleRecord::query()
+            ->whereNull('voided_at')
+            ->whereBetween('sold_at', [$startOfMonth, $endOfMonth])
+            ->where('inventory_purpose', 'consigned_phone')
+            ->orderByDesc('sold_at')
+            ->get();
+
+        $deviceIds = $salesRecords->pluck('inventory_item_id')->all();
+        $devices = InventoryItem::query()->whereIn('id', $deviceIds)->get()->keyBy('id');
+
+        $reports = [];
+        foreach ($salesRecords as $sale) {
+            /** @var InventoryItem|null $device */
+            $device = $devices->get($sale->inventory_item_id);
+
+            $reports[] = [
+                'sale_id' => $sale->id,
+                'device_id' => $sale->inventory_item_id,
+                'sku' => $device?->sku,
+                'title' => $device?->title ?? 'Equipo no encontrado',
+                'brand' => $device?->brand,
+                'model' => $device?->model,
+                'sold_at' => $sale->sold_at?->timezone('America/Montevideo')->toIso8601String(),
+                'receipt_number' => $sale->receipt_number,
+                'consignor_name' => $sale->consignor_name ?? 'Desconocido',
+                'status' => $sale->status,
+            ];
+        }
+
+        $recordedDeviceIds = DeviceSaleRecord::query()->pluck('inventory_item_id')->all();
+        $legacySoldDevices = InventoryItem::query()
+            ->whereIn('item_type', ['device', 'used_phone'])
+            ->where('inventory_purpose', 'consigned_phone')
+            ->whereIn('operational_status', ['vendido', 'sold'])
+            ->whereNotIn('id', $recordedDeviceIds)
+            ->get();
+
+        $legacyReports = [];
+        foreach ($legacySoldDevices as $legacy) {
+            $legacyReports[] = [
+                'sale_id' => null,
+                'device_id' => $legacy->id,
+                'sku' => $legacy->sku,
+                'title' => $legacy->title,
+                'brand' => $legacy->brand,
+                'model' => $legacy->model,
+                'sold_at' => null,
+                'receipt_number' => null,
+                'consignor_name' => 'Desconocido',
+                'status' => 'pending_conciliation',
+            ];
+        }
+
+        return response()->json([
+            'data' => [
+                'period' => $yearMonth,
+                'totals' => [
+                    'total_consigned_sold_count' => count($reports),
+                ],
+                'reports' => $reports,
+                'legacy_pending_conciliation' => $legacyReports,
+            ],
+        ]);
+    }
 }

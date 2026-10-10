@@ -114,9 +114,11 @@ final class OperationalDashboardController extends Controller
                         'url' => '/admin/finance/settlements'
                     ],
                     'consignment_sales' => [
-                        'status' => 'pending',
-                        'label' => 'Pendiente de habilitar',
-                        'reason' => 'El detalle de teléfonos consignados vendidos se activa con #55.',
+                        'status' => 'active',
+                        'label' => 'Teléfonos de consignación vendidos',
+                        'reason' => 'Ventas de consignación (actual e histórico).',
+                        'url' => '/admin/finance/consignment-sales',
+                        'count' => \App\Infrastructure\Inventory\DeviceSaleRecord::where('inventory_purpose', 'consigned_phone')->whereNull('voided_at')->whereBetween('sold_at', [now()->timezone('America/Montevideo')->startOfMonth(), now()->timezone('America/Montevideo')->endOfMonth()])->count() + \App\Infrastructure\Inventory\InventoryItem::whereIn('item_type', ['device', 'used_phone'])->where('inventory_purpose', 'consigned_phone')->whereIn('operational_status', ['vendido', 'sold'])->whereNotIn('id', \App\Infrastructure\Inventory\DeviceSaleRecord::pluck('inventory_item_id'))->count(),
                     ],
                 ],
             ],
