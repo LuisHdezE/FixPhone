@@ -147,20 +147,39 @@ export function ConsignedPhonesSoldPage() {
             )}
           </div>
 
-          <SurfaceCard>
-            <DataTable
-              caption={isProvisional ? "Detalle de ventas de consignación (Provisional)" : "Detalle de ventas de consignación"}
-              columns={columns}
-              emptyMessage="No hay teléfonos de consignación vendidos en este período."
-              getRowId={(item) => item.sale_id ?? item.device_id}
-              initialPageSize={10}
-              pageSizeOptions={[10, 25, 50]}
-              rows={[...report.reports, ...report.legacy_pending_conciliation]}
-              searchLabel="Buscar equipos"
-              searchPlaceholder="SKU, equipo, consignante o comprobante..."
-              searchable
-            />
-          </SurfaceCard>
+          <div className="mb-6">
+            <SurfaceCard>
+              <DataTable
+                caption={isProvisional ? "Detalle de ventas de consignación (Provisional)" : "Detalle de ventas de consignación"}
+                columns={columns}
+                emptyMessage="No hay teléfonos de consignación vendidos en este período."
+                getRowId={(item) => item.sale_id ?? item.device_id}
+                initialPageSize={10}
+                pageSizeOptions={[10, 25, 50]}
+                rows={report.reports}
+                searchLabel="Buscar equipos"
+                searchPlaceholder="SKU, equipo, consignante o comprobante..."
+                searchable
+              />
+            </SurfaceCard>
+          </div>
+
+          {report.legacy_pending_conciliation.length > 0 && (
+            <SurfaceCard>
+              <DataTable
+                caption="Pendientes de conciliación (Legacy)"
+                columns={columns}
+                emptyMessage="No hay registros legacy."
+                getRowId={(item) => item.sale_id ?? item.device_id}
+                initialPageSize={10}
+                pageSizeOptions={[10, 25, 50]}
+                rows={report.legacy_pending_conciliation}
+                searchLabel="Buscar equipos legacy"
+                searchPlaceholder="SKU, equipo, consignante..."
+                searchable
+              />
+            </SurfaceCard>
+          )}
         </>
       )}
     </PageShell>
