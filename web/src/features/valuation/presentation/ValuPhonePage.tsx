@@ -14,7 +14,7 @@ type Form = {
   publicStatus: 'draft' | 'published'; publicImageUrl: string;
   publicDescription: string; provenanceConfirmed: boolean;
 };
-type DeviceOption = { id: string; sku?: string; model?: string; title: string };
+type DeviceOption = { id: string; sku?: string; model?: string; title: string; item_type?: string; inventory_purpose?: string; stock_quantity?: number };
 const gateway = new ApiValuationGateway();
 const initial: Form = {
   model: 'iPhone 11', inventoryId: '', fault: 'icloud', screen: 'unknown', power: 'unknown',
@@ -86,15 +86,36 @@ function payload(f: Form): ValuationPayload {
     provenance_confirmed: f.provenanceConfirmed,
   };
 }
-function createAd(f: Form): string {
+type PublicationCheck = { key: string; label: string; ok: boolean };
+
+function publicationChecks(form: Form, saved: boolean, device: DeviceOption | undefined): PublicationCheck[] {
+  const hasEligibleDevice = Boolean(
+    device &&
+    (device.item_type === 'device' || device.item_type === 'used_phone') &&
+    device.inventory_purpose === 'parts_donor' &&
+    Number(device.stock_quantity) > 0
+  );
+  const askingPrice = Number(form.asking.replace(',', '.'));
+  return [
+    { key: 'saved', label: 'Ficha guardada en FixPhone', ok: saved },
+    { key: 'inventory', label: 'Equipo real de inventario para repuestos, con stock', ok: hasEligibleDevice },
+    { key: 'price', label: 'Precio de publicación mayor que cero', ok: Boolean(form.asking.trim()) && Number.isFinite(askingPrice) && askingPrice > 0 },
+    { key: 'image', label: 'Fotografía real con enlace HTTPS', ok: /^https:\/\/[^\s]+$/i.test(form.publicImageUrl.trim()) },
+    { key: 'description', label: 'Descripción pública de al menos 20 caracteres', ok: form.publicDescription.trim().length >= 20 },
+    { key: 'provenance', label: 'Procedencia legítima confirmada', ok: form.provenanceConfirmed },
+  ];
+}
+
+function createAd(f: Form, publicLink: string | null = null): string {
   const screen = f.screen === 'good' ? 'Pantalla en buen estado.' :
     f.screen === 'damaged' ? 'Pantalla dañada.' : 'Estado de pantalla sin verificar.';
   const powered = f.power === 'yes' ? 'Enciende.' : f.power === 'no' ? 'No enciende.' : 'Encendido sin verificar.';
   return '📱 ' + f.model.trim() + ' | FixPhone\n' +
     'Se vende PARA REPUESTOS. ' + faults[f.fault] + '.\n' + screen + ' ' + powered + '\n' +
-    (f.notes.trim() ? f.notes.trim() + '\n' : '') +
+    (f.publicDescription.trim() ? f.publicDescription.trim() + '\n' : '') +
     (f.asking.trim() ? 'Precio: $' + f.asking.trim() + ' UYU.\n' : '') +
     '⚠️ Equipo vendido en el estado indicado. No se promete desbloqueo ni funcionamiento como teléfono.\n' +
+    (publicLink ? '\n📍 Mirá fotos, precio y estado de esta unidad en FixPhone:\n' + publicLink + '\n' : '') +
     'Consultá por privado y seguí FixPhone en Facebook para conocer nuestros repuestos y equipos reacondicionados.';
 }
 
@@ -109,6 +130,13 @@ export function ValuPhonePage() {
   const [loading, setLoading] = useState(true);
   const hasSession = Boolean(adminToken());
   const reference = form.fault === 'icloud' && form.screen === 'good' ? icloudEstimates[form.model] : undefined;
+  const selectedDevice = devices.find((device) => device.id === form.inventoryId);
+  const checks = publicationChecks(form, Boolean(id), selectedDevice);
+  const readyCount = checks.filter((check) => check.ok).length;
+  const savedPublicItem = id ? items.find((item) => item.id === id && item.public_listing_status === 'published') : undefined;
+  const publicLink = savedPublicItem && form.publicStatus === 'published'
+    ? new URL('/store/for-parts/' + savedPublicItem.id, window.location.origin).toString()
+    : null;
 
   const load = useCallback(async () => {
     try {
@@ -258,25 +286,41 @@ export function ValuPhonePage() {
                 <option value="published">Publicar ficha visible en la web</option>
               </select>
             </label>
-            <p className="text-[11px] text-slate-700">Para publicar necesitás vincular arriba un equipo real de inventario clasificado como <strong>para repuestos</strong>, con stock, precio en UYU, foto HTTPS real y descripción. Las notas y valores internos jamás se mostrarán.</p>
-            {id && form.publicStatus === 'published' ? (
-              <Link className="w-fit rounded-md border border-amber-300 bg-white px-3 py-2 text-xs font-bold" to={'/store/for-parts/' + id} target="_blank" rel="noopener noreferrer">
-                Abrir ficha pública individual ↗
-              </Link>
-            ) : null}
+            <div className="rounded-md border border-amber-200 bg-white p-3" aria-label="Requisitos para publicar en FixPhone">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h4 className="text-xs font-bold text-slate-900">Antes de publicar esta unidad</h4>
+                <span className="text-[11px] font-semibold text-slate-600">{readyCount}/{checks.length} requisitos</span>
+              </div>
+              <div className="grid gap-1.5 sm:grid-cols-2">
+                {checks.map((check) => <div key={check.key} className="flex items-start gap-2 text-[11px] leading-4">
+                  <span aria-hidden="true" className={check.ok ? 'font-bold text-emerald-700' : 'font-bold text-amber-800'}>{check.ok ? '✓' : '○'}</span>
+                  <span className={check.ok ? 'text-slate-600' : 'font-semibold text-slate-800'}>{check.label}</span>
+                </div>)}
+              </div>
+              {form.publicStatus === 'published' && readyCount < checks.length ?
+                <p className="mt-2 text-[11px] text-amber-900">La API bloqueará la publicación si faltan requisitos. Guardá el borrador y completá los pendientes primero.</p> :
+                <p className="mt-2 text-[11px] text-slate-500">Esta lista es orientativa; Laravel valida las condiciones reales y el stock al guardar y mostrar el anuncio.</p>}
+            </div>
+            <p className="text-[11px] text-slate-700">Las notas internas, márgenes e identificadores privados nunca deben publicarse. El anuncio de Facebook usa la descripción pública, no las notas del taller.</p>
+            {publicLink ? <div className="flex flex-wrap items-center gap-2">
+              <a className="rounded-md border border-amber-300 bg-white px-3 py-2 text-xs font-bold" href={publicLink} target="_blank" rel="noopener noreferrer">Abrir ficha pública individual ↗</a>
+              <button className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-bold" type="button" onClick={() => {
+                void navigator.clipboard.writeText(publicLink).then(() => setNotice('Enlace público individual copiado.')).catch(() => setError('No se pudo copiar el enlace. Seleccionalo manualmente.'));
+              }}>Copiar enlace para Facebook</button>
+            </div> : <p className="text-[11px] text-slate-600">El enlace público para Facebook estará disponible cuando la ficha quede guardada y publicada. Nunca compartas el enlace de un borrador.</p>}
           </section>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <strong className="text-xs">Texto para publicar en Facebook</strong>
             <div className="flex gap-2">
-              <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => change('ad', createAd(form))}>Generar texto</button>
+              <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => change('ad', createAd(publicLink && savedPublicItem ? fromRow(savedPublicItem) : form, publicLink))}>Generar texto</button>
               <button className="rounded border px-2 py-1 text-xs" type="button" disabled={!form.ad} onClick={() => {
                 void navigator.clipboard.writeText(form.ad).then(() => setNotice('Texto copiado.')).catch(() => setError('Seleccioná y copiá el texto manualmente.'));
               }}>Copiar</button>
             </div>
           </div>
           <textarea className={input + ' mt-1 min-h-32 py-2'} value={form.ad} onChange={(e) => change('ad', e.target.value)} />
-          <p className="mt-1 text-[11px] text-slate-500">El texto se copia para publicar manualmente. No incluir IMEI ni prometer desbloqueo de iCloud.</p>
+          <p className="mt-1 text-[11px] text-slate-500">El texto se copia para publicar manualmente. Si la ficha ya está publicada, utiliza los datos guardados e incluye su enlace público único. No incluye notas internas ni IMEI, y no promete desbloqueo de iCloud. Si editaste datos, guardalos antes de generar el texto definitivo.</p>
           <button className="mt-3 rounded-md bg-[var(--theme-primary)] px-4 py-2 text-xs font-semibold text-white disabled:opacity-50" type="submit" disabled={busy}>{busy ? 'Guardando…' : 'Guardar valoración'}</button>
         </form>
       </SurfaceCard>
