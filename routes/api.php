@@ -11,10 +11,12 @@ use App\Presentation\Http\Controllers\MasterDataController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
 use App\Presentation\Http\Controllers\RepairQuoteController;
 use App\Presentation\Http\Controllers\DeviceInstalledPartsController;
+use App\Presentation\Http\Controllers\DeviceSalesController;
 use App\Presentation\Http\Controllers\FinancialReportsController;
 use App\Presentation\Http\Controllers\MediaStorageSettingsController;
 use App\Presentation\Http\Controllers\ValuationPhotosController;
 use App\Presentation\Http\Controllers\PartsDonorStorefrontController;
+use App\Presentation\Http\Controllers\ConsignorsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -40,6 +42,8 @@ Route::prefix('v1')->group(function (): void {
  Route::middleware('auth:sanctum')->group(function (): void {
   Route::get('/admin/dashboard/operational',[OperationalDashboardController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.dashboard.operational.show');
   Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.index');
+  Route::apiResource('admin/consignors', ConsignorsController::class)->except(['destroy'])->middleware('permission:catalog.manage');
+  
   // Operational inventory: one persisted source, separate permissions per action.
   Route::get('/admin/inventory/items',[OperationalInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.index');
   Route::get('/admin/inventory/items/{id}',[OperationalInventoryController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.show');
@@ -50,6 +54,10 @@ Route::prefix('v1')->group(function (): void {
   Route::get('/admin/devices/{id}/installed-parts', [DeviceInstalledPartsController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.devices.installed-parts.index');
   Route::post('/admin/devices/{id}/installed-parts', [DeviceInstalledPartsController::class, 'store'])->middleware('permission:inventory.adjust')->name('api.v1.admin.devices.installed-parts.store');
   Route::post('/admin/devices/{id}/installed-parts/{partId}/void', [DeviceInstalledPartsController::class, 'void'])->middleware('permission:inventory.adjust')->name('api.v1.admin.devices.installed-parts.void');
+
+  Route::get('/admin/devices/{id}/sales', [DeviceSalesController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.devices.sales.index');
+  Route::post('/admin/devices/{id}/sell', [DeviceSalesController::class, 'store'])->middleware('permission:inventory.adjust')->name('api.v1.admin.devices.sell');
+  Route::post('/admin/devices/{id}/sales/{saleId}/void', [DeviceSalesController::class, 'void'])->middleware('permission:inventory.adjust')->name('api.v1.admin.devices.sales.void');
 
   Route::get('/admin/reports/installed-parts-expenses', [FinancialReportsController::class, 'installedPartsExpenses'])->middleware('permission:inventory.view')->name('api.v1.admin.reports.installed-parts-expenses');
   Route::get('/admin/reports/direct-sales-settlements', [FinancialReportsController::class, 'directSalesSettlements'])->middleware('permission:inventory.view')->name('api.v1.admin.reports.direct-sales-settlements');

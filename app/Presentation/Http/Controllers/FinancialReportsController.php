@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Inventory\DeviceInstalledPart;
+use App\Infrastructure\Inventory\DeviceSaleRecord;
 use App\Infrastructure\Inventory\InventoryItem;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -93,20 +94,16 @@ final class FinancialReportsController extends Controller
             throw ValidationException::withMessages(['year_month' => 'Formato de período inválido. Use YYYY-MM.']);
         }
 
-        $directSales = InventoryItem::query()
-            ->whereIn('item_type', ['device', 'used_phone'])
+        // Query transactional sales from device_sale_records
+        $salesRecords = DeviceSaleRecord::query()
+            ->whereNull('voided_at')
+            ->whereBetween('sold_at', [$startOfMonth, $endOfMonth])
             ->whereIn('inventory_purpose', ['sell_as_used_phone', 'repair_then_sell', 'venta_directa', 'direct_sale'])
-            ->whereIn('operational_status', ['vendido', 'sold'])
-            ->whereBetween('updated_at', [$startOfMonth, $endOfMonth])
-            ->orderByDesc('updated_at')
+            ->orderByDesc('sold_at')
             ->get();
 
-        $deviceIds = $directSales->pluck('id')->all();
-        $installedPartsGrouped = DeviceInstalledPart::query()
-            ->whereIn('inventory_item_id', $deviceIds)
-            ->whereNull('voided_at')
-            ->get()
-            ->groupBy('inventory_item_id');
+        $deviceIds = $salesRecords->pluck('inventory_item_id')->all();
+        $devices = InventoryItem::query()->whereIn('id', $deviceIds)->get()->keyBy('id');
 
         $settlements = [];
         $totalSalesMinor = 0;
@@ -115,11 +112,13 @@ final class FinancialReportsController extends Controller
         $totalSettlableProfitMinor = 0;
         $totalLiquidationMinor = 0;
 
-        foreach ($directSales as $device) {
-            $parts = $installedPartsGrouped->get($device->id, collect());
-            $installedPartsCostMinor = (int) $parts->sum('cost_amount_minor');
-            $salePriceMinor = (int) $device->sale_price_amount_minor;
-            $initialCostMinor = $device->cost_amount_minor !== null ? (int) $device->cost_amount_minor : null;
+        foreach ($salesRecords as $sale) {
+            /** @var InventoryItem|null $device */
+            $device = $devices->get($sale->inventory_item_id);
+
+            $salePriceMinor = (int) $sale->effective_sale_price_minor;
+            $initialCostMinor = $sale->initial_cost_amount_minor !== null ? (int) $sale->initial_cost_amount_minor : null;
+            $installedPartsCostMinor = (int) $sale->installed_parts_cost_minor;
 
             $totalSalesMinor += $salePriceMinor;
             $totalPartsCostsMinor += $installedPartsCostMinor;
@@ -150,32 +149,68 @@ final class FinancialReportsController extends Controller
             }
 
             $settlements[] = [
-                'device_id' => $device->id,
-                'sku' => $device->sku,
-                'title' => $device->title,
-                'brand' => $device->brand,
-                'model' => $device->model,
-                'inventory_purpose' => $device->inventory_purpose,
-                'operational_status' => $device->operational_status,
+                'sale_id' => $sale->id,
+                'device_id' => $sale->inventory_item_id,
+                'sku' => $device?->sku,
+                'title' => $device?->title ?? 'Equipo no encontrado',
+                'brand' => $device?->brand,
+                'model' => $device?->model,
+                'inventory_purpose' => $sale->inventory_purpose,
+                'operational_status' => $device?->operational_status ?? 'vendido',
                 'sale_price_amount_minor' => $salePriceMinor,
                 'initial_cost_amount_minor' => $initialCostMinor,
                 'installed_parts_cost_minor' => $installedPartsCostMinor,
-                'installed_parts_count' => $parts->count(),
                 'settlable_profit_minor' => $settlableProfitMinor,
                 'liquidation_percentage' => 50,
                 'liquidation_amount_minor' => $liquidationAmountMinor,
-                'currency_code' => $device->currency_code ?? 'UYU',
+                'currency_code' => $sale->currency_code ?? 'UYU',
                 'status' => $settlementStatus,
                 'status_label' => $statusLabel,
                 'status_reason' => $statusReason,
-                'sold_at' => $device->updated_at?->toIso8601String(),
+                'receipt_number' => $sale->receipt_number,
+                'sold_at' => $sale->sold_at?->toIso8601String(),
+            ];
+        }
+
+        // Check legacy sold items without sale record (to guarantee zero silent omissions)
+        $recordedDeviceIds = DeviceSaleRecord::query()->pluck('inventory_item_id')->all();
+        $legacySoldDevices = InventoryItem::query()
+            ->whereIn('item_type', ['device', 'used_phone'])
+            ->whereIn('inventory_purpose', ['sell_as_used_phone', 'repair_then_sell', 'venta_directa', 'direct_sale'])
+            ->whereIn('operational_status', ['vendido', 'sold'])
+            ->whereNotIn('id', $recordedDeviceIds)
+            ->get();
+
+        $legacySettlements = [];
+        foreach ($legacySoldDevices as $legacy) {
+            $legacySettlements[] = [
+                'sale_id' => null,
+                'device_id' => $legacy->id,
+                'sku' => $legacy->sku,
+                'title' => $legacy->title,
+                'brand' => $legacy->brand,
+                'model' => $legacy->model,
+                'inventory_purpose' => $legacy->inventory_purpose,
+                'operational_status' => $legacy->operational_status,
+                'sale_price_amount_minor' => (int) ($legacy->sale_price_amount_minor ?? 0),
+                'initial_cost_amount_minor' => $legacy->cost_amount_minor !== null ? (int) $legacy->cost_amount_minor : null,
+                'installed_parts_cost_minor' => 0,
+                'settlable_profit_minor' => null,
+                'liquidation_percentage' => 50,
+                'liquidation_amount_minor' => 0,
+                'currency_code' => $legacy->currency_code ?? 'UYU',
+                'status' => 'pending_review',
+                'status_label' => 'Venta legacy pendiente de conciliación',
+                'status_reason' => 'El equipo figura vendido sin registro transaccional en device_sale_records. Requiere asentar la venta histórica.',
+                'receipt_number' => null,
+                'sold_at' => null,
             ];
         }
 
         return response()->json([
             'data' => [
                 'period' => $yearMonth,
-                'formula' => 'Liquidacion = 50% * (PrecioVenta - CostoInicialEquipo - CostoRepuestosInstalados)',
+                'formula' => 'Liquidacion = 50% * (PrecioVentaReal - CostoInicialHistorico - CostoRepuestosHistorico)',
                 'totals' => [
                     'total_direct_sales_count' => count($settlements),
                     'total_sales_amount_minor' => $totalSalesMinor,
@@ -186,6 +221,7 @@ final class FinancialReportsController extends Controller
                     'currency_code' => 'UYU',
                 ],
                 'settlements' => $settlements,
+                'legacy_pending_conciliation' => $legacySettlements,
             ],
         ]);
     }
