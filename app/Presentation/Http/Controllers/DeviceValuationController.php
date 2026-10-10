@@ -115,6 +115,9 @@ final class DeviceValuationController extends Controller
             $inventory->stock_quantity < 1) {
             $error['inventory_item_id'] = 'Vinculá un teléfono del inventario marcado para repuestos y con stock.';
         }
+        if ($inventory !== null && in_array($inventory->dismantling_status, ['partial', 'exhausted'], true)) {
+            $error['inventory_item_id'] = 'Este equipo ya fue desarmado. No se puede publicar como unidad completa.';
+        }
         if ($error) {
             throw ValidationException::withMessages($error);
         }
