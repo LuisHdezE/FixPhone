@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { AppIcon, type AppIconName } from '@/components/AppIcon';
 import { DataTable, type DataTableColumn } from '@/components/data-display/DataTable';
 import { StatusBadge } from '@/components/data-display/StatusBadge';
@@ -6,6 +6,8 @@ import { SelectField } from '@/components/forms/SelectField';
 import { TextAreaField } from '@/components/forms/TextAreaField';
 import { TextField } from '@/components/forms/TextField';
 import { PageShell } from '@/shell/PageShell';
+import { ModalShell } from '@/components/layout/ModalShell';
+import { FormModal } from '@/components/forms/FormModal';
 import type { MasterDataGateway, MasterDataKind, MasterDataProvider } from '../application/master-data.contracts';
 
 type ExtendedMasterDataKind = Extract<MasterDataKind, 'colors' | 'storageCapacities' | 'ramCapacities' | 'conditions' | 'sparePartTypes'>;
@@ -82,30 +84,7 @@ function PersistenceNote() {
   return <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] leading-4 text-emerald-700">Conectado a la API. Los cambios se guardan de forma permanente en la base de datos.</p>;
 }
 
-function ModalShell({ children, title, onClose }: { children: ReactNode; title: string; onClose: () => void }) {
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-3" role="dialog" aria-modal="true" aria-label={title}>
-    <div className="w-full max-w-4xl rounded-md border border-slate-200 bg-white shadow-2xl">
-      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-        <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
-        <button className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-900" onClick={onClose} type="button">Cerrar</button>
-      </div>
-      {children}
-    </div>
-  </div>;
-}
 
-function FormModal({ title, children, onSubmit, onCancel, submitLabel, error }: { title: string; children: ReactNode; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void; submitLabel: string; error?: string | null }) {
-  return <ModalShell title={title} onClose={onCancel}>
-    <form className="p-3" data-extended-master-data-form onSubmit={onSubmit}>
-      {error ? <div className="mb-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700" role="alert">{error}</div> : null}
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{children}</div>
-      <div className="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <button className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900" onClick={onCancel} type="button">Cancelar</button>
-        <button className="rounded-md bg-[var(--theme-primary)] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" type="submit">{submitLabel}</button>
-      </div>
-    </form>
-  </ModalShell>;
-}
 
 function ConfirmDialog({ action, onCancel }: { action: ConfirmAction; onCancel: () => void }) {
   if (!action) return null;
@@ -281,7 +260,7 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
     <div className="grid gap-3" data-extended-master-data={config.kind} data-testid={config.dataAttribute}>
       <PersistenceNote /><AdminNotice notice={notice} />
       <DataTable caption={config.title} columns={columns} emptyMessage="No hay datos para mostrar." getRowId={(item) => item.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={items} searchable searchLabel={`Buscar ${config.title.toLocaleLowerCase()}`} searchPlaceholder="Buscar por nombre, slug, valor o estadoâ€¦" />
-      {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveItem(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? `Editar ${config.singularLabel.toLocaleLowerCase()}` : config.createLabel}>
+      {form ? <FormModal dataAttribute="data-extended-master-data-form" error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveItem(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? `Editar ${config.singularLabel.toLocaleLowerCase()}` : config.createLabel}>
         {config.supportsParent ? <SelectField id={`${config.kind}-parent`} label={config.parentLabel ?? 'Padre'} onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={parentOptions.filter((option) => option.value !== form.id)} value={form.parentId ?? ''} /> : null}
         <TextField id={`${config.kind}-name`} label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id={`${config.kind}-value`} label={config.valueLabel} onChange={(value) => setForm((current) => current ? { ...current, value } : current)} placeholder={config.valuePlaceholder} value={form.value} />

@@ -7,6 +7,8 @@ import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { PageShell } from '@/shell/PageShell';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
+import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
+import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
 import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
 
 const dismantlingNames: Record<DismantlingStatus, string> = {
@@ -30,13 +32,16 @@ function optionLabel(options: readonly { value: string; label: string }[], value
 export function InventoryDevicesPage({
   provider,
   gateway,
+  masterDataProvider,
 }: {
   provider: InventoryDemoProvider;
   gateway: InventoryDevicesGateway;
+  masterDataProvider: MasterDataProvider;
 }) {
   const view = provider.getDevicesView();
   const [devices, setDevices] = useState<readonly InventoryDeviceListItemDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showIntakeModal, setShowIntakeModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -214,9 +219,9 @@ export function InventoryDevicesPage({
         <div className="max-w-2xl">
           <p className="text-sm text-slate-500">{view.description}</p>
         </div>
-        <Link className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700" to="/apps/inventory/devices/new">
+        <button className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700" onClick={() => setShowIntakeModal(true)} type="button">
           {view.newDeviceLabel}
-        </Link>
+        </button>
       </div>
 
       {loading ? (
@@ -254,5 +259,17 @@ export function InventoryDevicesPage({
         </div>
       ) : null}
     </SurfaceCard>
+    {showIntakeModal ? (
+      <InventoryDeviceIntakeModal
+        masterDataProvider={masterDataProvider}
+        onClose={() => setShowIntakeModal(false)}
+        onCreated={(msg) => {
+          setShowIntakeModal(false);
+          setNotice(msg);
+          void loadDevices();
+        }}
+        provider={provider}
+      />
+    ) : null}
   </PageShell>;
 }

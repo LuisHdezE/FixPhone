@@ -1,12 +1,12 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
-import { Link } from 'react-router';
+
 import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SelectField } from '@/components/forms/SelectField';
 import { TextAreaField } from '@/components/forms/TextAreaField';
 import { TextField } from '@/components/forms/TextField';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
-import { PageShell } from '@/shell/PageShell';
+import { ModalShell } from '@/components/layout/ModalShell';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import type { InventoryDemoProvider } from '../application/inventory.contracts';
 import type { DeviceAccountLock, DeviceDestination, DevicePhysicalCondition, DevicePowerState } from '../application/devices.dto';
@@ -90,7 +90,7 @@ function parseAcquisitionCost(raw: string): { amountMinor: number | null; curren
   return { amountMinor: Math.round(amount * 100), currencyCode };
 }
 
-export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { provider: InventoryDemoProvider; masterDataProvider: MasterDataProvider }) {
+export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClose, onCreated }: { provider: InventoryDemoProvider; masterDataProvider: MasterDataProvider; onClose: () => void; onCreated: (message: string) => void }) {
   const view = provider.getDeviceIntakeView();
   const brands = useMemo(() => masterDataProvider.getBrands().filter((brand) => brand.active), [masterDataProvider]);
   const deviceModels = useMemo(() => masterDataProvider.getDeviceModels().filter((model) => model.active), [masterDataProvider]);
@@ -232,6 +232,7 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
       setCreatedId(created.id ?? 'registrado');
       setCreatedCode(created.sku ?? null);
       setForm(initialForm());
+      onCreated(`Dispositivo registrado exitosamente: ${created.sku ?? created.id ?? 'registrado'}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'No se pudo registrar el dispositivo.');
     } finally {
@@ -239,8 +240,8 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
     }
   }
 
-  return <PageShell breadcrumbs={view.breadcrumbs.map((label) => ({ label }))} description={view.description} title={view.title}>
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]" data-device-intake>
+  return <ModalShell title={view.title} onClose={onClose} disabled={saving}>
+    <div className="p-4" data-device-intake>
       <form className="grid gap-4" onSubmit={submit}>
         <SurfaceCard>
           <h2 className="text-base font-semibold text-slate-950">Ingreso rápido de dispositivo</h2>
@@ -291,30 +292,23 @@ export function InventoryDeviceIntakePage({ provider, masterDataProvider }: { pr
           </div>
         </details>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={!canSubmit} type="submit">
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 pt-3">
+          <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50" onClick={onClose} disabled={saving} type="button">
+            {view.cancelLabel}
+          </button>
+          <button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50" disabled={!canSubmit} type="submit">
             {saving ? 'Guardando...' : 'Registrar dispositivo'}
           </button>
-          <Link className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" to="/apps/inventory/devices">{view.cancelLabel}</Link>
         </div>
       </form>
-
-      <aside className="grid content-start gap-4">
-        <SurfaceCard>
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-600">{view.introTitle}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Los datos se guardan ahora en el inventario real. El equipo entra como no publicable y no vendible hasta completar su evaluación.</p>
-        </SurfaceCard>
-
-        {error ? <InlineFeedback title="No se pudo registrar el dispositivo" message={error} tone="error" /> : null}
-
-        {createdId ? <SurfaceCard>
-          <div role="status" data-device-intake-success>
-            <p className="text-sm font-semibold text-emerald-700">Dispositivo registrado{createdCode ? ' · ' + createdCode : ''}</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">El equipo fue guardado en MySQL y ya puede verse en la lista de dispositivos.</p>
-            <Link className="mt-3 inline-flex text-sm font-semibold text-brand-700 hover:text-brand-800" to="/apps/inventory/devices">Ver dispositivos</Link>
-          </div>
-        </SurfaceCard> : null}
-      </aside>
+      
+      {error ? <div className="mt-4"><InlineFeedback title="No se pudo registrar el dispositivo" message={error} tone="error" /></div> : null}
+      
+      {createdId ? (
+        <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+          Dispositivo registrado: {createdCode ?? createdId}. Puedes buscarlo en el listado.
+        </div>
+      ) : null}
     </div>
-  </PageShell>;
+  </ModalShell>;
 }
