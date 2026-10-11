@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link, NavLink, Outlet } from 'react-router';
 import { endAdminSession } from '@/auth/adminApiSession';
 import type { AdminPrincipal } from '@/auth/AuthenticatedAdminShell';
@@ -19,34 +19,96 @@ export function FixPhoneAdminShell({ principal }: { principal: AdminPrincipal })
   });
 
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768;
+  });
+
+  const [activeTooltip, setActiveTooltip] = useState<{ text: string; top: number } | null>(null);
+
+  const hamburgerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const drawerRef = useRef<HTMLElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
   const navigate = useNavigate();
 
-  // Escape key closes mobile navigation
+  // Track viewport breakpoint for responsive attributes
   useEffect(() => {
-    if (!mobileOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileOpen(false);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mobileOpen]);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // Lock body scroll while mobile drawer is open
+  // Manage focus, Escape key and focus trap for mobile drawer
   useEffect(() => {
     if (mobileOpen) {
+      previousFocusRef.current = (document.activeElement as HTMLElement) || hamburgerButtonRef.current;
+
+      const timer = setTimeout(() => {
+        closeButtonRef.current?.focus();
+      }, 50);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setMobileOpen(false);
+          return;
+        }
+
+        if (e.key === 'Tab' && drawerRef.current) {
+          const focusable = Array.from(
+            drawerRef.current.querySelectorAll<HTMLElement>(
+              'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+          ).filter((el) => el.offsetParent !== null);
+
+          if (focusable.length === 0) {
+            e.preventDefault();
+            return;
+          }
+
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+
+          if (!first || !last) {
+            e.preventDefault();
+            return;
+          }
+
+          if (e.shiftKey) {
+            if (document.activeElement === first || !drawerRef.current.contains(document.activeElement)) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last || !drawerRef.current.contains(document.activeElement)) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = '';
+        previousFocusRef.current?.focus();
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [mobileOpen]);
 
   const toggleSidebar = () => {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       setMobileOpen((prev) => !prev);
     } else {
+      setActiveTooltip(null);
       setIsCollapsed((prev) => {
         const next = !prev;
         try {
@@ -98,21 +160,28 @@ export function FixPhoneAdminShell({ principal }: { principal: AdminPrincipal })
                       end={Boolean(item.exact)}
                       to={item.to ?? '/'}
                       title={item.label}
-                      onClick={onItemClick}
+                      onClick={() => {
+                        setActiveTooltip(null);
+                        onItemClick?.();
+                      }}
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setActiveTooltip({ text: item.label, top: rect.top + rect.height / 2 });
+                      }}
+                      onMouseLeave={() => setActiveTooltip(null)}
+                      onFocus={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setActiveTooltip({ text: item.label, top: rect.top + rect.height / 2 });
+                      }}
+                      onBlur={() => setActiveTooltip(null)}
                       className={({ isActive }) => `
-                        group relative mx-auto grid size-9 place-items-center rounded-md text-[12px] font-medium transition
+                        relative mx-auto grid size-9 place-items-center rounded-md text-[12px] font-medium transition
                         ${isActive
                           ? 'bg-[var(--theme-primary-soft)] text-[var(--theme-primary)] font-semibold shadow-xs ring-1 ring-[var(--theme-primary)]/20'
                           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
                       `}
                     >
                       <AppIcon className="size-4 shrink-0" name={item.icon} />
-                      <span
-                        role="tooltip"
-                        className="pointer-events-none absolute left-full ml-2.5 z-50 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[11px] font-medium text-white shadow-xl opacity-0 invisible -translate-x-1 transition-all duration-150 group-hover:opacity-100 group-hover:visible group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:visible group-focus-visible:translate-x-0"
-                      >
-                        {item.label}
-                      </span>
                     </NavLink>
                   );
                 }
@@ -148,10 +217,27 @@ export function FixPhoneAdminShell({ principal }: { principal: AdminPrincipal })
       <header className="fixed inset-x-0 top-0 z-30 flex h-11 items-center justify-between border-b border-slate-200 bg-white px-3 shadow-xs">
         <div className="flex items-center gap-2">
           <button
-            aria-controls="fixphone-sidebar-navigation"
-            aria-expanded={mobileOpen || !isCollapsed}
-            aria-label={isCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
-            title={isCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
+            ref={hamburgerButtonRef}
+            aria-controls={isMobile ? 'fixphone-mobile-navigation' : 'fixphone-sidebar-navigation'}
+            aria-expanded={isMobile ? mobileOpen : !isCollapsed}
+            aria-label={
+              isMobile
+                ? mobileOpen
+                  ? 'Cerrar navegación móvil'
+                  : 'Abrir navegación móvil'
+                : isCollapsed
+                  ? 'Expandir barra lateral'
+                  : 'Contraer barra lateral'
+            }
+            title={
+              isMobile
+                ? mobileOpen
+                  ? 'Cerrar menú'
+                  : 'Abrir menú'
+                : isCollapsed
+                  ? 'Expandir barra lateral'
+                  : 'Contraer barra lateral'
+            }
             className="grid size-8 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
             onClick={toggleSidebar}
             type="button"
@@ -216,12 +302,24 @@ export function FixPhoneAdminShell({ principal }: { principal: AdminPrincipal })
       <aside
         id="fixphone-sidebar-navigation"
         aria-label="Navegación principal"
+        onScroll={() => setActiveTooltip(null)}
         className={`fixed bottom-0 left-0 top-11 z-20 hidden overflow-y-auto border-r border-slate-200 bg-white transition-[width,padding] duration-200 ease-in-out md:block ${
           isCollapsed ? 'w-14 p-2' : 'w-[216px] p-2.5'
         }`}
       >
         {renderNavItems(isCollapsed)}
       </aside>
+
+      {/* Floating Tooltip outside aside to prevent clipping by overflow-y-auto */}
+      {activeTooltip && isCollapsed ? (
+        <div
+          role="tooltip"
+          className="pointer-events-none fixed z-50 -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-xl"
+          style={{ left: 62, top: activeTooltip.top }}
+        >
+          {activeTooltip.text}
+        </div>
+      ) : null}
 
       {/* Mobile Drawer Overlay */}
       {mobileOpen ? (
@@ -230,6 +328,7 @@ export function FixPhoneAdminShell({ principal }: { principal: AdminPrincipal })
           onClick={() => setMobileOpen(false)}
         >
           <aside
+            ref={drawerRef}
             aria-label="Navegación móvil"
             className="h-full w-[260px] max-w-[85vw] overflow-y-auto bg-white p-3 shadow-2xl transition-transform"
             id="fixphone-mobile-navigation"
@@ -243,8 +342,9 @@ export function FixPhoneAdminShell({ principal }: { principal: AdminPrincipal })
                 <strong className="text-sm font-bold text-slate-900">FixPhone</strong>
               </div>
               <button
+                ref={closeButtonRef}
                 aria-label="Cerrar navegación"
-                className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
                 onClick={() => setMobileOpen(false)}
                 type="button"
               >
