@@ -213,7 +213,7 @@ export function MasterDataBrandsPage({ masterDataProvider, viewProvider, gateway
     <div className="grid gap-3" data-master-data-brands>
       <PersistenceNote /><AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(brand) => brand.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={brands} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
-      {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveBrand(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar marca' : 'Nueva marca'}>
+      {form ? <FormModal dataAttribute="data-master-data-form" error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveBrand(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar marca' : 'Nueva marca'}>
         <TextField id="brand-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id="brand-slug" label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} />
         <TextField id="brand-logo" label="Logo opcional" onChange={(value) => setForm((current) => current ? { ...current, logo: value } : current)} value={form.logo ?? ''} />
@@ -324,7 +324,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
     <div className="grid gap-3" data-master-data-device-models>
       <PersistenceNote /><AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(model) => model.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={models} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
-      {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveModel(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar modelo' : 'Nuevo modelo'}>
+      {form ? <FormModal dataAttribute="data-master-data-form" error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveModel(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar modelo' : 'Nuevo modelo'}>
         <SelectField id="model-brand" label="Marca" onChange={(value) => setForm((current) => current ? { ...current, brandId: value } : current)} options={brands.map((brand) => ({ value: brand.id, label: brand.name }))} value={form.brandId} />
         <TextField id="model-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id="model-slug" label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} />
@@ -445,7 +445,7 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
     <div className="grid gap-3" data-master-data-categories>
       <PersistenceNote /><AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(category) => category.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={categories} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
-      {form ? <FormModal error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveCategory(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar categoría' : 'Nueva categoría'}>
+      {form ? <FormModal dataAttribute="data-master-data-form" error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveCategory(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar categoría' : 'Nueva categoría'}>
         <SelectField id="category-parent" label="Padre" onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={[{ value: '', label: 'Raíz' }, ...categories.filter((category) => category.id !== form.id).map((category) => ({ value: category.id, label: category.name }))]} value={form.parentId ?? ''} />
         <TextField id="category-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id="category-slug" label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} />

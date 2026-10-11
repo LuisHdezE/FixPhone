@@ -90,7 +90,7 @@ function parseAcquisitionCost(raw: string): { amountMinor: number | null; curren
   return { amountMinor: Math.round(amount * 100), currencyCode };
 }
 
-export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClose, onCreated }: { provider: InventoryDemoProvider; masterDataProvider: MasterDataProvider; onClose: () => void; onCreated: () => void }) {
+export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClose, onCreated }: { provider: InventoryDemoProvider; masterDataProvider: MasterDataProvider; onClose: () => void; onCreated: (message: string) => void }) {
   const view = provider.getDeviceIntakeView();
   const brands = useMemo(() => masterDataProvider.getBrands().filter((brand) => brand.active), [masterDataProvider]);
   const deviceModels = useMemo(() => masterDataProvider.getDeviceModels().filter((model) => model.active), [masterDataProvider]);
@@ -232,7 +232,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       setCreatedId(created.id ?? 'registrado');
       setCreatedCode(created.sku ?? null);
       setForm(initialForm());
-      onCreated();
+      onCreated(`Dispositivo registrado exitosamente: ${created.sku ?? created.id ?? 'registrado'}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'No se pudo registrar el dispositivo.');
     } finally {
@@ -240,7 +240,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     }
   }
 
-  return <ModalShell title={view.title} onClose={onClose}>
+  return <ModalShell title={view.title} onClose={onClose} disabled={saving}>
     <div className="p-4" data-device-intake>
       <form className="grid gap-4" onSubmit={submit}>
         <SurfaceCard>

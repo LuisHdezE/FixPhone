@@ -8,6 +8,7 @@ export function FormModal({
   onCancel,
   submitLabel,
   error,
+  dataAttribute,
 }: {
   title: string;
   children: ReactNode;
@@ -15,10 +16,11 @@ export function FormModal({
   onCancel: () => void;
   submitLabel: string;
   error?: string | null;
+  dataAttribute?: string;
 }) {
   return (
     <ModalShell title={title} onClose={onCancel}>
-      <form className="p-3" data-master-data-form onSubmit={onSubmit}>
+      <form className="p-3" {...(dataAttribute ? { [dataAttribute]: true } : {})} onSubmit={onSubmit}>
         {error ? (
           <div className="mb-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700" role="alert">
             {error}

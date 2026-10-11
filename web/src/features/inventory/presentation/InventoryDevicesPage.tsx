@@ -263,8 +263,9 @@ export function InventoryDevicesPage({
       <InventoryDeviceIntakeModal
         masterDataProvider={masterDataProvider}
         onClose={() => setShowIntakeModal(false)}
-        onCreated={() => {
+        onCreated={(msg) => {
           setShowIntakeModal(false);
+          setNotice(msg);
           void loadDevices();
         }}
         provider={provider}
