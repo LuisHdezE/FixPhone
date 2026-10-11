@@ -15,7 +15,7 @@ import { ApiOperationalDashboardGateway } from '@/features/inventory/infrastruct
 import { JsonInventoryDemoProvider } from '@/features/inventory/infrastructure/JsonInventoryDemoProvider';
 import { InventoryDashboardPage } from '@/features/inventory/presentation/InventoryDashboardPage';
 import { InventoryDeviceEvaluationPage } from '@/features/inventory/presentation/InventoryDeviceEvaluationPage';
-import { InventoryDeviceIntakePage } from '@/features/inventory/presentation/InventoryDeviceIntakePage';
+
 import { InventoryDevicesPage } from '@/features/inventory/presentation/InventoryDevicesPage';
 import { ApiMasterDataGateway } from '@/features/master-data/infrastructure/ApiMasterDataGateway';
 import { JsonMasterDataAdminViewProvider } from '@/features/master-data/infrastructure/JsonMasterDataAdminViewProvider';
@@ -93,7 +93,7 @@ export function AppRouter() {
       .catch(e => setError(e.message));
   }, []);
 
-  const needsMasterData = location.pathname.startsWith('/admin/master-data') || location.pathname === '/apps/inventory/devices/new';
+  const needsMasterData = location.pathname.startsWith('/admin/master-data') || location.pathname === '/apps/inventory/devices';
 
   if (needsMasterData && masterDataLoading) {
     return <div className="grid min-h-dvh place-items-center bg-slate-50 text-sm font-semibold text-slate-600">Cargando catálogo maestro…</div>;
@@ -146,8 +146,7 @@ export function AppRouter() {
         <Route index element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="dashboard" element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="apps/inventory/dashboard" element={<InventoryDashboardPage gateway={operationalDashboardGateway} />} />
-        <Route path="apps/inventory/devices" element={<InventoryDevicesPage provider={inventoryDemoProvider} gateway={inventoryDevicesGateway} />} />
-        <Route path="apps/inventory/devices/new" element={<InventoryDeviceIntakePage provider={inventoryDemoProvider} masterDataProvider={masterDataProvider} />} />
+        <Route path="apps/inventory/devices" element={<InventoryDevicesPage provider={inventoryDemoProvider} gateway={inventoryDevicesGateway} masterDataProvider={masterDataProvider} />} />
         <Route path="apps/inventory/devices/evaluation" element={<InventoryDeviceEvaluationPage provider={inventoryDemoProvider} />} />
         <Route path="applications/management/inventory" element={<InventoryView />} />
         <Route path="applications/management/customers" element={<CustomerDirectoryView />} />
