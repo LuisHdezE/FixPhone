@@ -293,7 +293,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         </details>
 
         <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 pt-3">
-          <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900" onClick={onClose} type="button">
+          <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50" onClick={onClose} disabled={saving} type="button">
             {view.cancelLabel}
           </button>
           <button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50" disabled={!canSubmit} type="submit">

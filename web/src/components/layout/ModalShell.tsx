@@ -21,6 +21,14 @@ export function ModalShell({
       modalRef.current.focus();
     }
 
+    return () => {
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !disabled) {
         onClose();
@@ -30,9 +38,6 @@ export function ModalShell({
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      if (previousFocusRef.current) {
-        previousFocusRef.current.focus();
-      }
     };
   }, [onClose, disabled]);
 
