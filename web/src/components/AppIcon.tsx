@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export type AppIconName =
   | 'apps'
@@ -29,6 +29,10 @@ export type AppIconName =
   | 'power'
   | 'wrench'
   | 'check-circle'
+  | 'cpu'
+  | 'hard-drive'
+  | 'tag'
+  | 'x'
   | 'widgets';
 
 const iconPaths: Record<AppIconName, ReactNode> = {
@@ -38,11 +42,13 @@ const iconPaths: Record<AppIconName, ReactNode> = {
   chart: <path d="M4 19V9m5 10V5m5 14v-7m5 7V3" />,
   'chevron-down': <path d="m7 10 5 5 5-5" />,
   components: <path d="m12 2 8 4.5v9L12 20l-8-4.5v-9L12 2Zm0 0v9m8-4.5-8 4.5m-8-4.5 8 4.5" />,
+  cpu: <><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" /><path d="M9 1v3m6-3v3M9 20v3m6-3v3m5-14h3m-3 5h3M1 9h3m0 5h3" /></>,
   device: <><rect x="6" y="2" width="12" height="20" rx="2" /><path d="M10 18h4" /></>,
   dashboard: <path d="M4 4h7v7H4V4Zm9 0h7v4h-7V4ZM4 13h7v7H4v-7Zm9-3h7v10h-7V10Z" />,
   document: <path d="M6 2h8l4 4v16H6V2Zm8 0v5h5M9 12h6m-6 4h6" />,
   edit: <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Zm11-13 3 3" />,
   forms: <path d="M5 3h14v18H5V3Zm3 5h8M8 12h8m-8 4h5" />,
+  'hard-drive': <><line x1="22" x2="2" y1="12" y2="12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /><line x1="6" x2="6.01" y1="16" y2="16" /><line x1="10" x2="10.01" y1="16" y2="16" /></>,
   help: <path d="M9.5 9a2.8 2.8 0 1 1 4.7 2c-1.1.9-2.2 1.4-2.2 3m0 4h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />,
   layers: <path d="m12 3 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5m-18 5 9 5 9-5" />,
   lock: <path d="M6 10h12v11H6V10Zm3 0V7a3 3 0 0 1 6 0v3" />,
@@ -55,10 +61,12 @@ const iconPaths: Record<AppIconName, ReactNode> = {
   store: <><path d="M4 10h16l-1-5H5l-1 5Zm1 0v10h14V10" /><path d="M8 14h4v6M4 10a2 2 0 0 0 4 0m0 0a2 2 0 0 0 4 0m0 0a2 2 0 0 0 4 0m0 0a2 2 0 0 0 4 0" /></>,
   settings: <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-3.5 2-1-2-3-2.2.5L15 7l-.2-2.3h-3.6L11 7 9.2 8.5 7 8 5 11l2 1-2 1 2 3 2.2-.5L11 17l.2 2.3h3.6L15 17l1.8-1.5L19 16l2-3-2-1Z" />,
   table: <path d="M3 5h18v14H3V5Zm0 4h18M8 5v14m6-14v14" />,
+  tag: <path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" />,
   trash: <path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" />,
   user: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0" />,
   power: <path d="M12 2v10m6.4-6.4a9 9 0 1 1-12.8 0" />,
   wrench: <path d="M14.5 6.5a4 4 0 0 0-5-4.8l2.4 2.4-2.8 2.8-2.4-2.4a4 4 0 0 0 4.8 5L19 17l-2 2-7.5-7.5a4 4 0 0 1-5-4.8" />,
+  x: <path d="M18 6 6 18M6 6l12 12" />,
   'check-circle': <path d="M21 11a9 9 0 1 1-4.9-8M9 11l2 2 7-7" />,
   widgets: <path d="M4 4h7v5H4V4Zm9 0h7v8h-7V4ZM4 11h7v9H4v-9Zm9 3h7v6h-7v-6Z" />,
 };

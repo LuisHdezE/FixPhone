@@ -1,6 +1,10 @@
+import type { AppIconName } from '@/components/AppIcon';
+
 export type FixPhoneNavItem = {
   label: string;
   to?: string;
+  icon: AppIconName;
+  exact?: boolean;
   planned?: boolean;
 };
 
@@ -13,61 +17,55 @@ export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
   {
     label: 'Operación',
     items: [
-      { label: 'Panel operativo', to: '/apps/inventory/dashboard' },
-      { label: 'Equipos', to: '/apps/inventory/devices' },
-      { label: 'Presupuestos', to: '/admin/repair-quotes' },
-      { label: 'ValuPhone · Tasaciones', to: '/admin/valuations' },
-      { label: 'Evaluación', to: '/apps/inventory/devices/evaluation' },
-      { label: 'Diagnósticos', planned: true },
-      { label: 'Órdenes de reparación', planned: true },
-      { label: 'Deshuesado', planned: true }
+      { label: 'Panel operativo', to: '/apps/inventory/dashboard', icon: 'dashboard', exact: true },
+      { label: 'Equipos', to: '/apps/inventory/devices', icon: 'device', exact: true },
+      { label: 'Evaluación técnica', to: '/apps/inventory/devices/evaluation', icon: 'wrench' },
+      { label: 'Presupuestos', to: '/admin/repair-quotes', icon: 'forms' },
+      { label: 'ValuPhone · Tasaciones', to: '/admin/valuations', icon: 'chart' },
+      { label: 'Diagnósticos', icon: 'check-circle', planned: true },
+      { label: 'Órdenes de reparación', icon: 'wrench', planned: true },
+      { label: 'Deshuesado', icon: 'components', planned: true }
     ]
   },
   {
-    label: 'Inventario',
+    label: 'Inventario y Ventas',
     items: [
-      { label: 'Inventario', to: '/applications/management/inventory' },
-      { label: 'Ubicaciones', planned: true },
-      { label: 'Conteos', planned: true }
-    ]
-  },
-  {
-    label: 'Comercial',
-    items: [
-      { label: 'Clientes', to: '/applications/management/customers' },
-      { label: 'Pedidos', to: '/applications/management/orders' },
-      { label: 'Lotes de adquisición', planned: true },
-      { label: 'Consignaciones', planned: true }
+      { label: 'Inventario general', to: '/applications/management/inventory', icon: 'package' },
+      { label: 'Clientes', to: '/applications/management/customers', icon: 'user' },
+      { label: 'Pedidos', to: '/applications/management/orders', icon: 'table' },
+      { label: 'Ventas consignadas', to: '/admin/finance/consignment-sales', icon: 'store' },
+      { label: 'Ubicaciones', icon: 'map', planned: true },
+      { label: 'Conteos', icon: 'check-circle', planned: true },
+      { label: 'Lotes de adquisición', icon: 'layers', planned: true }
     ]
   },
   {
     label: 'Catálogo maestro',
     items: [
-      { label: 'Marcas', to: '/admin/master-data/brands' },
-      { label: 'Modelos', to: '/admin/master-data/device-models' },
-      { label: 'Categorías', to: '/admin/master-data/categories' },
-      { label: 'Colores', to: '/admin/master-data/colors' },
-      { label: 'Almacenamientos', to: '/admin/master-data/storage-capacities' },
-      { label: 'RAM', to: '/admin/master-data/ram-capacities' },
-      { label: 'Condiciones', to: '/admin/master-data/conditions' },
-      { label: 'Tipos de repuesto', to: '/admin/master-data/spare-part-types' },
-      { label: 'Catálogo comercial', planned: true }
+      { label: 'Marcas', to: '/admin/master-data/brands', icon: 'tag' },
+      { label: 'Modelos', to: '/admin/master-data/device-models', icon: 'device' },
+      { label: 'Categorías', to: '/admin/master-data/categories', icon: 'widgets' },
+      { label: 'Colores', to: '/admin/master-data/colors', icon: 'palette' },
+      { label: 'Almacenamientos', to: '/admin/master-data/storage-capacities', icon: 'hard-drive' },
+      { label: 'RAM', to: '/admin/master-data/ram-capacities', icon: 'cpu' },
+      { label: 'Condiciones', to: '/admin/master-data/conditions', icon: 'check-circle' },
+      { label: 'Tipos de repuesto', to: '/admin/master-data/spare-part-types', icon: 'wrench' },
+      { label: 'Catálogo comercial', icon: 'store', planned: true }
     ]
   },
   {
     label: 'Administración',
     items: [
-      { label: 'Usuarios y roles', planned: true },
-      { label: 'Gastos', planned: true },
-      { label: 'Liquidaciones 50%', to: '/admin/finance/settlements' },
-      { label: 'Rentabilidad', planned: true },
-      { label: 'Aging inventario', planned: true },
-      { label: 'Integraciones', planned: true },
-      { label: 'Almacenamiento de imágenes', to: '/admin/settings/media-storage' },
-      { label: 'Reclamos de garantía', planned: true },
-      { label: 'Auditoría', planned: true },
-      { label: 'Perfil', to: '/user/profile' },
-      { label: 'Configuración', to: '/user/account-settings' }
+      { label: 'Liquidaciones 50%', to: '/admin/finance/settlements', icon: 'chart' },
+      { label: 'Almacenamiento multimedia', to: '/admin/settings/media-storage', icon: 'pages' },
+      { label: 'Configuración', to: '/user/account-settings', icon: 'settings' },
+      { label: 'Usuarios y roles', icon: 'user', planned: true },
+      { label: 'Gastos', icon: 'table', planned: true },
+      { label: 'Rentabilidad', icon: 'chart', planned: true },
+      { label: 'Aging inventario', icon: 'chart', planned: true },
+      { label: 'Integraciones', icon: 'apps', planned: true },
+      { label: 'Reclamos de garantía', icon: 'check-circle', planned: true },
+      { label: 'Auditoría', icon: 'document', planned: true }
     ]
   }
 ] as const;
