@@ -70,11 +70,11 @@ function clearValidationError(
 
 function BrandIdentity({ branding }: { branding: SignInViewDto['branding'] }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2.5">
       {branding.logoUrl ? (
-        <img className="size-11 rounded-xl object-contain" src={branding.logoUrl} alt={branding.name} />
+        <img className="size-9 rounded-xl object-contain" src={branding.logoUrl} alt={branding.name} />
       ) : (
-        <div className="grid size-11 place-items-center rounded-xl bg-[var(--theme-primary)] text-sm font-bold tracking-wide text-[var(--theme-on-primary)] shadow-sm">
+        <div className="grid size-9 place-items-center rounded-xl bg-[var(--theme-primary)] text-sm font-bold tracking-wide text-[var(--theme-on-primary)] shadow-sm">
           {branding.mark}
         </div>
       )}
@@ -140,41 +140,41 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
   }
 
   return (
-    <main className="min-h-dvh bg-[var(--surface-page)] px-3 py-3 sm:px-5 sm:py-5 lg:px-7 lg:py-7" aria-labelledby="sign-in-title">
-      <div className="mx-auto grid min-h-[calc(100dvh-1.5rem)] max-w-[1180px] gap-3 overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:min-h-[calc(100dvh-2.5rem)] lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[1.04fr_0.96fr] lg:p-2">
-        <section className="relative hidden min-h-[620px] overflow-hidden rounded-[24px] bg-slate-900 lg:block" aria-label="Servicio técnico y venta de celulares FixPhone">
+    <main className="flex min-h-dvh items-center justify-center bg-[var(--surface-page)] px-2 py-2 sm:px-4 sm:py-4" aria-labelledby="sign-in-title">
+      <div className="mx-auto grid w-full max-w-[1020px] gap-2 overflow-hidden rounded-[24px] border border-slate-200/80 bg-white shadow-[0_18px_56px_rgba(15,23,42,0.09)] lg:min-h-[500px] lg:grid-cols-[1.04fr_0.96fr] lg:p-2">
+        <section className="relative hidden min-h-[480px] overflow-hidden rounded-[18px] bg-slate-900 lg:block" aria-label="Servicio técnico y venta de celulares FixPhone">
           <img
             src="/assets/login-fixphone.jpg"
             alt="Técnico de FixPhone asesorando a una clienta mientras se repara un celular en el taller"
             className="absolute inset-0 h-full w-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/15 to-transparent" aria-hidden="true" />
-          <div className="absolute inset-x-0 bottom-0 p-8 text-white xl:p-10">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-red-300">FixPhone · Montevideo</p>
-            <h1 className="max-w-md text-4xl font-bold leading-[1.08] tracking-tight xl:text-5xl">Tecnología que vuelve a funcionar.</h1>
-            <p className="mt-4 max-w-md text-sm leading-6 text-white/85">Reparaciones, equipos seleccionados y atención de confianza, todo en un mismo lugar.</p>
+          <div className="absolute inset-x-0 bottom-0 p-6 text-white xl:p-8">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.15em] text-red-300">FixPhone · Montevideo</p>
+            <h1 className="max-w-sm text-[1.85rem] font-bold leading-[1.12] tracking-tight xl:text-[2.1rem]">Tecnología que vuelve a funcionar.</h1>
+            <p className="mt-2 max-w-sm text-[13px] leading-5 text-white/85">Reparaciones, equipos seleccionados y atención de confianza, todo en un mismo lugar.</p>
           </div>
         </section>
-        <section className="flex items-center px-6 py-8 sm:px-10 sm:py-10 lg:px-10 xl:px-12">
-          <div className="mx-auto w-full max-w-[390px]">
-            <div className="mb-8">
+        <section className="flex items-center px-4 py-4 sm:px-8 sm:py-7 lg:px-7 xl:px-10">
+          <div className="mx-auto w-full max-w-[375px]">
+            <div className="mb-4 sm:mb-5">
               <BrandIdentity branding={view.branding} />
             </div>
 
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--theme-primary)]">{view.form.eyebrow}</p>
-            <h2 id="sign-in-title" className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-slate-950">
+            <h2 id="sign-in-title" className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
               {view.form.title}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{view.form.description}</p>
+            <p className="mt-1 text-[13px] leading-5 text-slate-600">{view.form.description}</p>
 
-            <form className="mt-7 space-y-4" noValidate onSubmit={handleSubmit}>
+            <form className="mt-3 space-y-3 sm:mt-4" noValidate onSubmit={handleSubmit}>
               <div>
-                <label className="text-sm font-medium text-slate-800" htmlFor="sign-in-email">
+                <label className="text-[13px] font-medium text-slate-800" htmlFor="sign-in-email">
                   {view.form.email.label}
                 </label>
                 <input
                   id="sign-in-email"
-                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--theme-primary)] focus:ring-4 focus:ring-[var(--theme-primary-soft)]"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--theme-primary)] focus:ring-4 focus:ring-[var(--theme-primary-soft)]"
                   type="email"
                   autoComplete={view.form.email.autocomplete}
                   placeholder={view.form.email.placeholder}
@@ -195,13 +195,13 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-800" htmlFor="sign-in-password">
+                <label className="text-[13px] font-medium text-slate-800" htmlFor="sign-in-password">
                   {view.form.password.label}
                 </label>
-                <div className="relative mt-2">
+                <div className="relative mt-1">
                   <input
                     id="sign-in-password"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 pr-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--theme-primary)] focus:ring-4 focus:ring-[var(--theme-primary-soft)] sm:pr-36"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 pr-12 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--theme-primary)] focus:ring-4 focus:ring-[var(--theme-primary-soft)]"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete={view.form.password.autocomplete}
                     placeholder={view.form.password.placeholder}
@@ -214,15 +214,21 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
                       setSubmissionState('idle');
                     }}
                   />
-                  <div className="mt-2 flex justify-end sm:absolute sm:inset-y-0 sm:right-2.5 sm:mt-0 sm:items-center">
+                  <div className="absolute inset-y-0 right-2 flex items-center">
                     <button
-                      className="min-h-10 rounded-lg px-2.5 py-2 text-xs font-semibold text-[var(--theme-primary)] transition hover:bg-[var(--theme-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] sm:min-h-0 sm:py-1.5"
+                      className="grid size-9 place-items-center rounded-lg text-slate-500 transition hover:bg-[var(--theme-primary-soft)] hover:text-[var(--theme-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
                       type="button"
                       aria-controls="sign-in-password"
+                      aria-label={showPassword ? view.form.password.hideLabel : view.form.password.showLabel}
+                      title={showPassword ? view.form.password.hideLabel : view.form.password.showLabel}
                       aria-pressed={showPassword}
                       onClick={() => setShowPassword((current) => !current)}
                     >
-                      {showPassword ? view.form.password.hideLabel : view.form.password.showLabel}
+                      <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                        <circle cx="12" cy="12" r="3" />
+                        {showPassword ? <path d="M3 3l18 18" /> : null}
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -233,7 +239,7 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
                 ) : null}
               </div>
 
-              <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:justify-between">
                 <label className="inline-flex cursor-pointer items-center gap-2.5 text-slate-600">
                   <input
                     className="size-4 rounded border-slate-300 accent-[var(--theme-primary)]"
@@ -247,7 +253,7 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
                   {view.form.forgotPassword.label}
                 </Link>
               </div>
-              <p className="-mt-3 text-xs leading-5 text-slate-500">
+              <p className="-mt-1 text-[11px] leading-4 text-slate-500">
                 {credentials.rememberMe
                   ? 'Tu sesión estará disponible en otras pestañas de este navegador durante 12 horas, salvo que cierres sesión.'
                   : 'Sin esta opción, la sesión se conserva solo en esta pestaña.'}
@@ -267,14 +273,14 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
               ) : null}
 
               <button
-                className="w-full rounded-xl bg-[var(--theme-primary)] px-4 py-3 text-sm font-semibold text-[var(--theme-on-primary)] shadow-sm transition hover:bg-[var(--theme-primary-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--theme-primary-soft)] disabled:cursor-not-allowed disabled:opacity-65"
+                className="w-full rounded-xl bg-[var(--theme-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--theme-on-primary)] shadow-sm transition hover:bg-[var(--theme-primary-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--theme-primary-soft)] disabled:cursor-not-allowed disabled:opacity-65"
                 type="submit"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? view.form.submittingLabel : view.form.submitLabel}
               </button>
             </form>
-            <p className="mt-6 border-t border-slate-100 pt-5 text-center text-xs text-slate-500">
+            <p className="mt-3 border-t border-slate-100 pt-2 text-center text-[11px] text-slate-500">
               El alta de usuarios administrativos se gestiona desde FixPhone.
             </p>
           </div>
