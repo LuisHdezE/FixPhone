@@ -141,37 +141,23 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
 
   return (
     <main className="min-h-dvh bg-[var(--surface-page)] px-3 py-3 sm:px-5 sm:py-5 lg:px-7 lg:py-7" aria-labelledby="sign-in-title">
-      <div className="mx-auto grid min-h-[calc(100dvh-1.5rem)] max-w-[1180px] overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:min-h-[calc(100dvh-2.5rem)] lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[1.04fr_0.96fr]">
-        <section className="relative hidden overflow-hidden bg-[var(--theme-primary-soft)] px-10 py-12 lg:block lg:border-r lg:border-[var(--theme-primary-muted)]">
-          <div className="pointer-events-none absolute -right-24 -top-20 size-72 rounded-full border border-[var(--theme-primary-border)]/60 bg-white/35" aria-hidden="true" />
-          <div className="pointer-events-none absolute -bottom-24 -left-20 size-64 rounded-full border border-[var(--theme-primary-border)]/45 bg-white/25" aria-hidden="true" />
-
-          <div className="relative flex h-full flex-col">
-            <BrandIdentity branding={view.branding} />
-
-            <div className="relative my-auto max-w-xl py-16">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--theme-primary)]">{view.hero.eyebrow}</p>
-              <h1 className="mt-3 max-w-lg text-[2.8rem] font-semibold leading-[1.08] tracking-[-0.035em] text-slate-950">
-                {view.hero.title}
-              </h1>
-              <p className="mt-4 max-w-lg text-[15px] leading-6 text-slate-600">{view.hero.description}</p>
-
-              <div className="mt-8 grid gap-3 lg:grid-cols-1 xl:grid-cols-3">
-                {view.hero.highlights.map((highlight) => (
-                  <article key={highlight.id} className="rounded-2xl border border-white/80 bg-white/65 p-4 shadow-sm backdrop-blur-sm">
-                    <div className="mb-3 size-2 rounded-full bg-[var(--theme-primary)]" aria-hidden="true" />
-                    <h2 className="text-sm font-semibold text-slate-900">{highlight.title}</h2>
-                    <p className="mt-1.5 text-xs leading-5 text-slate-600">{highlight.description}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
+      <div className="mx-auto grid min-h-[calc(100dvh-1.5rem)] max-w-[1180px] gap-3 overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:min-h-[calc(100dvh-2.5rem)] lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[1.04fr_0.96fr] lg:p-2">
+        <section className="relative hidden min-h-[620px] overflow-hidden rounded-[24px] bg-slate-900 lg:block" aria-label="Servicio técnico y venta de celulares FixPhone">
+          <img
+            src="/assets/login-fixphone.jpg"
+            alt="Técnico de FixPhone asesorando a una clienta mientras se repara un celular en el taller"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/15 to-transparent" aria-hidden="true" />
+          <div className="absolute inset-x-0 bottom-0 p-8 text-white xl:p-10">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-red-300">FixPhone · Montevideo</p>
+            <h1 className="max-w-md text-4xl font-bold leading-[1.08] tracking-tight xl:text-5xl">Tecnología que vuelve a funcionar.</h1>
+            <p className="mt-4 max-w-md text-sm leading-6 text-white/85">Reparaciones, equipos seleccionados y atención de confianza, todo en un mismo lugar.</p>
           </div>
         </section>
-
-        <section className="flex items-center px-6 py-8 sm:px-10 sm:py-10 lg:px-12 xl:px-16">
-          <div className="mx-auto w-full max-w-[430px]">
-            <div className="mb-8 lg:hidden">
+        <section className="flex items-center px-6 py-8 sm:px-10 sm:py-10 lg:px-10 xl:px-12">
+          <div className="mx-auto w-full max-w-[390px]">
+            <div className="mb-8">
               <BrandIdentity branding={view.branding} />
             </div>
 
@@ -181,14 +167,14 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">{view.form.description}</p>
 
-            <form className="mt-7 space-y-5" noValidate onSubmit={handleSubmit}>
+            <form className="mt-7 space-y-4" noValidate onSubmit={handleSubmit}>
               <div>
                 <label className="text-sm font-medium text-slate-800" htmlFor="sign-in-email">
                   {view.form.email.label}
                 </label>
                 <input
                   id="sign-in-email"
-                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--theme-primary)] focus:ring-4 focus:ring-[var(--theme-primary-soft)]"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--theme-primary)] focus:ring-4 focus:ring-[var(--theme-primary-soft)]"
                   type="email"
                   autoComplete={view.form.email.autocomplete}
                   placeholder={view.form.email.placeholder}
@@ -215,7 +201,7 @@ export function SignInPage({ contentProvider, gateway }: SignInPageProps) {
                 <div className="relative mt-2">
                   <input
                     id="sign-in-password"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 pr-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--theme-primary)] focus:ring-4 focus:ring-[var(--theme-primary-soft)] sm:pr-36"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 pr-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[var(--theme-primary)] focus:ring-4 focus:ring-[var(--theme-primary-soft)] sm:pr-36"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete={view.form.password.autocomplete}
                     placeholder={view.form.password.placeholder}
