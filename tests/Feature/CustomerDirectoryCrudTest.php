@@ -7,6 +7,8 @@ use App\Infrastructure\Identity\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -110,6 +112,35 @@ final class CustomerDirectoryCrudTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors(['customer']);
     }
 
+    public function test_customer_with_linked_order_cannot_be_archived(): void
+    {
+        $this->signIn('owner');
+        $customer = Customer::query()->create([
+            'full_name' => 'Cliente con pedido',
+            'phone' => '098111111',
+            'relationship_state' => 'active',
+        ]);
+
+        if (!Schema::hasTable('orders')) {
+            Schema::create('orders', static function (Blueprint $table): void {
+                $table->ulid('id')->primary();
+                $table->ulid('customer_id');
+            });
+        }
+
+        if (!Schema::hasColumn('orders', 'customer_id')) {
+            $this->markTestSkipped('La tabla de pedidos aún no posee vínculo customer_id.');
+        }
+
+        DB::table('orders')->insert([
+            'id' => (string) Str::ulid(),
+            'customer_id' => $customer->id,
+        ]);
+
+        $this->deleteJson('/api/v1/admin/customers/'.$customer->id)->assertStatus(409);
+        $this->assertDatabaseHas('crm_customers', ['id' => $customer->id, 'deleted_at' => null]);
+    }
+
     public function test_email_uniqueness_and_deletion_are_safe(): void
     {
         $this->signIn('owner');
@@ -117,6 +148,11 @@ final class CustomerDirectoryCrudTest extends TestCase
 
         $this->postJson('/api/v1/admin/customers', [
             ...$this->payload(), 'full_name' => 'Otro cliente',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['email']);
+
+        $this->postJson('/api/v1/admin/customers', [
+            ...$this->payload(), 'full_name' => 'Otro cliente con mayúsculas',
+            'email' => 'CLIENTE@FIXPHONE.TEST',
         ])->assertUnprocessable()->assertJsonValidationErrors(['email']);
 
         $this->deleteJson('/api/v1/admin/customers/'.$id)->assertOk();
