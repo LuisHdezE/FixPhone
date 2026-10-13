@@ -5,6 +5,7 @@ use App\Presentation\Http\Controllers\AuthMeController;
 use App\Presentation\Http\Controllers\IamController;
 use App\Presentation\Http\Controllers\InventoryController;
 use App\Presentation\Http\Controllers\OperationalInventoryController;
+use App\Presentation\Http\Controllers\DeviceInventoryCrudController;
 use App\Presentation\Http\Controllers\OperationalDashboardController;
 use App\Presentation\Http\Controllers\DeviceDismantlingController;
 use App\Presentation\Http\Controllers\MasterDataController;
@@ -100,6 +101,8 @@ Route::prefix('v1')->group(function (): void {
   Route::get('/admin/reports/consigned-phones-sold', [FinancialReportsController::class, 'consignedPhonesSold'])->middleware('permission:inventory.view')->name('api.v1.admin.reports.consigned-phones-sold');
 
   Route::post('/admin/inventory',[InventoryController::class, 'create'])->middleware('permission:devices.intake')->name('api.v1.admin.inventory.store');
+  Route::patch('/admin/inventory/{id}',[DeviceInventoryCrudController::class, 'update'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.device.update');
+  Route::delete('/admin/inventory/{id}',[DeviceInventoryCrudController::class, 'destroy'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.device.destroy');
   Route::patch('/admin/inventory/{id}/dismantling',[DeviceDismantlingController::class, 'update'])->middleware('permission:workshop.dismantle')->name('api.v1.admin.inventory.dismantling.update');
   Route::prefix('admin/media/storage-profiles')->middleware('permission:integrations.manage')->group(function (): void {
    Route::get('/', [MediaStorageSettingsController::class, 'index'])->name('api.v1.admin.media.storage.index');

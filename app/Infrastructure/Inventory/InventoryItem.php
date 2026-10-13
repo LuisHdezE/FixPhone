@@ -4,10 +4,11 @@ namespace App\Infrastructure\Inventory;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InventoryItem extends Model
 {
-    use HasUlids;
+    use HasUlids, SoftDeletes;
 
     protected $table = 'inventory_items';
 

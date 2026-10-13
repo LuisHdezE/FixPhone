@@ -6,7 +6,27 @@ export type DevicePowerState = 'Yes' | 'No' | 'Unknown';
 export type DeviceAccountLock = 'Clear' | 'Locked' | 'Unknown';
 export type DismantlingStatus = 'unknown' | 'not_started' | 'partial' | 'exhausted';
 
+export interface InventoryDeviceEditDto {
+  title: string;
+  manufacturer: string;
+  model: string;
+  description: string;
+  serialOrImei: string;
+  storage: string;
+  color: string;
+  physicalCondition: DevicePhysicalCondition;
+  powersOn: DevicePowerState;
+  accountLock: DeviceAccountLock;
+  acquisitionSource: string;
+  acquisitionCostMinor: number | null;
+  currencyCode: 'UYU' | 'USD';
+}
+
 export interface InventoryDeviceListItemDto {
+  title: string;
+  description: string;
+  acquisitionCostMinor: number | null;
+  currencyCode: 'UYU' | 'USD';
   id: string;
   inventoryId: string;
   isDonor: boolean;
@@ -29,7 +49,7 @@ export interface InventoryDeviceListItemDto {
 
 // Static presentation reference data is not a persisted inventory record.
 export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
-  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId'>;
+  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode'>;
 
 export interface InventoryFilterOptionDto {
   value: string;

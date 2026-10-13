@@ -6,12 +6,14 @@ import type {
   DevicePhysicalCondition,
   DevicePowerState,
   InventoryDeviceListItemDto,
+  InventoryDeviceEditDto,
 } from '../application/devices.dto';
 
 type ApiInventoryItem = {
   id: string;
   sku?: string | null;
   title: string;
+  description?: string | null;
   item_type: string;
   brand?: string | null;
   model?: string | null;
@@ -104,6 +106,10 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
   const accountLock = stringMeta(item.metadata, 'account_lock');
 
   return {
+    title: item.title,
+    description: typeof item.description === 'string' ? item.description : '',
+    acquisitionCostMinor: item.cost_amount_minor ?? null,
+    currencyCode: item.currency_code === 'USD' ? 'USD' : 'UYU',
     id: item.sku?.trim() || item.id,
     inventoryId: item.id,
     isDonor: item.inventory_purpose === 'parts_donor',
@@ -125,7 +131,45 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
   };
 }
 
+async function readApiError(response: Response, fallback: string): Promise<string> {
+  const payload = await response.json().catch(() => null) as
+    | { message?: string; errors?: Record<string, string[]> } | null;
+  const details = payload?.errors ? Object.values(payload.errors).flat().join(' ') : '';
+  return details || payload?.message || fallback + ' (' + response.status + ').';
+}
+
 export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
+  async updateDevice(inventoryId: string, fields: InventoryDeviceEditDto): Promise<void> {
+    const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId), {
+      method: 'PATCH',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: fields.title,
+        brand: fields.manufacturer || null,
+        model: fields.model || null,
+        description: fields.description || null,
+        serial_or_imei: fields.serialOrImei || null,
+        storage: fields.storage || null,
+        color: fields.color || null,
+        physical_condition: fields.physicalCondition,
+        powers_on: fields.powersOn,
+        account_lock: fields.accountLock,
+        acquisition_source: fields.acquisitionSource || null,
+        cost_amount_minor: fields.acquisitionCostMinor,
+        currency_code: fields.currencyCode,
+      }),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'No se pudo editar el equipo'));
+  }
+
+  async deleteDevice(inventoryId: string): Promise<void> {
+    const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId), {
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'No se pudo eliminar el equipo'));
+  }
+
   async updateDismantling(inventoryId: string, status: Exclude<DismantlingStatus, 'unknown'>): Promise<void> {
     const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId) + '/dismantling', {
       method: 'PATCH',

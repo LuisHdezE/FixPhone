@@ -11,6 +11,7 @@ import { PageShell } from '@/shell/PageShell';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
+import { InventoryDeviceEditModal } from './InventoryDeviceEditModal';
 import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
 
 const dismantlingNames: Record<DismantlingStatus, string> = {
@@ -49,6 +50,9 @@ export function InventoryDevicesPage({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [canDismantle, setCanDismantle] = useState(false);
   const [canValuate, setCanValuate] = useState(false);
+  const [canManage, setCanManage] = useState(false);
+  const [editingDevice, setEditingDevice] = useState<InventoryDeviceListItemDto | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<{ device: InventoryDeviceListItemDto; kind: 'details' | 'dismantling' } | null>(null);
 
   const loadDevices = useCallback(async () => {
@@ -65,6 +69,7 @@ export function InventoryDevicesPage({
       const permissions = Array.isArray(payload.data?.permissions) ? payload.data.permissions : [];
       setCanDismantle(permissions.includes('workshop.dismantle'));
       setCanValuate(permissions.includes('valuation.manage'));
+      setCanManage(permissions.includes('catalog.manage'));
       setDevices(items);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el inventario.');
@@ -94,6 +99,25 @@ export function InventoryDevicesPage({
       setNotice(device.id + ': estado de despiece actualizado y auditado. La venta pública, si existía, fue despublicada.');
     } catch (changeError) {
       setError(changeError instanceof Error ? changeError.message : 'No se pudo actualizar el despiece.');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteDevice(device: InventoryDeviceListItemDto) {
+    if (!canManage || busyId !== null) return;
+    if (!window.confirm('¿Eliminar ' + device.id + '? Se retirará del inventario, pero su código y auditoría se conservarán. Los equipos con ventas, repuestos, tasaciones o movimientos asociados no se pueden eliminar.')) return;
+
+    setBusyId(device.inventoryId);
+    setNotice(null);
+    setActionError(null);
+    try {
+      await gateway.deleteDevice(device.inventoryId);
+      await loadDevices();
+      setActiveAction(null);
+      setNotice('El dispositivo ' + device.id + ' se retiró del inventario sin perder su código ni auditoría.');
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : 'No fue posible eliminar el equipo.');
     } finally {
       setBusyId(null);
     }
@@ -183,6 +207,22 @@ export function InventoryDevicesPage({
           title={'Ver detalle de ' + device.id}
           type="button"
         ><AppIcon className="size-3.5" name="search" /></button>
+        {canManage ? <button
+          aria-label={'Editar ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
+          disabled={busyId !== null}
+          onClick={() => { setActionError(null); setEditingDevice(device); }}
+          title={'Editar ' + device.id}
+          type="button"
+        ><AppIcon className="size-3.5" name="edit" /></button> : null}
+        {canManage ? <button
+          aria-label={'Eliminar ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-red-600 transition hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red-600 disabled:opacity-40"
+          disabled={busyId !== null}
+          onClick={() => void deleteDevice(device)}
+          title={'Eliminar ' + device.id + ' (conservar auditoría)'}
+          type="button"
+        ><AppIcon className="size-3.5" name="trash" /></button> : null}
         {device.isDonor && canDismantle && transitions[device.dismantlingStatus].length > 1 ? <button
           aria-label={'Actualizar despiece de ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
@@ -236,6 +276,7 @@ export function InventoryDevicesPage({
       ) : null}
 
       {notice ? <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">{notice}</p> : null}
+      {actionError ? <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">{actionError}</p> : null}
 
       {error ? (
         <div className="mt-5 space-y-3">
@@ -304,6 +345,17 @@ export function InventoryDevicesPage({
         </div>
       </div>}
     </ModalShell> : null}
+    {editingDevice ? <InventoryDeviceEditModal
+      device={editingDevice}
+      gateway={gateway}
+      onClose={() => setEditingDevice(null)}
+      onSaved={() => {
+        setEditingDevice(null);
+        setNotice(editingDevice.id + ': ficha actualizada y auditada.');
+        setActionError(null);
+        void loadDevices();
+      }}
+    /> : null}
     {showIntakeModal ? (
       <InventoryDeviceIntakeModal
         masterDataProvider={masterDataProvider}
