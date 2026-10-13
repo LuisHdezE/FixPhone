@@ -155,7 +155,7 @@ final class CommercialOrdersTest extends TestCase
         $this->postJson('/api/v1/admin/orders', [
             ...$this->requestBody($customer, $item),
             'items' => [['inventory_item_id' => $item->id, 'quantity' => 1, 'unit_price_minor' => 1]],
-        ])->assertUnprocessable()->assertJsonValidationErrors(['items']);
+        ])->assertUnprocessable()->assertJsonValidationErrors(['items.0']);
 
         $fake = $this->item(['metadata' => ['is_mvp_demo' => true]]);
         $this->postJson('/api/v1/admin/orders', $this->requestBody($customer, $fake))->assertUnprocessable();
