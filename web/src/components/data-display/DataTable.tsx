@@ -34,6 +34,8 @@ export type DataTableProps<Row> = {
   selectable?: boolean;
   pageSizeOptions?: readonly number[];
   initialPageSize?: number;
+  density?: 'standard' | 'compact';
+  paginationStyle?: 'numbered' | 'compact';
 };
 
 export function DataTable<Row>({
@@ -49,6 +51,8 @@ export function DataTable<Row>({
   selectable = false,
   pageSizeOptions = [10, 25, 50],
   initialPageSize,
+  density = 'standard',
+  paginationStyle = 'numbered',
 }: DataTableProps<Row>) {
   const firstPageSize = initialPageSize ?? pageSizeOptions[0] ?? 10;
   const [query, setQuery] = useState('');
@@ -139,13 +143,13 @@ export function DataTable<Row>({
             options={[{ value: '', label: filter.allLabel ?? 'Todos' }, ...filter.options]}
             value={filterValues[filter.id] ?? ''}
           />)}
-          <SelectField
+          {paginationStyle === 'numbered' ? <SelectField
             id="data-table-page-size"
             label="Filas"
             onChange={(value) => { setPageSize(Number(value)); resetPage(); }}
             options={pageSizeOptions.map((size) => ({ value: String(size), label: String(size) }))}
             value={String(pageSize)}
-          />
+          /> : null}
           <button className="self-end rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" onClick={resetControls} type="button">Restablecer</button>
         </div>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
@@ -159,11 +163,11 @@ export function DataTable<Row>({
           {caption ? <caption className="sr-only">{caption}</caption> : null}
           <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.07em] text-slate-500">
             <tr>
-              {selectable ? <th className="w-10 px-2.5 py-2" scope="col">
+              {selectable ? <th className={`w-10 ${density === 'compact' ? 'px-2 py-1.5' : 'px-2.5 py-2'}`} scope="col">
                 <input aria-label="Seleccionar filas visibles" checked={allVisibleSelected} onChange={toggleVisible} type="checkbox" />
               </th> : null}
               {columns.map((column) => (
-                <th className={`px-2.5 py-2 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id} scope="col">
+                <th className={`${density === 'compact' ? 'px-2 py-1.5' : 'px-2.5 py-2'} ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id} scope="col">
                   {column.sortable && column.sortValue ? <button className="inline-flex items-center gap-1 font-semibold uppercase tracking-[0.07em] hover:text-slate-800" onClick={() => toggleSort(column)} type="button">
                     {column.header}<span aria-hidden="true">{sort?.id === column.id ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}</span>
                   </button> : column.header}
@@ -175,15 +179,47 @@ export function DataTable<Row>({
             {pageRows.length > 0 ? pageRows.map((row) => {
               const id = getRowId(row);
               return <tr className="transition hover:bg-slate-50/80" key={id}>
-                {selectable ? <td className="px-2.5 py-2"><input aria-label={`Seleccionar ${id}`} checked={selectedIds.has(id)} onChange={() => toggleRow(id)} type="checkbox" /></td> : null}
-                {columns.map((column) => <td className={`px-2.5 py-2 align-middle text-slate-600 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id}>{column.cell(row)}</td>)}
+                {selectable ? <td className={density === 'compact' ? 'px-2 py-1' : 'px-2.5 py-2'}><input aria-label={`Seleccionar ${id}`} checked={selectedIds.has(id)} onChange={() => toggleRow(id)} type="checkbox" /></td> : null}
+                {columns.map((column) => <td className={`${density === 'compact' ? 'px-2 py-1' : 'px-2.5 py-2'} align-middle text-slate-600 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id}>{column.cell(row)}</td>)}
               </tr>;
             }) : <tr><td className="px-2.5 py-8 text-center text-xs text-slate-500" colSpan={columns.length + (selectable ? 1 : 0)}>{emptyMessage}</td></tr>}
           </tbody>
         </table>
       </div>
 
-      {hasControls ? <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-2.5 py-2 text-xs text-slate-500">
+      {hasControls && paginationStyle === 'compact' ? <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 border-t border-slate-200 bg-slate-50/40 px-3 py-2 text-[11px] text-slate-500" data-data-table-compact-pagination>
+        <label className="inline-flex items-center gap-2" htmlFor="data-table-footer-page-size">
+          Filas por página:
+          <select
+            id="data-table-footer-page-size"
+            aria-label="Filas por página"
+            className="rounded border border-transparent bg-transparent px-1 py-1 font-medium text-slate-700 hover:border-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
+            onChange={(event) => { setPageSize(Number(event.target.value)); resetPage(); }}
+            value={String(pageSize)}
+          >
+            {pageSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
+          </select>
+        </label>
+        <span aria-live="polite" className="whitespace-nowrap" data-data-table-range>
+          {processedRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, processedRows.length)} de {processedRows.length}
+        </span>
+        <nav aria-label="Paginación de la tabla" className="flex items-center gap-1" data-data-table-pagination>
+          <button aria-label="Primera página" className="grid size-7 place-items-center rounded hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-30" disabled={safePage <= 1} onClick={() => setPage(1)} title="Primera página" type="button">
+            <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><path d="M6 5v14M17 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+          <button aria-label="Página anterior" className="grid size-7 place-items-center rounded hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-30" disabled={safePage <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} title="Página anterior" type="button">
+            <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+          <button aria-label="Página siguiente" className="grid size-7 place-items-center rounded hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-30" disabled={safePage >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))} title="Página siguiente" type="button">
+            <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+          <button aria-label="Última página" className="grid size-7 place-items-center rounded hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-30" disabled={safePage >= pageCount} onClick={() => setPage(pageCount)} title="Última página" type="button">
+            <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><path d="m7 6 6 6-6 6M18 5v14" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        </nav>
+      </div> : null}
+
+      {hasControls && paginationStyle === 'numbered' ? <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-2.5 py-2 text-xs text-slate-500">
         <span>Página {safePage} de {pageCount}</span>
         <div className="flex items-center gap-1" data-data-table-pagination>
           <button className="rounded-md border border-slate-200 px-2 py-1 disabled:opacity-40" disabled={safePage <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} type="button">Anterior</button>
