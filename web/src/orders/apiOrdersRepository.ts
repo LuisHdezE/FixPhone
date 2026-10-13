@@ -19,8 +19,9 @@ export const apiOrdersRepository: OrdersRepository = {
     return orders;
   },
 
-  async catalog() {
-    return payload<OrderCatalog>(await adminFetch('/api/v1/admin/orders/catalog', { cache: 'no-store' }));
+  async catalog(excludeOrderId?: string) {
+    const query = excludeOrderId ? '?order_id=' + encodeURIComponent(excludeOrderId) : '';
+    return payload<OrderCatalog>(await adminFetch('/api/v1/admin/orders/catalog' + query, { cache: 'no-store' }));
   },
 
   async create(input: OrderFormInput) {
