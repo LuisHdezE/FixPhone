@@ -19,6 +19,7 @@ use App\Presentation\Http\Controllers\ValuationPhotosController;
 use App\Presentation\Http\Controllers\PartsDonorStorefrontController;
 use App\Presentation\Http\Controllers\ConsignorsController;
 use App\Presentation\Http\Controllers\CustomerDirectoryController;
+use App\Presentation\Http\Controllers\CommercialOrdersController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -87,6 +88,12 @@ Route::prefix('v1')->group(function (): void {
   Route::post('/admin/customers', [CustomerDirectoryController::class, 'store'])->middleware('permission:catalog.manage')->name('api.v1.admin.customers.store');
   Route::patch('/admin/customers/{id}', [CustomerDirectoryController::class, 'update'])->middleware('permission:catalog.manage')->name('api.v1.admin.customers.update');
   Route::delete('/admin/customers/{id}', [CustomerDirectoryController::class, 'destroy'])->middleware('permission:catalog.manage')->name('api.v1.admin.customers.destroy');
+  Route::get('/admin/orders', [CommercialOrdersController::class, 'index'])->middleware('permission:orders.view')->name('api.v1.admin.orders.index');
+  Route::get('/admin/orders/catalog', [CommercialOrdersController::class, 'catalog'])->middleware('permission:orders.view')->name('api.v1.admin.orders.catalog');
+  Route::get('/admin/orders/{id}', [CommercialOrdersController::class, 'show'])->middleware('permission:orders.view')->name('api.v1.admin.orders.show');
+  Route::post('/admin/orders', [CommercialOrdersController::class, 'store'])->middleware('permission:orders.manage')->name('api.v1.admin.orders.store');
+  Route::patch('/admin/orders/{id}', [CommercialOrdersController::class, 'update'])->middleware('permission:orders.manage')->name('api.v1.admin.orders.update');
+  Route::patch('/admin/orders/{id}/status', [CommercialOrdersController::class, 'changeStatus'])->middleware('permission:orders.manage')->name('api.v1.admin.orders.status');
   
   // Operational inventory: one persisted source, separate permissions per action.
   Route::get('/admin/inventory/items',[OperationalInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.index');
