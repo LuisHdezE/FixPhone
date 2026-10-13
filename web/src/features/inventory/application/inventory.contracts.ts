@@ -2,6 +2,8 @@ import type { InventoryDeviceEvaluationViewDto, InventoryDeviceIntakeViewDto, In
 import type { InventoryDashboardDto, OperationalDashboardDto } from './inventory.dto';
 
 export interface InventoryDevicesGateway {
+  updateDevice(inventoryId: string, fields: import('./devices.dto').InventoryDeviceEditDto): Promise<void>;
+  deleteDevice(inventoryId: string): Promise<void>;
   listDevices(): Promise<readonly import('./devices.dto').InventoryDeviceListItemDto[]>;
   updateDismantling(inventoryId: string, status: 'not_started' | 'partial' | 'exhausted'): Promise<void>;
 }

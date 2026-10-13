@@ -74,7 +74,7 @@ class SeedMvpCommand extends Command
             $mvpItemIds = InventoryItem::where('metadata->is_mvp_demo', true)->pluck('id');
             DeviceSaleRecord::whereIn('inventory_item_id', $mvpItemIds)->delete();
             DeviceInstalledPart::whereIn('inventory_item_id', $mvpItemIds)->delete();
-            InventoryItem::whereIn('id', $mvpItemIds)->delete();
+            InventoryItem::whereIn('id', $mvpItemIds)->forceDelete();
 
             // Eliminar por ID prefijo 01MVP
             RepairQuote::where('id', 'like', '01MVP%')->delete();

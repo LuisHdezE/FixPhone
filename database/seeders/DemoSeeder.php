@@ -37,7 +37,7 @@ class DemoSeeder extends Seeder
             $demoItemIds = InventoryItem::where('metadata->is_demo', true)->pluck('id');
             DeviceSaleRecord::whereIn('inventory_item_id', $demoItemIds)->delete();
             DeviceInstalledPart::whereIn('inventory_item_id', $demoItemIds)->delete();
-            InventoryItem::where('metadata->is_demo', true)->delete();
+            InventoryItem::where('metadata->is_demo', true)->forceDelete();
 
             RepairQuote::where('id', 'like', '01J00DEM01%')->delete();
             DeviceValuation::where('id', 'like', '01J00DEM02%')->delete();
