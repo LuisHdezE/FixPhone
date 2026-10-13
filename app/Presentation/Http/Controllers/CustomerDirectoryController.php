@@ -90,6 +90,10 @@ final class CustomerDirectoryController extends Controller
 
     private function validated(Request $request, ?string $id = null): array
     {
+        // Normalize before the uniqueness check, also for case-sensitive SQLite.
+        if (is_string($request->input('email'))) {
+            $request->merge(['email' => Str::lower(trim($request->input('email')))]);
+        }
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255', Rule::unique('crm_customers', 'email')->ignore($id)],
