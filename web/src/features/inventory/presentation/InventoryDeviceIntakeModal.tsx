@@ -8,7 +8,8 @@ import { TextField } from '@/components/forms/TextField';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { ModalShell } from '@/components/layout/ModalShell';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
-import type { InventoryDemoProvider } from '../application/inventory.contracts';
+import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
+import type { InventoryDeviceListItemDto } from '../application/devices.dto';
 import type { DeviceAccountLock, DeviceDestination, DevicePhysicalCondition, DevicePowerState } from '../application/devices.dto';
 
 type IntakeFormState = {
@@ -90,7 +91,28 @@ function parseAcquisitionCost(raw: string): { amountMinor: number | null; curren
   return { amountMinor: Math.round(amount * 100), currencyCode };
 }
 
-export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClose, onCreated }: { provider: InventoryDemoProvider; masterDataProvider: MasterDataProvider; onClose: () => void; onCreated: (message: string) => void }) {
+function catalogId<T extends { id: string }>(
+  storedId: string | null,
+  storedLabel: string,
+  items: readonly T[],
+  label: (item: T) => string,
+): string {
+  if (storedId && items.some((item) => item.id === storedId)) return storedId;
+  const matches = items.filter((item) => label(item).trim().toLowerCase() === storedLabel.trim().toLowerCase());
+  return matches.length === 1 ? matches[0]?.id ?? '' : '';
+}
+
+type DeviceModalProps = {
+  provider: InventoryDemoProvider;
+  masterDataProvider: MasterDataProvider;
+  onClose: () => void;
+  onCreated?: (message: string) => void;
+  editDevice?: InventoryDeviceListItemDto;
+  gateway?: InventoryDevicesGateway;
+  onSaved?: (message: string) => void;
+};
+
+export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClose, onCreated, editDevice, gateway, onSaved }: DeviceModalProps) {
   const view = provider.getDeviceIntakeView();
   const brands = useMemo(() => masterDataProvider.getBrands().filter((brand) => brand.active), [masterDataProvider]);
   const deviceModels = useMemo(() => masterDataProvider.getDeviceModels().filter((model) => model.active), [masterDataProvider]);
@@ -98,20 +120,46 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const colors = useMemo(() => masterDataProvider.getColors().filter((color) => color.active), [masterDataProvider]);
   const conditions = useMemo(() => masterDataProvider.getConditions().filter((condition) => condition.active), [masterDataProvider]);
 
-  const initialForm = (): IntakeFormState => ({
-    brandId: view.defaults.brandId,
-    deviceModelId: view.defaults.deviceModelId,
-    serialOrImei: '',
-    storageCapacityId: view.defaults.storageCapacityId,
-    colorId: view.defaults.colorId,
-    conditionId: view.defaults.conditionId,
-    powersOn: view.defaults.powersOn,
-    accountLock: view.defaults.accountLock,
-    acquisitionSource: '',
-    acquisitionCost: '',
-    destination: view.defaults.destination,
-    notes: '',
-  });
+  const initialForm = (): IntakeFormState => {
+    if (!editDevice) {
+      return {
+        brandId: view.defaults.brandId,
+        deviceModelId: view.defaults.deviceModelId,
+        serialOrImei: '',
+        storageCapacityId: view.defaults.storageCapacityId,
+        colorId: view.defaults.colorId,
+        conditionId: view.defaults.conditionId,
+        powersOn: view.defaults.powersOn,
+        accountLock: view.defaults.accountLock,
+        acquisitionSource: '',
+        acquisitionCost: '',
+        destination: view.defaults.destination,
+        notes: '',
+      };
+    }
+    const brandId = catalogId(editDevice.brandId, editDevice.manufacturer, brands, (brand) => brand.name);
+    const modelOptions = deviceModels.filter((model) => model.brandId === brandId);
+    const modelId = catalogId(editDevice.deviceModelId, editDevice.model, modelOptions, (model) => model.name);
+    const potentialConditions = conditions.filter((condition) => mapCondition(condition.grade) === editDevice.physicalCondition);
+    const conditionId = editDevice.conditionId && conditions.some((c) => c.id === editDevice.conditionId)
+      ? editDevice.conditionId
+      : potentialConditions.length === 1 ? potentialConditions[0]?.id ?? '' : '';
+    return {
+      brandId,
+      deviceModelId: modelId,
+      serialOrImei: editDevice.serialOrImei === '—' ? '' : editDevice.serialOrImei,
+      storageCapacityId: catalogId(editDevice.storageCapacityId, editDevice.storage, storageCapacities, (storage) => storage.label),
+      colorId: catalogId(editDevice.colorId, editDevice.color, colors, (color) => color.name),
+      conditionId,
+      powersOn: editDevice.powersOn,
+      accountLock: editDevice.accountLock,
+      acquisitionSource: editDevice.acquisitionSource === '—' ? '' : editDevice.acquisitionSource,
+      acquisitionCost: editDevice.acquisitionCostMinor === null
+        ? '' : (editDevice.currencyCode === 'USD' ? 'USD ' : '') + (editDevice.acquisitionCostMinor / 100).toFixed(2),
+      destination: editDevice.destination,
+      notes: editDevice.description,
+    };
+  };
 
   const [form, setForm] = useState<IntakeFormState>(initialForm);
   const [saving, setSaving] = useState(false);
@@ -166,7 +214,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const selectedCondition = conditions.find((condition) => condition.id === form.conditionId);
 
   const canSubmit = Boolean(
-    selectedBrand && selectedModel && Boolean(form.destination) && !saving,
+    selectedBrand && selectedModel && selectedModel.brandId === form.brandId && Boolean(form.destination) && !saving,
   );
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -180,6 +228,26 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
 
     try {
       const { amountMinor, currencyCode } = parseAcquisitionCost(form.acquisitionCost);
+      if (editDevice) {
+        if (!gateway || !onSaved) throw new Error('No se pudo iniciar la edición del dispositivo.');
+        if (amountMinor !== null && amountMinor > 2147483647) throw new Error('El costo supera el importe máximo permitido.');
+        await gateway.updateDevice(editDevice.inventoryId, {
+          brandId: selectedBrand.id,
+          deviceModelId: selectedModel.id,
+          storageCapacityId: selectedStorage?.id ?? null,
+          colorId: selectedColor?.id ?? null,
+          conditionId: selectedCondition?.id ?? null,
+          serialOrImei: form.serialOrImei.trim(),
+          powersOn: form.powersOn,
+          accountLock: form.accountLock,
+          acquisitionSource: form.acquisitionSource.trim(),
+          acquisitionCostMinor: amountMinor,
+          currencyCode: currencyCode as 'UYU' | 'USD',
+          description: form.notes.trim(),
+        });
+        onSaved('Equipo ' + editDevice.id + ' actualizado correctamente.');
+        return;
+      }
       const payload = {
         title: [selectedBrand.name, selectedModel.name, selectedStorage?.label].filter(Boolean).join(' '),
         item_type: 'used_phone',
@@ -232,7 +300,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       setCreatedId(created.id ?? 'registrado');
       setCreatedCode(created.sku ?? null);
       setForm(initialForm());
-      onCreated(`Dispositivo registrado exitosamente: ${created.sku ?? created.id ?? 'registrado'}`);
+      onCreated?.(`Dispositivo registrado exitosamente: ${created.sku ?? created.id ?? 'registrado'}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'No se pudo registrar el dispositivo.');
     } finally {
@@ -240,21 +308,28 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     }
   }
 
-  return <ModalShell title={view.title} onClose={onClose} disabled={saving}>
-    <div className="p-4" data-device-intake>
+  return <ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving}>
+    <div className="p-4" data-device-intake data-device-mode={editDevice ? "edit" : "create"}>
       <form className="grid gap-4" onSubmit={submit}>
         <SurfaceCard>
-          <h2 className="text-base font-semibold text-slate-950">Ingreso rápido de dispositivo</h2>
-          <p className="mt-1 text-xs text-slate-600">Marca, modelo y destino son suficientes para registrar el equipo. FixPhone le asignará un código FXP único. No necesitás IMEI.</p>
+          <h2 className="text-base font-semibold text-slate-950">{editDevice ? 'Actualizar ficha de dispositivo' : 'Ingreso rápido de dispositivo'}</h2>
+          <p className="mt-1 text-xs text-slate-600">{editDevice
+            ? 'Usá el mismo catálogo del alta. El modelo depende de la marca seleccionada. El código FXP permanece igual.'
+            : 'Marca, modelo y destino son suficientes para registrar el equipo. FixPhone le asignará un código FXP único. No necesitás IMEI.'}</p>
           <div className="mt-3 grid gap-3 md:grid-cols-3">
             <SelectField id="device-brand" label={view.fields.brandId} onChange={setBrand} options={brandOptions} value={form.brandId} />
             <SelectField id="device-model" label={view.fields.deviceModelId} onChange={(value) => setField('deviceModelId', value)} options={filteredModelOptions} value={form.deviceModelId} />
-            <SelectField id="device-destination" label={view.fields.destination} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
+            <SelectField id="device-destination" label={view.fields.destination} disabled={Boolean(editDevice)} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
           </div>
-          <p className="mt-2 text-[11px] text-slate-500">El dispositivo ingresa con stock inicial 1, sin habilitar venta ni publicación. Podrás completar identificación y diagnóstico después.</p>
+          <p className="mt-2 text-[11px] text-slate-500">{editDevice
+            ? 'El destino, el stock, el código FXP y la publicación son operaciones independientes y no se cambian desde la edición de ficha.'
+            : 'El dispositivo ingresa con stock inicial 1, sin habilitar venta ni publicación. Podrás completar identificación y diagnóstico después.'}</p>
+          {editDevice && (!form.brandId || !form.deviceModelId) ? <p role="alert" className="mt-2 text-xs font-semibold text-amber-700">
+            Este equipo no tiene una marca o modelo reconocido en el catálogo. Seleccioná ambos antes de guardar. No se modificarán datos hasta confirmarlo.
+          </p> : null}
         </SurfaceCard>
 
-        <details className="rounded-lg border border-slate-200 bg-white" data-device-optional-details>
+        <details open={Boolean(editDevice)} className="rounded-lg border border-slate-200 bg-white" data-device-optional-details>
           <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Completar datos opcionales: IMEI, características, condición y costo</summary>
           <div className="grid gap-3 p-3 pt-0">
           <SurfaceCard>
@@ -297,14 +372,14 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
             {view.cancelLabel}
           </button>
           <button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50" disabled={!canSubmit} type="submit">
-            {saving ? 'Guardando...' : 'Registrar dispositivo'}
+            {saving ? 'Guardando...' : editDevice ? 'Guardar cambios' : 'Registrar dispositivo'}
           </button>
         </div>
       </form>
       
-      {error ? <div className="mt-4"><InlineFeedback title="No se pudo registrar el dispositivo" message={error} tone="error" /></div> : null}
+      {error ? <div className="mt-4"><InlineFeedback title={editDevice ? "No se pudo editar el dispositivo" : "No se pudo registrar el dispositivo"} message={error} tone="error" /></div> : null}
       
-      {createdId ? (
+      {!editDevice && createdId ? (
         <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
           Dispositivo registrado: {createdCode ?? createdId}. Puedes buscarlo en el listado.
         </div>

@@ -11,7 +11,6 @@ import { PageShell } from '@/shell/PageShell';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
-import { InventoryDeviceEditModal } from './InventoryDeviceEditModal';
 import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
 
 const dismantlingNames: Record<DismantlingStatus, string> = {
@@ -345,13 +344,16 @@ export function InventoryDevicesPage({
         </div>
       </div>}
     </ModalShell> : null}
-    {editingDevice ? <InventoryDeviceEditModal
-      device={editingDevice}
+    {editingDevice ? <InventoryDeviceIntakeModal
+      key={editingDevice.inventoryId}
+      editDevice={editingDevice}
       gateway={gateway}
+      masterDataProvider={masterDataProvider}
+      provider={provider}
       onClose={() => setEditingDevice(null)}
-      onSaved={() => {
+      onSaved={(message) => {
         setEditingDevice(null);
-        setNotice(editingDevice.id + ': ficha actualizada y auditada.');
+        setNotice(message);
         setActionError(null);
         void loadDevices();
       }}
