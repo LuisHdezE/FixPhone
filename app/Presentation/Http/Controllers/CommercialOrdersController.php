@@ -192,6 +192,7 @@ final class CommercialOrdersController extends Controller
             'customer_id' => ['required', 'string', Rule::exists('crm_customers', 'id')->whereNull('deleted_at')],
             'notes' => ['nullable', 'string', 'max:4000'],
             'items' => ['required', 'array', 'min:1', 'max:30'],
+            'items.*' => ['required', 'array:inventory_item_id,quantity'],
             'items.*.inventory_item_id' => ['required', 'string', 'distinct', Rule::exists('inventory_items', 'id')->whereNull('deleted_at')],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:1000'],
         ]);
