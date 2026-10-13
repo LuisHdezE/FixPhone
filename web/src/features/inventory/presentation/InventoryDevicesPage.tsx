@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import { AppIcon } from '@/components/AppIcon';
+import { ModalShell } from '@/components/layout/ModalShell';
 import { adminFetch } from '@/auth/adminApiSession';
 import { DataTable, type DataTableColumn, type DataTableFilter } from '@/components/data-display/DataTable';
 import { StatusBadge } from '@/components/data-display/StatusBadge';
@@ -47,6 +49,7 @@ export function InventoryDevicesPage({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [canDismantle, setCanDismantle] = useState(false);
   const [canValuate, setCanValuate] = useState(false);
+  const [activeAction, setActiveAction] = useState<{ device: InventoryDeviceListItemDto; kind: 'details' | 'dismantling' } | null>(null);
 
   const loadDevices = useCallback(async () => {
     setLoading(true);
@@ -87,6 +90,7 @@ export function InventoryDevicesPage({
     try {
       await gateway.updateDismantling(device.inventoryId, next);
       await loadDevices();
+      setActiveAction(null);
       setNotice(device.id + ': estado de despiece actualizado y auditado. La venta pública, si existía, fue despublicada.');
     } catch (changeError) {
       setError(changeError instanceof Error ? changeError.message : 'No se pudo actualizar el despiece.');
@@ -107,7 +111,7 @@ export function InventoryDevicesPage({
     {
       id: 'device',
       header: view.columns.device,
-      cell: (device) => <div><p className="font-medium text-slate-900">{device.manufacturer} {device.model}</p><p className="mt-0.5 text-xs text-slate-400">{device.storage} · {device.color}</p></div>,
+      cell: (device) => <div className="leading-4"><p className="font-medium text-slate-900">{device.manufacturer} {device.model}</p><p className="text-[10px] text-slate-400">{device.storage} · {device.color}</p></div>,
       sortable: true,
       sortValue: (device) => `${device.manufacturer} ${device.model}`,
       searchValue: (device) => `${device.manufacturer} ${device.model} ${device.storage} ${device.color}`,
@@ -170,28 +174,29 @@ export function InventoryDevicesPage({
     {
       id: 'actions',
       header: 'Acciones',
-      cell: (device) => <div className="flex flex-wrap items-center gap-1.5">
-        {device.isDonor && canDismantle && transitions[device.dismantlingStatus].length > 1 ? <select
+      align: 'right',
+      cell: (device) => <div className="flex items-center justify-end gap-1">
+        <button
+          aria-label={'Ver detalle de ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600"
+          onClick={() => setActiveAction({ device, kind: 'details' })}
+          title={'Ver detalle de ' + device.id}
+          type="button"
+        ><AppIcon className="size-3.5" name="search" /></button>
+        {device.isDonor && canDismantle && transitions[device.dismantlingStatus].length > 1 ? <button
           aria-label={'Actualizar despiece de ' + device.id}
-          title="Registrar estado de despiece (sin movimientos de stock)"
-          className="max-w-36 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs"
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
           disabled={busyId !== null}
-          value={device.dismantlingStatus}
-          onChange={(event) => {
-            const next = event.target.value as Exclude<DismantlingStatus, 'unknown'>;
-            // Reset the native select while confirmation/API validation is pending.
-            event.currentTarget.value = device.dismantlingStatus;
-            void updateDismantling(device, next);
-          }}
-        >
-          {transitions[device.dismantlingStatus].map((status) => <option key={status} value={status}>{dismantlingNames[status]}</option>)}
-        </select> : null}
+          onClick={() => setActiveAction({ device, kind: 'dismantling' })}
+          title={'Actualizar despiece de ' + device.id}
+          type="button"
+        ><AppIcon className="size-3.5" name="wrench" /></button> : null}
         {device.isDonor && canValuate ? <Link
-          className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-          title={'Administrar ficha pública de ' + device.id + ' en ValuPhone'}
+          aria-label={'Administrar ficha de ' + device.id + ' en ValuPhone'}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600"
+          title={'Administrar ficha de ' + device.id + ' en ValuPhone'}
           to="/admin/valuations"
-        >ValuPhone ↗</Link> : null}
-        {!device.isDonor || (!canDismantle && !canValuate) ? <span className="text-xs text-slate-400">Sin acciones</span> : null}
+        ><AppIcon className="size-3.5" name="tag" /></Link> : null}
       </div>,
     },
   ];
@@ -249,8 +254,10 @@ export function InventoryDevicesPage({
             emptyMessage={view.emptyMessage}
             filters={filters}
             getRowId={(device) => device.id}
-            initialPageSize={10}
-            pageSizeOptions={[5, 10, 25]}
+            density="compact"
+            initialPageSize={20}
+            paginationStyle="compact"
+            pageSizeOptions={[10, 20, 50]}
             rows={devices}
             searchLabel={view.searchLabel}
             searchPlaceholder={view.searchPlaceholder}
@@ -259,6 +266,44 @@ export function InventoryDevicesPage({
         </div>
       ) : null}
     </SurfaceCard>
+    {activeAction ? <ModalShell
+      disabled={busyId !== null}
+      onClose={() => setActiveAction(null)}
+      title={(activeAction.kind === 'details' ? 'Detalle de ' : 'Actualizar despiece de ') + activeAction.device.id}
+    >
+      {activeAction.kind === 'details' ? <dl className="grid gap-3 p-4 text-xs sm:grid-cols-2">
+        {([
+          ['Código', activeAction.device.id],
+          ['Equipo', activeAction.device.manufacturer + ' ' + activeAction.device.model],
+          ['IMEI / Serie', activeAction.device.serialOrImei],
+          ['Memoria / Color', activeAction.device.storage + ' · ' + activeAction.device.color],
+          ['Condición física', activeAction.device.physicalCondition === 'Unknown' ? 'Sin evaluar' : optionLabel(view.filters.conditionOptions, activeAction.device.physicalCondition)],
+          ['Enciende', activeAction.device.powersOn],
+          ['Bloqueo de cuenta', activeAction.device.accountLock],
+          ['Origen', activeAction.device.acquisitionSource],
+          ['Costo', activeAction.device.acquisitionCost],
+          ['Destino', optionLabel(view.filters.destinationOptions, activeAction.device.destination)],
+          ['Despiece', activeAction.device.isDonor ? dismantlingNames[activeAction.device.dismantlingStatus] : 'No aplica'],
+          ['Publicación', activeAction.device.publicListingStatus === 'published' ? 'Publicada' : 'Sin publicar'],
+        ] as const).map(([label, value]) => <div className="min-w-0" key={label}>
+          <dt className="font-semibold text-slate-500">{label}</dt>
+          <dd className="mt-1 break-words font-medium text-slate-800">{value || '—'}</dd>
+        </div>)}
+      </dl> : <div className="space-y-3 p-4">
+        <p className="text-xs text-slate-600">Elegí el nuevo estado de despiece para {activeAction.device.id}. La operación requiere confirmación y quedará auditada.</p>
+        <div className="flex flex-wrap gap-2">
+          {transitions[activeAction.device.dismantlingStatus]
+            .filter((status): status is Exclude<DismantlingStatus, 'unknown'> => status !== 'unknown' && status !== activeAction.device.dismantlingStatus)
+            .map((status) => <button
+              className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+              disabled={busyId !== null || !canDismantle}
+              key={status}
+              onClick={() => void updateDismantling(activeAction.device, status)}
+              type="button"
+            >{dismantlingNames[status]}</button>)}
+        </div>
+      </div>}
+    </ModalShell> : null}
     {showIntakeModal ? (
       <InventoryDeviceIntakeModal
         masterDataProvider={masterDataProvider}
