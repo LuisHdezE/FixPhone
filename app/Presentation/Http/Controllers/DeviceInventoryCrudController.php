@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Inventory\InventoryItem;
+use App\Infrastructure\MasterData\MasterDataEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -17,24 +18,24 @@ use Illuminate\Validation\ValidationException;
 final class DeviceInventoryCrudController extends Controller
 {
     private const EDITABLE = [
-        'title', 'brand', 'model', 'description', 'serial_or_imei', 'storage',
-        'color', 'physical_condition', 'powers_on', 'account_lock',
+        'brand_id', 'device_model_id', 'storage_capacity_id', 'color_id', 'condition_id',
+        'description', 'serial_or_imei', 'powers_on', 'account_lock',
         'acquisition_source', 'cost_amount_minor', 'currency_code',
     ];
 
+    /** Uses the same master catalog IDs as the device intake flow, never free-text brand/model. */
     public function update(Request $request, string $id): JsonResponse
     {
         $this->rejectUnexpectedFields($request);
 
         $values = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'brand' => ['nullable', 'string', 'max:150'],
-            'model' => ['nullable', 'string', 'max:150'],
+            'brand_id' => ['required', 'string'],
+            'device_model_id' => ['required', 'string'],
+            'storage_capacity_id' => ['nullable', 'string'],
+            'color_id' => ['nullable', 'string'],
+            'condition_id' => ['nullable', 'string'],
             'description' => ['nullable', 'string', 'max:4000'],
             'serial_or_imei' => ['nullable', 'string', 'max:100'],
-            'storage' => ['nullable', 'string', 'max:100'],
-            'color' => ['nullable', 'string', 'max:100'],
-            'physical_condition' => ['required', 'in:Excellent,Good,Fair,Poor,Damaged,Unknown'],
             'powers_on' => ['required', 'in:Yes,No,Unknown'],
             'account_lock' => ['required', 'in:Clear,Locked,Unknown'],
             'acquisition_source' => ['nullable', 'string', 'max:200'],
@@ -46,46 +47,59 @@ final class DeviceInventoryCrudController extends Controller
             $item = InventoryItem::query()->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->assertDevice($item);
             $this->assertNoFinancialHistory($item, 'editar');
-            if ($item->publication_status === 'publicado') {
-                abort(409, 'Primero despublicá el equipo para modificar su ficha.');
+            if ($item->publication_status === 'publicado' || $item->is_sellable) {
+                abort(409, 'Primero despublicá o deshabilitá la venta del equipo para modificar su ficha.');
             }
+
+            $brand = $this->masterItem('brands', $values['brand_id'], 'brand_id');
+            $model = $this->masterItem('deviceModels', $values['device_model_id'], 'device_model_id');
+            if (($model['brandId'] ?? null) !== $values['brand_id']) {
+                throw ValidationException::withMessages([
+                    'device_model_id' => 'El modelo seleccionado no pertenece a la marca indicada.',
+                ]);
+            }
+            $storage = $this->optionalMasterItem('storageCapacities', $values['storage_capacity_id'] ?? null, 'storage_capacity_id');
+            $color = $this->optionalMasterItem('colors', $values['color_id'] ?? null, 'color_id');
+            $condition = $this->optionalMasterItem('conditions', $values['condition_id'] ?? null, 'condition_id');
 
             $before = $item->only(['title', 'brand', 'model', 'description', 'cost_amount_minor', 'currency_code', 'metadata']);
             $metadata = is_array($item->metadata) ? $item->metadata : [];
-            // Avoid retaining obsolete master-data pointers when editing free-text device attributes.
-            if (($item->brand ?? '') !== ($values['brand'] ?? '')) {
-                $metadata['brand_id'] = null;
-                $metadata['device_model_id'] = null;
-            } elseif (($item->model ?? '') !== ($values['model'] ?? '')) {
-                $metadata['device_model_id'] = null;
-            }
-            if (($metadata['storage'] ?? null) !== ($values['storage'] ?? null)) {
-                $metadata['storage_capacity_id'] = null;
+            $metadata['brand_id'] = $values['brand_id'];
+            $metadata['device_model_id'] = $values['device_model_id'];
+            if ($storage !== null) {
+                $metadata['storage_capacity_id'] = $values['storage_capacity_id'];
+                $metadata['storage'] = $storage['label'];
                 $metadata['storage_capacity'] = null;
             }
-            if (($metadata['color'] ?? null) !== ($values['color'] ?? null)) {
-                $metadata['color_id'] = null;
+            if ($color !== null) {
+                $metadata['color_id'] = $values['color_id'];
+                $metadata['color'] = $color['name'];
             }
-            if (($metadata['physical_condition'] ?? 'Unknown') !== $values['physical_condition']) {
-                $metadata['condition_id'] = null;
-                $metadata['condition_grade'] = null;
-                $metadata['condition_name'] = null;
-            }
-            if (($metadata['serial_or_imei'] ?? null) !== ($values['serial_or_imei'] ?? null)) {
-                $metadata['imei'] = null;
-                $metadata['serial'] = null;
-            }
-            if (($metadata['acquisition_source'] ?? null) !== ($values['acquisition_source'] ?? null)) {
-                $metadata['source'] = null;
-            }
-            foreach (['serial_or_imei', 'storage', 'color', 'physical_condition', 'powers_on', 'account_lock', 'acquisition_source'] as $key) {
-                $metadata[$key] = $values[$key] ?? null;
+            if ($condition !== null) {
+                $metadata['condition_id'] = $values['condition_id'];
+                $metadata['condition_name'] = $condition['name'];
+                $metadata['condition_grade'] = $condition['grade'];
+                $metadata['physical_condition'] = match ($condition['grade']) {
+                    'N', 'OB' => 'Excellent',
+                    'A' => 'Good',
+                    'B' => 'Fair',
+                    'PARTS' => 'Damaged',
+                    default => 'Unknown',
+                };
             }
 
+            $metadata['serial_or_imei'] = $values['serial_or_imei'] ?? null;
+            $metadata['imei'] = null;
+            $metadata['serial'] = null;
+            $metadata['powers_on'] = $values['powers_on'];
+            $metadata['account_lock'] = $values['account_lock'];
+            $metadata['acquisition_source'] = $values['acquisition_source'] ?? null;
+            $metadata['source'] = null;
+            $metadata['notes'] = $values['description'] ?? null;
             $item->fill([
-                'title' => $values['title'],
-                'brand' => $values['brand'] ?? null,
-                'model' => $values['model'] ?? null,
+                'title' => implode(' ', array_filter([$brand['name'], $model['name'], $metadata['storage'] ?? null])),
+                'brand' => $brand['name'],
+                'model' => $model['name'],
                 'description' => $values['description'] ?? null,
                 'cost_amount_minor' => $values['cost_amount_minor'] ?? null,
                 'currency_code' => $values['currency_code'],
@@ -102,6 +116,21 @@ final class DeviceInventoryCrudController extends Controller
         });
 
         return response()->json(['data' => $item->fresh()]);
+    }
+
+    private function masterItem(string $kind, string $id, string $field): array
+    {
+        $entry = MasterDataEntry::query()->where('kind', $kind)->whereKey($id)->first();
+        $payload = $entry?->payload;
+        if (!is_array($payload) || ($payload['active'] ?? false) !== true) {
+            throw ValidationException::withMessages([$field => 'Seleccioná una opción activa del catálogo maestro.']);
+        }
+        return $payload;
+    }
+
+    private function optionalMasterItem(string $kind, ?string $id, string $field): ?array
+    {
+        return $id === null || $id === '' ? null : $this->masterItem($kind, $id, $field);
     }
 
     /** Logical deletion preserves immutable FXP codes and auditability. */

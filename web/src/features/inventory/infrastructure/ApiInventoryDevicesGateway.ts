@@ -106,6 +106,11 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
   const accountLock = stringMeta(item.metadata, 'account_lock');
 
   return {
+    brandId: stringMeta(item.metadata, 'brand_id'),
+    deviceModelId: stringMeta(item.metadata, 'device_model_id'),
+    storageCapacityId: stringMeta(item.metadata, 'storage_capacity_id'),
+    colorId: stringMeta(item.metadata, 'color_id'),
+    conditionId: stringMeta(item.metadata, 'condition_id'),
     title: item.title,
     description: typeof item.description === 'string' ? item.description : '',
     acquisitionCostMinor: item.cost_amount_minor ?? null,
@@ -144,14 +149,13 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
       method: 'PATCH',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: fields.title,
-        brand: fields.manufacturer || null,
-        model: fields.model || null,
+        brand_id: fields.brandId,
+        device_model_id: fields.deviceModelId,
+        storage_capacity_id: fields.storageCapacityId,
+        color_id: fields.colorId,
+        condition_id: fields.conditionId,
         description: fields.description || null,
         serial_or_imei: fields.serialOrImei || null,
-        storage: fields.storage || null,
-        color: fields.color || null,
-        physical_condition: fields.physicalCondition,
         powers_on: fields.powersOn,
         account_lock: fields.accountLock,
         acquisition_source: fields.acquisitionSource || null,

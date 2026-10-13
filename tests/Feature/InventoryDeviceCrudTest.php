@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Infrastructure\Identity\User;
 use App\Infrastructure\Inventory\InventoryItem;
+use App\Infrastructure\MasterData\MasterDataEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -48,15 +49,24 @@ final class InventoryDeviceCrudTest extends TestCase
 
     private function updatePayload(): array
     {
+        foreach ([
+            ['id' => 'brand-apple', 'kind' => 'brands', 'payload' => ['id' => 'brand-apple', 'name' => 'Apple', 'active' => true]],
+            ['id' => 'model-iphone-11-pro', 'kind' => 'deviceModels', 'payload' => ['id' => 'model-iphone-11-pro', 'brandId' => 'brand-apple', 'name' => 'iPhone 11 Pro', 'active' => true]],
+            ['id' => 'storage-128', 'kind' => 'storageCapacities', 'payload' => ['id' => 'storage-128', 'label' => '128 GB', 'active' => true]],
+            ['id' => 'color-blue', 'kind' => 'colors', 'payload' => ['id' => 'color-blue', 'name' => 'Azul', 'active' => true]],
+            ['id' => 'condition-good', 'kind' => 'conditions', 'payload' => ['id' => 'condition-good', 'name' => 'Bueno', 'grade' => 'A', 'active' => true]],
+        ] as $entry) {
+            MasterDataEntry::query()->firstOrCreate(['id' => $entry['id']], $entry);
+        }
+
         return [
-            'title' => 'iPhone 11 Pro',
-            'brand' => 'Apple',
-            'model' => 'iPhone 11 Pro',
+            'brand_id' => 'brand-apple',
+            'device_model_id' => 'model-iphone-11-pro',
+            'storage_capacity_id' => 'storage-128',
+            'color_id' => 'color-blue',
+            'condition_id' => 'condition-good',
             'description' => 'Equipo revisado',
             'serial_or_imei' => 'NEW123',
-            'storage' => '128 GB',
-            'color' => 'Azul',
-            'physical_condition' => 'Good',
             'powers_on' => 'Yes',
             'account_lock' => 'Clear',
             'acquisition_source' => 'Compra directa',
@@ -86,11 +96,12 @@ final class InventoryDeviceCrudTest extends TestCase
         $path = '/api/v1/admin/inventory/'.$device->id;
 
         $this->patchJson($path, $this->updatePayload())->assertOk()
-            ->assertJsonPath('data.title', 'iPhone 11 Pro')
+            ->assertJsonPath('data.title', 'Apple iPhone 11 Pro 128 GB')
             ->assertJsonPath('data.metadata.serial_or_imei', 'NEW123')
-            ->assertJsonPath('data.metadata.origin_marker', 'preservar');
-            $this->assertNull($device->fresh()->metadata['device_model_id']);
-            $this->assertNull($device->fresh()->metadata['condition_id']);
+            ->assertJsonPath('data.metadata.origin_marker', 'preservar')
+            ->assertJsonPath('data.metadata.brand_id', 'brand-apple')
+            ->assertJsonPath('data.metadata.device_model_id', 'model-iphone-11-pro')
+            ->assertJsonPath('data.metadata.condition_id', 'condition-good');
 
         $fresh = $device->fresh();
         $this->assertSame('FXP-9001', $fresh->sku);
@@ -105,6 +116,58 @@ final class InventoryDeviceCrudTest extends TestCase
         $this->patchJson($path, [...$this->updatePayload(), 'sku' => 'FXP-9999'])
             ->assertUnprocessable();
         $this->assertSame('FXP-9001', $device->fresh()->sku);
+    }
+
+    public function test_edit_rejects_model_of_another_brand_and_unknown_ids(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device();
+        $payload = $this->updatePayload();
+
+        MasterDataEntry::query()->create([
+            'id' => 'brand-test-other', 'kind' => 'brands',
+            'payload' => ['id' => 'brand-test-other', 'name' => 'Samsung', 'active' => true],
+        ]);
+        MasterDataEntry::query()->create([
+            'id' => 'model-test-other', 'kind' => 'deviceModels',
+            'payload' => ['id' => 'model-test-other', 'brandId' => 'brand-test-other', 'name' => 'Galaxy', 'active' => true],
+        ]);
+
+        $path = '/api/v1/admin/inventory/'.$device->id;
+        $this->patchJson($path, [...$payload, 'device_model_id' => 'model-test-other'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['device_model_id']);
+
+        $this->patchJson($path, [...$payload, 'brand_id' => 'not-a-brand'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['brand_id']);
+
+        $this->patchJson($path, [...$payload, 'model' => 'Galaxy'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['device']);
+
+        $this->assertSame('iPhone 11', $device->fresh()->title);
+        $this->assertDatabaseCount('inventory_items', 1);
+    }
+
+    public function test_edit_preserves_legacy_optional_properties_when_no_catalog_match_is_selected(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device([
+            'metadata' => [
+                'storage' => '256 GB legacy',
+                'color' => 'Color legado',
+                'physical_condition' => 'Fair',
+                'origin_marker' => 'preservar',
+            ],
+        ]);
+        $payload = $this->updatePayload();
+        $payload['storage_capacity_id'] = null;
+        $payload['color_id'] = null;
+        $payload['condition_id'] = null;
+        $this->patchJson('/api/v1/admin/inventory/'.$device->id, $payload)
+            ->assertOk()
+            ->assertJsonPath('data.metadata.storage', '256 GB legacy')
+            ->assertJsonPath('data.metadata.color', 'Color legado')
+            ->assertJsonPath('data.metadata.physical_condition', 'Fair')
+            ->assertJsonPath('data.metadata.origin_marker', 'preservar');
     }
 
     public function test_delete_is_logical_and_keeps_permanent_device_code_and_audit(): void

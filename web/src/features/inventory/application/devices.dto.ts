@@ -7,14 +7,13 @@ export type DeviceAccountLock = 'Clear' | 'Locked' | 'Unknown';
 export type DismantlingStatus = 'unknown' | 'not_started' | 'partial' | 'exhausted';
 
 export interface InventoryDeviceEditDto {
-  title: string;
-  manufacturer: string;
-  model: string;
+  brandId: string;
+  deviceModelId: string;
+  storageCapacityId: string | null;
+  colorId: string | null;
+  conditionId: string | null;
   description: string;
   serialOrImei: string;
-  storage: string;
-  color: string;
-  physicalCondition: DevicePhysicalCondition;
   powersOn: DevicePowerState;
   accountLock: DeviceAccountLock;
   acquisitionSource: string;
@@ -23,6 +22,11 @@ export interface InventoryDeviceEditDto {
 }
 
 export interface InventoryDeviceListItemDto {
+  brandId: string | null;
+  deviceModelId: string | null;
+  storageCapacityId: string | null;
+  colorId: string | null;
+  conditionId: string | null;
   title: string;
   description: string;
   acquisitionCostMinor: number | null;
@@ -49,7 +53,7 @@ export interface InventoryDeviceListItemDto {
 
 // Static presentation reference data is not a persisted inventory record.
 export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
-  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode'>;
+  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId'>;
 
 export interface InventoryFilterOptionDto {
   value: string;
