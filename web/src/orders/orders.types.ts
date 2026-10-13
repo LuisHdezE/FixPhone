@@ -50,7 +50,7 @@ export type OrderFilter = {
 
 export type OrdersRepository = {
   list(): Promise<readonly OrderSummary[]>;
-  catalog(): Promise<OrderCatalog>;
+  catalog(excludeOrderId?: string): Promise<OrderCatalog>;
   create(input: OrderFormInput): Promise<OrderSummary>;
   update(id: string, input: OrderFormInput): Promise<OrderSummary>;
   changeStatus(id: string, status: Exclude<OrderStatus, 'pending'>, reason?: string): Promise<OrderSummary>;
