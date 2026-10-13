@@ -40,8 +40,13 @@ final class CommercialOrdersController extends Controller
         return response()->json(['data' => $this->details(DB::table('orders')->where('id', $id)->firstOrFail())]);
     }
 
-    public function catalog(): JsonResponse
+    public function catalog(Request $request): JsonResponse
     {
+        $filter = $request->validate(['order_id' => ['sometimes', 'string', Rule::exists('orders', 'id')]]);
+        $excludeOrderId = $filter['order_id'] ?? null;
+        if ($excludeOrderId !== null && DB::table('orders')->where('id', $excludeOrderId)->value('status') !== 'pending') {
+            abort(409, 'Solo los pedidos pendientes se pueden editar.');
+        }
         $customers = Customer::query()->orderBy('full_name')->get(['id', 'full_name', 'relationship_state']);
         $stock = InventoryItem::query()->whereIn('item_type', self::ITEM_TYPES)
             ->where('is_sellable', true)->where('stock_quantity', '>', 0)
@@ -52,7 +57,7 @@ final class CommercialOrdersController extends Controller
             !in_array($item->operational_status, ['sold', 'vendido'], true)
             && !((bool) ($item->metadata['is_mvp_demo'] ?? false))
             && !((bool) ($item->metadata['is_demo'] ?? false))
-        )->map(function (InventoryItem $item): array {
+        )->map(function (InventoryItem $item) use ($excludeOrderId): array {
             return [
                 'id' => $item->id,
                 'sku' => $item->sku,
@@ -60,7 +65,7 @@ final class CommercialOrdersController extends Controller
                 'item_type' => $item->item_type,
                 'currency_code' => $item->currency_code,
                 'unit_price_minor' => (int) $item->sale_price_amount_minor,
-                'available_quantity' => max(0, (int) $item->stock_quantity - $this->heldQuantity($item->id)),
+                'available_quantity' => max(0, (int) $item->stock_quantity - $this->heldQuantity($item->id, $excludeOrderId)),
             ];
         })->filter(static fn (array $item): bool => $item['available_quantity'] > 0)->values();
 
