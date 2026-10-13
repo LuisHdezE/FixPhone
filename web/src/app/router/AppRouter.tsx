@@ -147,7 +147,8 @@ export function AppRouter() {
         <Route path="dashboard" element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="apps/inventory/dashboard" element={<InventoryDashboardPage gateway={operationalDashboardGateway} />} />
         <Route path="apps/inventory/devices" element={<InventoryDevicesPage provider={inventoryDemoProvider} gateway={inventoryDevicesGateway} masterDataProvider={masterDataProvider} />} />
-        <Route path="apps/inventory/devices/evaluation" element={<InventoryDeviceEvaluationPage provider={inventoryDemoProvider} />} />
+        <Route path="apps/inventory/devices/evaluation" element={<Navigate to="/apps/inventory/devices" replace />} />
+        <Route path="apps/inventory/devices/:deviceId/evaluation" element={<InventoryDeviceEvaluationPage gateway={inventoryDevicesGateway} />} />
         <Route path="applications/management/inventory" element={<InventoryView />} />
         <Route path="applications/management/customers" element={<CustomerDirectoryView />} />
         <Route path="applications/management/orders" element={<OrderListView />} />

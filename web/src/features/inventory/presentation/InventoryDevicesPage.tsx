@@ -206,6 +206,12 @@ export function InventoryDevicesPage({
           title={'Ver detalle de ' + device.id}
           type="button"
         ><AppIcon className="size-3.5" name="search" /></button>
+        <Link
+          aria-label={'Evaluar dispositivo ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600"
+          title={'Consultar evaluación técnica de ' + device.id}
+          to={'/apps/inventory/devices/' + encodeURIComponent(device.inventoryId) + '/evaluation'}
+        ><AppIcon className="size-3.5" name="check-circle" /></Link>
         {canManage ? <button
           aria-label={'Editar ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
