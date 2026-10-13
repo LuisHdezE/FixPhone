@@ -6,9 +6,18 @@ export type CustomerSummary = {
   name: string;
   email: string;
   phone: string;
-  orderCount: number;
+  notes: string;
+  orderCount: number | null;
   lastOrderLabel: string;
   lifetimeValueLabel: string;
+  relationshipState: CustomerRelationshipState;
+};
+
+export type CustomerFormInput = {
+  name: string;
+  email: string;
+  phone: string;
+  notes: string;
   relationshipState: CustomerRelationshipState;
 };
 
@@ -26,4 +35,10 @@ export type CustomersDataState =
 
 export type CustomersRepository = {
   list(filter: CustomerFilter): Promise<CustomersDataState>;
+};
+
+export type CustomersCrudRepository = CustomersRepository & {
+  create(input: CustomerFormInput): Promise<CustomerSummary>;
+  update(id: string, input: CustomerFormInput): Promise<CustomerSummary>;
+  archive(id: string): Promise<void>;
 };
