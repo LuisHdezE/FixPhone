@@ -19,7 +19,6 @@ export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
     items: [
       { label: 'Panel operativo', to: '/apps/inventory/dashboard', icon: 'dashboard', exact: true },
       { label: 'Equipos', to: '/apps/inventory/devices', icon: 'device', exact: true },
-      { label: 'Evaluación técnica', to: '/apps/inventory/devices/evaluation', icon: 'wrench' },
       { label: 'Presupuestos', to: '/admin/repair-quotes', icon: 'forms' },
       { label: 'ValuPhone · Tasaciones', to: '/admin/valuations', icon: 'chart' },
       { label: 'Diagnósticos', icon: 'check-circle', planned: true },

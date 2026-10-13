@@ -1,4 +1,4 @@
-import type { InventoryDeviceEvaluationViewDto, InventoryDeviceIntakeViewDto, InventoryDevicesViewDto } from './devices.dto';
+import type { InventoryDeviceIntakeViewDto, InventoryDevicesViewDto } from './devices.dto';
 import type { InventoryDashboardDto, OperationalDashboardDto } from './inventory.dto';
 
 export interface InventoryDevicesGateway {
@@ -16,5 +16,4 @@ export interface InventoryDemoProvider {
   getDashboard(): InventoryDashboardDto;
   getDevicesView(): InventoryDevicesViewDto;
   getDeviceIntakeView(): InventoryDeviceIntakeViewDto;
-  getDeviceEvaluationView(): InventoryDeviceEvaluationViewDto;
 }

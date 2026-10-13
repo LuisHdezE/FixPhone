@@ -30,7 +30,6 @@ export const templateNavigation: readonly TemplateNavigationSection[] = [
     items: [
       { label: 'Panel operativo', to: '/apps/inventory/dashboard', icon: 'dashboard', status: 'implemented' },
       { label: 'Equipos', to: '/apps/inventory/devices', icon: 'device', status: 'implemented' },
-      { label: 'Evaluación', to: '/apps/inventory/devices/evaluation', icon: 'check-circle', status: 'implemented' },
       { label: 'Inventario', to: '/applications/management/inventory', icon: 'table', status: 'implemented' },
       { label: 'Clientes', to: '/applications/management/customers', icon: 'user', status: 'implemented' },
       { label: 'Pedidos', to: '/applications/management/orders', icon: 'apps', status: 'implemented' },
@@ -126,7 +125,6 @@ export const templateNavigation: readonly TemplateNavigationSection[] = [
     items: [
       { label: 'Inventario · Dashboard', to: '/apps/inventory/dashboard', icon: 'dashboard' },
       { label: 'Inventario · Dispositivos', to: '/apps/inventory/devices', icon: 'device' },
-      { label: 'Inventario · Evaluación', to: '/apps/inventory/devices/evaluation', icon: 'check-circle' },
     ],
   },
   {

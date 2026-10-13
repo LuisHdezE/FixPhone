@@ -1,124 +1,185 @@
-import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router';
-import { MetricCard, type MetricCardTone } from '@/components/data-display/MetricCard';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router';
+import { AppIcon } from '@/components/AppIcon';
+import { MetricCard } from '@/components/data-display/MetricCard';
 import { StatusBadge } from '@/components/data-display/StatusBadge';
-import { SelectField } from '@/components/forms/SelectField';
-import { TextAreaField } from '@/components/forms/TextAreaField';
+import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { PageShell } from '@/shell/PageShell';
-import type { DeviceDestination } from '../application/devices.dto';
-import type { InventoryDemoProvider } from '../application/inventory.contracts';
+import type { InventoryDeviceListItemDto, DevicePowerState, DevicePhysicalCondition, DeviceAccountLock } from '../application/devices.dto';
+import type { InventoryDevicesGateway } from '../application/inventory.contracts';
 
-const metricTone: Record<'success' | 'warning' | 'info' | 'neutral', MetricCardTone> = {
-  success: 'positive',
-  warning: 'warning',
-  info: 'neutral',
-  neutral: 'neutral',
+const returnPath = '/apps/inventory/devices';
+
+const physicalLabels: Record<DevicePhysicalCondition, string> = {
+  Excellent: 'Excelente', Good: 'Buena', Fair: 'Regular', Poor: 'Mala',
+  Damaged: 'Dañada', Unknown: 'Sin evaluar',
 };
 
-function optionLabel(options: readonly { value: string; label: string }[], value: string) {
-  return options.find((option) => option.value === value)?.label ?? value;
+const powerLabels: Record<DevicePowerState, string> = {
+  Yes: 'Sí', No: 'No', Unknown: 'Sin evaluar',
+};
+
+const lockLabels: Record<DeviceAccountLock, string> = {
+  Clear: 'Sin bloqueo', Locked: 'Bloqueado', Unknown: 'Sin evaluar',
+};
+
+const destinationLabels: Record<InventoryDeviceListItemDto['destination'], string> = {
+  'Pending Evaluation': 'Pendiente de evaluación',
+  Donor: 'Para repuestos',
+  Refurbish: 'Reacondicionar',
+  Hold: 'En espera',
+  Discard: 'Descartar',
+};
+
+const dismantlingLabels: Record<InventoryDeviceListItemDto['dismantlingStatus'], string> = {
+  unknown: 'Sin verificar', not_started: 'Sin iniciar', partial: 'Parcial', exhausted: 'Agotado',
+};
+
+function Field({ label, value }: { label: string; value: string | null | undefined }) {
+  const content = value && value.trim() && value !== '—' ? value : 'Sin registrar';
+  return <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
+    <dt className="text-[11px] font-semibold text-slate-500">{label}</dt>
+    <dd className="mt-1 break-words text-sm font-medium text-slate-900">{content}</dd>
+  </div>;
 }
 
-export function InventoryDeviceEvaluationPage({ provider }: { provider: InventoryDemoProvider }) {
-  const view = provider.getDeviceEvaluationView();
-  const [destination, setDestination] = useState<DeviceDestination>(view.recommendedDestination);
-  const [notes, setNotes] = useState(view.evaluatorNotes);
-  const [submitted, setSubmitted] = useState(false);
-  const selectedDecision = view.decisions.find((decision) => decision.destination === destination);
+const missingChecks = [
+  'Pantalla y táctil', 'Chasis y tapa trasera', 'Indicadores de humedad',
+  'Batería y carga', 'Cámaras', 'Audio y micrófonos', 'Conectividad', 'Biometría',
+] as const;
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSubmitted(true);
-  }
+export function InventoryDeviceEvaluationPage({ gateway }: { gateway: InventoryDevicesGateway }) {
+  const { deviceId } = useParams<{ deviceId: string }>();
+  const [device, setDevice] = useState<InventoryDeviceListItemDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  return <PageShell breadcrumbs={view.breadcrumbs.map((label) => ({ label }))} description={view.description} title={view.title}>
-    <div className="grid gap-4" data-device-evaluation>
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    setNotFound(false);
+    setDevice(null);
+
+    if (!deviceId) {
+      setLoading(false);
+      setNotFound(true);
+      return;
+    }
+
+    gateway.listDevices()
+      .then(devices => {
+        if (!alive) return;
+        const matching = devices.find(item => item.inventoryId === deviceId);
+        if (matching) setDevice(matching);
+        else setNotFound(true);
+      })
+      .catch(cause => {
+        if (alive) setError(cause instanceof Error ? cause.message : 'No se pudo consultar el inventario.');
+      })
+      .finally(() => { if (alive) setLoading(false); });
+
+    return () => { alive = false; };
+  }, [deviceId, gateway, reloadKey]);
+
+  const breadcrumbs = [
+    { label: 'Aplicaciones' },
+    { label: 'Inventario' },
+    { label: 'Dispositivos', to: returnPath },
+    { label: 'Evaluación técnica' },
+  ];
+
+  return <PageShell
+    title="Evaluación técnica"
+    description="Ficha vinculada al dispositivo registrado en el inventario de FixPhone."
+    breadcrumbs={breadcrumbs}
+  >
+    {loading ? <InlineFeedback title="Cargando dispositivo" message="Consultando su información actual en el inventario." tone="info" /> : null}
+    {!loading && error ? <div className="grid gap-3">
+      <InlineFeedback title="No se pudo cargar el dispositivo" message={error} tone="error" />
+      <div className="flex gap-2">
+        <button className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold" onClick={() => setReloadKey(key => key + 1)} type="button">Reintentar</button>
+        <Link className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold" to={returnPath}>Volver a dispositivos</Link>
+      </div>
+    </div> : null}
+    {!loading && !error && notFound ? <div className="grid gap-3">
+      <InlineFeedback title="Dispositivo no encontrado" message="El equipo no existe en el inventario disponible o fue retirado. Elegí otro desde la tabla de dispositivos." tone="warning" />
+      <Link className="w-fit rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold" to={returnPath}>Volver a dispositivos</Link>
+    </div> : null}
+    {!loading && !error && device ? <div className="grid gap-3" data-device-evaluation data-inventory-device-id={device.inventoryId}>
       <SurfaceCard>
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-600">{view.device.id}</p>
-            <h2 className="mt-1 text-xl font-semibold text-slate-950">{view.device.manufacturer} {view.device.model}</h2>
-            <p className="mt-1 text-sm text-slate-500">{view.device.storage} · {view.device.color}</p>
+            <p className="text-xs font-semibold text-brand-600">{device.id}</p>
+            <h2 className="mt-1 text-lg font-semibold text-slate-950">{device.manufacturer} {device.model}</h2>
+            <p className="mt-1 text-xs text-slate-500">{device.storage} · {device.color}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge label={optionLabel(view.decisions.map((decision) => ({ value: decision.destination, label: decision.label })), view.device.destination)} tone={view.device.destinationTone} />
-            <Link className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" to="/apps/inventory/devices">{view.backLabel}</Link>
+            <StatusBadge label={destinationLabels[device.destination]} tone={device.destinationTone} />
+            <Link className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" to={returnPath}>
+              <AppIcon name="device" className="size-4" /> Volver a dispositivos
+            </Link>
           </div>
         </div>
       </SurfaceCard>
 
-      <section aria-label={view.summaryTitle} className="grid gap-4 md:grid-cols-3">
-        {view.metrics.map((metric) => <MetricCard key={metric.id} label={metric.label} note={metric.note} tone={metricTone[metric.tone]} value={metric.value} />)}
+      <section className="grid gap-3 md:grid-cols-3" aria-label="Estado técnico registrado">
+        <MetricCard label="Condición física" value={physicalLabels[device.physicalCondition]} tone={device.physicalCondition === 'Unknown' ? 'warning' : 'neutral'} note="Dato del inventario" />
+        <MetricCard label="Encendido" value={powerLabels[device.powersOn]} tone={device.powersOn === 'Unknown' ? 'warning' : 'neutral'} note="Dato del inventario" />
+        <MetricCard label="Bloqueo de cuenta" value={lockLabels[device.accountLock]} tone={device.accountLock === 'Unknown' ? 'warning' : 'neutral'} note="Dato del inventario" />
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="grid gap-4">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="grid content-start gap-3">
           <SurfaceCard>
-            <h2 className="text-base font-semibold text-slate-950">{view.identitySectionTitle}</h2>
-            <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-[11px] font-semibold text-slate-500">{view.fields.serialOrImei}</dt><dd className="mt-1 font-mono text-sm text-slate-800">{view.device.serialOrImei}</dd></div>
-              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-[11px] font-semibold text-slate-500">{view.fields.acquisitionSource}</dt><dd className="mt-1 text-sm text-slate-800">{view.device.acquisitionSource}</dd></div>
-              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-[11px] font-semibold text-slate-500">{view.fields.acquisitionCost}</dt><dd className="mt-1 text-sm font-semibold text-slate-800">{view.device.acquisitionCost}</dd></div>
-              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-[11px] font-semibold text-slate-500">{view.fields.accountLock}</dt><dd className="mt-1 text-sm text-slate-800">{view.device.accountLock}</dd></div>
+            <h3 className="text-sm font-semibold text-slate-950">Identidad y adquisición</h3>
+            <dl className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <Field label="Código FixPhone" value={device.id} />
+              <Field label="IMEI / Serie" value={device.serialOrImei} />
+              <Field label="Marca" value={device.manufacturer} />
+              <Field label="Modelo" value={device.model} />
+              <Field label="Almacenamiento" value={device.storage} />
+              <Field label="Color" value={device.color} />
+              <Field label="Origen" value={device.acquisitionSource} />
+              <Field label="Costo inicial" value={device.acquisitionCostMinor === null ? null : device.acquisitionCost} />
+              <Field label="Destino actual" value={destinationLabels[device.destination]} />
             </dl>
           </SurfaceCard>
 
           <SurfaceCard>
-            <h2 className="text-base font-semibold text-slate-950">{view.visualSectionTitle}</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {view.visualChecks.map((check) => <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3" key={check.id}>
-                <div><p className="text-sm font-medium text-slate-800">{check.label}</p><p className="mt-0.5 text-xs text-slate-500">{check.value}</p></div>
-                <StatusBadge label={check.value} tone={check.tone} />
-              </div>)}
-            </div>
-          </SurfaceCard>
-
-          <SurfaceCard>
-            <h2 className="text-base font-semibold text-slate-950">{view.functionalSectionTitle}</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {view.functionalChecks.map((check) => <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3" key={check.id}>
-                <div><p className="text-sm font-medium text-slate-800">{check.label}</p><p className="mt-0.5 text-xs text-slate-500">{check.value}</p></div>
-                <StatusBadge label={check.value} tone={check.tone} />
+            <h3 className="text-sm font-semibold text-slate-950">Pruebas técnicas pendientes de registro</h3>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Esta pantalla todavía no dispone de registros persistidos para cada prueba. No se muestran diagnósticos simulados.</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {missingChecks.map(check => <div key={check} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2 text-xs">
+                <span className="font-medium text-slate-700">{check}</span>
+                <span className="shrink-0 text-slate-500">Sin registrar</span>
               </div>)}
             </div>
           </SurfaceCard>
         </div>
 
-        <aside className="grid content-start gap-4">
+        <aside className="grid content-start gap-3">
           <SurfaceCard>
-            <h2 className="text-base font-semibold text-slate-950">{view.commercialSectionTitle}</h2>
-            <dl className="mt-4 grid gap-3">
-              <div><dt className="text-[11px] font-semibold text-slate-500">{view.fields.estimatedRecoverableValue}</dt><dd className="mt-1 text-xl font-semibold text-slate-950">{view.commercial.estimatedRecoverableValue}</dd></div>
-              <div><dt className="text-[11px] font-semibold text-slate-500">{view.fields.estimatedPartsValue}</dt><dd className="mt-1 text-sm text-slate-700">{view.commercial.estimatedPartsValue}</dd></div>
-              <div><dt className="text-[11px] font-semibold text-slate-500">{view.fields.estimatedRefurbCost}</dt><dd className="mt-1 text-sm text-slate-700">{view.commercial.estimatedRefurbCost}</dd></div>
+            <h3 className="text-sm font-semibold text-slate-950">Estado comercial y operativo</h3>
+            <dl className="mt-3 grid gap-2">
+              <Field label="Costo de adquisición" value={device.acquisitionCostMinor === null ? null : device.acquisitionCost} />
+              <Field label="Despiece" value={device.isDonor ? dismantlingLabels[device.dismantlingStatus] : 'No aplica'} />
+              <Field label="Publicación" value={device.publicListingStatus === 'published' ? 'Publicada' : 'Sin publicar'} />
+              <Field label="Valor recuperable estimado" value="Sin evaluar" />
+              <Field label="Costo estimado de reparación" value="Sin evaluar" />
             </dl>
-            <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600">{view.commercial.profitabilitySignal}</p>
+            <p className="mt-3 text-xs leading-5 text-slate-500">Las estimaciones comerciales no se calculan hasta contar con valores registrados para este equipo.</p>
           </SurfaceCard>
-
-          <form className="grid gap-4" onSubmit={submit}>
-            <SurfaceCard>
-              <h2 className="text-base font-semibold text-slate-950">{view.decisionSectionTitle}</h2>
-              <div className="mt-4 grid gap-4">
-                <SelectField id="device-evaluation-destination" label={view.fields.recommendedDestination} onChange={(value) => { setDestination(value as DeviceDestination); setSubmitted(false); }} options={view.decisions.map((decision) => ({ value: decision.destination, label: decision.label }))} value={destination} />
-                {selectedDecision ? <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <StatusBadge label={selectedDecision.label} tone={selectedDecision.tone} />
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{selectedDecision.description}</p>
-                </div> : null}
-                <TextAreaField id="device-evaluation-notes" label={view.fields.evaluatorNotes} onChange={(value) => { setNotes(value); setSubmitted(false); }} rows={5} value={notes} />
-                <p className="text-xs leading-5 text-slate-500">{view.localNotice}</p>
-                <button className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700" type="submit">{view.submitLabel}</button>
-              </div>
-            </SurfaceCard>
-            {submitted ? <SurfaceCard>
-              <div role="status" data-device-evaluation-success>
-                <p className="text-sm font-semibold text-emerald-700">{view.successTitle}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{view.successMessage}</p>
-              </div>
-            </SurfaceCard> : null}
-          </form>
+          <SurfaceCard>
+            <h3 className="text-sm font-semibold text-slate-950">Observaciones registradas</h3>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{device.description.trim() || 'Sin observaciones registradas.'}</p>
+            <p className="mt-3 text-xs leading-5 text-slate-500">Ficha de consulta. No modifica el destino ni registra una evaluación nueva.</p>
+          </SurfaceCard>
         </aside>
       </div>
-    </div>
+    </div> : null}
   </PageShell>;
 }
