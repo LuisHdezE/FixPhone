@@ -60,9 +60,9 @@ final class DeviceRoutingController extends Controller
                 abort(409, 'El equipo está comprometido en un pedido abierto. Resolvé el pedido antes de cambiar su destino.');
             }
 
-            if ($device->is_sellable || $device->publication_status === 'publicado'
+            if ($device->publication_status === 'publicado'
                 || PublishedPartsDonor::query()->where('inventory_item_id', $id)->exists()) {
-                abort(409, 'Primero deshabilitá la venta y retiralo de las publicaciones antes de cambiar su destino.');
+                abort(409, 'Primero retiralo de las publicaciones activas antes de cambiar su destino.');
             }
 
             if (in_array($device->dismantling_status, ['partial', 'exhausted'], true)) {
@@ -78,12 +78,16 @@ final class DeviceRoutingController extends Controller
                 'destination' => $oldDestination,
                 'inventory_purpose' => $device->inventory_purpose,
                 'operational_status' => $device->operational_status,
+                'is_sellable' => (bool) $device->is_sellable,
             ];
 
             $route = self::ROUTES[$next];
             $metadata['destination'] = $next;
             $device->inventory_purpose = $route['purpose'];
             $device->operational_status = $route['status'];
+            // Rerouting is not a sale. Disable sale eligibility until the
+            // corresponding commercial workflow explicitly re-enables it.
+            $device->is_sellable = false;
             $device->metadata = $metadata;
             $device->save();
 
@@ -102,6 +106,7 @@ final class DeviceRoutingController extends Controller
                         'destination' => $next,
                         'inventory_purpose' => $device->inventory_purpose,
                         'operational_status' => $device->operational_status,
+                        'is_sellable' => (bool) $device->is_sellable,
                     ],
                     'reason' => trim($values['reason']),
                 ]),
