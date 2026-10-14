@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/data-display/StatusBadge';
 import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { PageShell } from '@/shell/PageShell';
-import type { InventoryDeviceListItemDto, DevicePowerState, DevicePhysicalCondition, DeviceAccountLock } from '../application/devices.dto';
+import { lifecycleLabel, type InventoryDeviceListItemDto, type DevicePowerState, type DevicePhysicalCondition, type DeviceAccountLock } from '../application/devices.dto';
 import type { InventoryDevicesGateway } from '../application/inventory.contracts';
 
 const returnPath = '/apps/inventory/devices';
@@ -118,7 +118,7 @@ export function InventoryDeviceEvaluationPage({ gateway }: { gateway: InventoryD
             <p className="mt-1 text-xs text-slate-500">{device.storage} · {device.color}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge label={destinationLabels[device.destination]} tone={device.destinationTone} />
+            <StatusBadge label={lifecycleLabel(device.operationalStatus)} tone="info" />
             <Link className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" to={returnPath}>
               <AppIcon name="device" className="size-4" /> Volver a dispositivos
             </Link>
@@ -145,7 +145,8 @@ export function InventoryDeviceEvaluationPage({ gateway }: { gateway: InventoryD
               <Field label="Color" value={device.color} />
               <Field label="Origen" value={device.acquisitionSource} />
               <Field label="Costo inicial" value={device.acquisitionCostMinor === null ? null : device.acquisitionCost} />
-              <Field label="Destino actual" value={destinationLabels[device.destination]} />
+              <Field label="Destino inicial" value={device.initialDestination ? destinationLabels[device.initialDestination] : "Sin registro histórico"} />
+              <Field label="Estado operativo actual" value={lifecycleLabel(device.operationalStatus)} />
             </dl>
           </SurfaceCard>
 
