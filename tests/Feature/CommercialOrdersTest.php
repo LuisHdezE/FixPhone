@@ -198,6 +198,56 @@ final class CommercialOrdersTest extends TestCase
         $this->assertSame('vendido', $device->fresh()->operational_status);
     }
 
+    public function test_reserved_device_cannot_be_edited_or_archived(): void
+    {
+        $this->signIn('owner');
+        $customer = $this->customer();
+        $device = $this->item();
+        $this->postJson('/api/v1/admin/orders', $this->requestBody($customer, $device))
+            ->assertCreated();
+
+        $this->patchJson('/api/v1/admin/inventory/'.$device->id, [
+            'brand_id' => 'brand-apple',
+            'device_model_id' => 'model-iphone-12',
+            'powers_on' => 'Unknown',
+            'account_lock' => 'Unknown',
+            'currency_code' => 'UYU',
+        ])->assertStatus(409);
+
+        $this->deleteJson('/api/v1/admin/inventory/'.$device->id)->assertStatus(409);
+        $this->assertDatabaseHas('inventory_items', ['id' => $device->id, 'deleted_at' => null]);
+    }
+
+    public function test_manual_stock_adjustments_respect_quantities_committed_to_orders(): void
+    {
+        $this->signIn('owner');
+        $customer = $this->customer();
+        $spare = $this->item([
+            'title' => 'Pantalla iPhone 12',
+            'item_type' => 'spare_part',
+            'stock_quantity' => 5,
+            'sale_price_amount_minor' => 90000,
+        ]);
+        $this->postJson('/api/v1/admin/orders', $this->requestBody($customer, $spare, 4))
+            ->assertCreated();
+
+        $path = '/api/v1/admin/inventory/items/'.$spare->id.'/adjustments';
+        $this->postJson($path, [
+            'request_id' => (string) Str::uuid(),
+            'delta' => -2,
+            'reason' => 'Ajuste verificado por el operador',
+        ])->assertStatus(409);
+        $this->assertSame(5, $spare->fresh()->stock_quantity);
+
+        $this->postJson($path, [
+            'request_id' => (string) Str::uuid(),
+            'delta' => -1,
+            'reason' => 'Ajuste verificado por el operador',
+        ])->assertCreated();
+        $this->assertSame(4, $spare->fresh()->stock_quantity);
+        $this->assertDatabaseCount('device_sale_records', 0);
+    }
+
     public function test_invalid_transitions_and_edits_after_preparing_are_blocked(): void
     {
         $this->signIn();
