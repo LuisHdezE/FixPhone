@@ -170,6 +170,34 @@ final class InventoryDeviceCrudTest extends TestCase
             ->assertJsonPath('data.metadata.origin_marker', 'preservar');
     }
 
+    public function test_owner_can_edit_brand_model_and_characteristics_after_technical_evaluation(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device();
+        $checks = array_map(static fn (string $key): array => [
+            'key' => $key,
+            'result' => $key === 'display_touch' ? 'ok' : 'not_tested',
+            'notes' => null,
+        ], ['display_touch', 'housing', 'moisture', 'battery_charging', 'cameras', 'audio_microphones', 'connectivity', 'biometrics']);
+        $this->postJson('/api/v1/admin/devices/'.$device->id.'/technical-evaluations', [
+            'request_id' => (string) Str::uuid(),
+            'notes' => 'Evaluación original',
+            'checks' => $checks,
+        ])->assertCreated();
+        $this->patchJson('/api/v1/admin/inventory/'.$device->id, $this->updatePayload())
+            ->assertOk()->assertJsonPath('data.model', 'iPhone 11 Pro')
+            ->assertJsonPath('data.metadata.color', 'Azul');
+        $this->getJson('/api/v1/admin/inventory')->assertOk()
+            ->assertJsonPath('data.0.metadata.device_model_id', 'model-iphone-11-pro');
+        $this->assertDatabaseCount('device_technical_evaluations', 1);
+        $this->assertDatabaseCount('device_technical_checks', 8);
+        $this->assertDatabaseHas('audit_events', [
+            'entity_id' => $device->id,
+            'event_type' => 'inventory.device_updated',
+        ]);
+        $this->assertSame('FXP-9001', $device->fresh()->sku);
+    }
+
     public function test_delete_is_logical_and_keeps_permanent_device_code_and_audit(): void
     {
         $this->signIn('owner');
