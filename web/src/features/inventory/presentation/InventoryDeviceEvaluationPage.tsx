@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/data-display/StatusBadge';
 import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { PageShell } from '@/shell/PageShell';
+import { TechnicalEvaluationPanel } from './TechnicalEvaluationPanel';
 import type { InventoryDeviceListItemDto, DevicePowerState, DevicePhysicalCondition, DeviceAccountLock } from '../application/devices.dto';
 import type { InventoryDevicesGateway } from '../application/inventory.contracts';
 
@@ -43,11 +44,6 @@ function Field({ label, value }: { label: string; value: string | null | undefin
     <dd className="mt-1 break-words text-sm font-medium text-slate-900">{content}</dd>
   </div>;
 }
-
-const missingChecks = [
-  'Pantalla y táctil', 'Chasis y tapa trasera', 'Indicadores de humedad',
-  'Batería y carga', 'Cámaras', 'Audio y micrófonos', 'Conectividad', 'Biometría',
-] as const;
 
 export function InventoryDeviceEvaluationPage({ gateway }: { gateway: InventoryDevicesGateway }) {
   const { deviceId } = useParams<{ deviceId: string }>();
@@ -149,16 +145,7 @@ export function InventoryDeviceEvaluationPage({ gateway }: { gateway: InventoryD
             </dl>
           </SurfaceCard>
 
-          <SurfaceCard>
-            <h3 className="text-sm font-semibold text-slate-950">Pruebas técnicas pendientes de registro</h3>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Esta pantalla todavía no dispone de registros persistidos para cada prueba. No se muestran diagnósticos simulados.</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {missingChecks.map(check => <div key={check} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2 text-xs">
-                <span className="font-medium text-slate-700">{check}</span>
-                <span className="shrink-0 text-slate-500">Sin registrar</span>
-              </div>)}
-            </div>
-          </SurfaceCard>
+          <TechnicalEvaluationPanel inventoryId={device.inventoryId}/>
         </div>
 
         <aside className="grid content-start gap-3">
