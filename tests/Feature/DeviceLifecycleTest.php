@@ -49,7 +49,7 @@ final class DeviceLifecycleTest extends TestCase
         ], $overrides));
     }
 
-    private function patch(InventoryItem $device, string $status, string $reason = 'Revisión del técnico en taller')
+    private function transition(InventoryItem $device, string $status, string $reason = 'Revisión del técnico en taller')
     {
         return $this->patchJson('/api/v1/admin/inventory/'.$device->id.'/lifecycle', compact('status', 'reason'));
     }
@@ -58,11 +58,11 @@ final class DeviceLifecycleTest extends TestCase
     {
         $device = $this->device();
         $this->getJson('/api/v1/admin/inventory/'.$device->id.'/lifecycle')->assertUnauthorized();
-        $this->patch($device, 'en_reparacion')->assertUnauthorized();
+        $this->transition($device, 'en_reparacion')->assertUnauthorized();
 
         $this->signIn('intake_operator');
         $this->getJson('/api/v1/admin/inventory/'.$device->id.'/lifecycle')->assertOk();
-        $this->patch($device, 'en_reparacion')->assertForbidden();
+        $this->transition($device, 'en_reparacion')->assertForbidden();
         $this->assertSame('para_reparar', $device->fresh()->operational_status);
     }
 
@@ -71,9 +71,9 @@ final class DeviceLifecycleTest extends TestCase
         $this->signIn();
         $device = $this->device();
 
-        $this->patch($device, 'en_reparacion')->assertOk()->assertJsonPath('data.operational_status', 'en_reparacion');
-        $this->patch($device, 'reparado')->assertOk();
-        $this->patch($device, 'listo_para_venta')->assertOk();
+        $this->transition($device, 'en_reparacion')->assertOk()->assertJsonPath('data.operational_status', 'en_reparacion');
+        $this->transition($device, 'reparado')->assertOk();
+        $this->transition($device, 'listo_para_venta')->assertOk();
         $fresh = $device->fresh();
 
         $this->assertSame('Refurbish', $fresh->metadata['destination']);
@@ -104,9 +104,9 @@ final class DeviceLifecycleTest extends TestCase
         $this->signIn();
         $device = $this->device();
 
-        $this->patch($device, 'para_deshuesar')->assertOk()->assertJsonPath('data.inventory_purpose', 'parts_donor');
+        $this->transition($device, 'para_deshuesar')->assertOk()->assertJsonPath('data.inventory_purpose', 'parts_donor');
         $this->assertSame('Refurbish', $device->fresh()->metadata['destination']);
-        $this->patch($device, 'para_reparar')->assertOk()->assertJsonPath('data.inventory_purpose', 'repair_then_sell');
+        $this->transition($device, 'para_reparar')->assertOk()->assertJsonPath('data.inventory_purpose', 'repair_then_sell');
         $this->assertSame('Refurbish', $device->fresh()->metadata['destination']);
         $this->assertDatabaseCount('audit_events', 2);
     }
@@ -118,7 +118,7 @@ final class DeviceLifecycleTest extends TestCase
 
         $this->getJson('/api/v1/admin/inventory/'.$device->id.'/lifecycle')
             ->assertOk()->assertJsonPath('data.allowed_statuses', []);
-        $this->patch($device, 'para_reparar')->assertStatus(409);
+        $this->transition($device, 'para_reparar')->assertStatus(409);
         $this->assertSame('parts_donor', $device->fresh()->inventory_purpose);
     }
 
@@ -126,12 +126,12 @@ final class DeviceLifecycleTest extends TestCase
     {
         $this->signIn();
         $device = $this->device(['is_sellable' => true]);
-        $this->patch($device, 'en_reparacion')->assertStatus(409);
+        $this->transition($device, 'en_reparacion')->assertStatus(409);
 
         $device->is_sellable = false;
         $device->publication_status = 'publicado';
         $device->save();
-        $this->patch($device, 'en_reparacion')->assertStatus(409);
+        $this->transition($device, 'en_reparacion')->assertStatus(409);
 
         $device->publication_status = 'no_publicable';
         $device->save();
@@ -152,14 +152,14 @@ final class DeviceLifecycleTest extends TestCase
             'item_type_snapshot' => 'used_phone', 'quantity' => 1, 'unit_price_minor' => 100000,
             'line_total_minor' => 100000, 'created_at' => now(), 'updated_at' => now(),
         ]);
-        $this->patch($device, 'en_reparacion')->assertStatus(409);
+        $this->transition($device, 'en_reparacion')->assertStatus(409);
         $this->assertSame('para_reparar', $device->fresh()->operational_status);
         DB::table('orders')->where('id', $orderId)->update(['status' => 'cancelled']);
-        $this->patch($device, 'en_reparacion')->assertOk();
+        $this->transition($device, 'en_reparacion')->assertOk();
 
         $device->operational_status = 'vendido';
         $device->save();
-        $this->patch($device, 'reparado')->assertStatus(409);
+        $this->transition($device, 'reparado')->assertStatus(409);
     }
 
     public function test_ready_requires_basic_power_and_account_checks(): void
@@ -171,7 +171,7 @@ final class DeviceLifecycleTest extends TestCase
         ]);
         $this->getJson('/api/v1/admin/inventory/'.$device->id.'/lifecycle')->assertOk()
             ->assertJsonMissing(['listo_para_venta']);
-        $this->patch($device, 'listo_para_venta')->assertStatus(409);
+        $this->transition($device, 'listo_para_venta')->assertStatus(409);
         $this->assertSame('reparado', $device->fresh()->operational_status);
     }
 
@@ -179,9 +179,9 @@ final class DeviceLifecycleTest extends TestCase
     {
         $this->signIn();
         $device = $this->device(['inventory_purpose' => 'consigned_phone']);
-        $this->patch($device, 'para_deshuesar')->assertStatus(409);
-        $this->patch($device, 'descartado')->assertStatus(409);
-        $this->patch($device, 'en_reparacion')->assertOk();
+        $this->transition($device, 'para_deshuesar')->assertStatus(409);
+        $this->transition($device, 'descartado')->assertStatus(409);
+        $this->transition($device, 'en_reparacion')->assertOk();
         $this->assertSame('consigned_phone', $device->fresh()->inventory_purpose);
     }
 
@@ -190,8 +190,8 @@ final class DeviceLifecycleTest extends TestCase
         $this->signIn();
         $device = $this->device();
         $url = '/api/v1/admin/inventory/'.$device->id.'/lifecycle';
-        $this->patch($device, 'listo_para_venta')->assertStatus(409);
-        $this->patch($device, 'en_reparacion', 'abc')->assertUnprocessable()->assertJsonValidationErrors(['reason']);
+        $this->transition($device, 'listo_para_venta')->assertStatus(409);
+        $this->transition($device, 'en_reparacion', 'abc')->assertUnprocessable()->assertJsonValidationErrors(['reason']);
         $this->patchJson($url, ['status' => 'en_reparacion', 'reason' => 'Intento de modificar destino', 'metadata' => ['destination' => 'Donor']])
             ->assertUnprocessable();
         $this->patchJson($url, ['status' => 'vendido', 'reason' => 'Venta simulada en estado'])
