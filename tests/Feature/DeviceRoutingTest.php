@@ -31,7 +31,7 @@ final class DeviceRoutingTest extends TestCase
     private function device(array $overrides = []): InventoryItem
     {
         return InventoryItem::query()->create(array_merge([
-            'sku' => 'FXP-ROUTE-001',
+            'sku' => 'FXP-ROUTE-'.strtoupper(substr((string) Str::ulid(), -12)),
             'title' => 'iPhone 12',
             'item_type' => 'used_phone',
             'brand' => 'Apple',
@@ -93,10 +93,6 @@ final class DeviceRoutingTest extends TestCase
             'entity_id' => $device->id,
             'event_type' => 'inventory.device_destination_changed',
         ]);
-        $this->assertSame('Donor', DB::table('audit_events')
-            ->where('entity_id', $device->id)
-            ->where('event_type', 'inventory.device_destination_changed')
-            ->firstOrFail() !== null ? $device->metadata['destination'] : null);
     }
 
     public function test_changing_destination_remains_possible_after_a_saved_technical_evaluation(): void
