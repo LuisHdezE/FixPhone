@@ -177,6 +177,14 @@ final class DeviceInventoryCrudController extends Controller
 
     private function assertNoFinancialHistory(InventoryItem $item, string $verb): void
     {
+        if (DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.inventory_item_id', $item->id)
+            ->whereIn('orders.status', ['pending', 'processing', 'ready'])
+            ->exists()) {
+            abort(409, 'No se puede '.$verb.' un equipo reservado en un pedido comercial abierto.');
+        }
+
         if (DB::table('device_sale_records')->where('inventory_item_id', $item->id)->exists()
             || DB::table('device_installed_parts')->where('inventory_item_id', $item->id)->exists()
             || DB::table('device_valuations')->where('inventory_item_id', $item->id)->exists()
