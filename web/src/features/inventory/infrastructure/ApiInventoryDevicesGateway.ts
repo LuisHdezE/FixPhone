@@ -3,6 +3,8 @@ import type { InventoryDevicesGateway } from '../application/inventory.contracts
 import type {
   DeviceDestination,
   DismantlingStatus,
+  DeviceLifecycleStatus,
+  DeviceLifecycleSnapshot,
   DevicePhysicalCondition,
   DevicePowerState,
   InventoryDeviceListItemDto,
@@ -118,6 +120,8 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
     id: item.sku?.trim() || item.id,
     inventoryId: item.id,
     isDonor: item.inventory_purpose === 'parts_donor',
+    operationalStatus: item.operational_status,
+    inventoryPurpose: item.inventory_purpose,
     dismantlingStatus: isDismantlingStatus(item.dismantling_status) ? item.dismantling_status : 'unknown',
     publicListingStatus: item.public_listing_status === 'published' ? 'published' : 'draft',
     publicValuationId: item.public_valuation_id ?? null,
@@ -144,6 +148,22 @@ async function readApiError(response: Response, fallback: string): Promise<strin
 }
 
 export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
+  async getLifecycle(inventoryId: string): Promise<DeviceLifecycleSnapshot> {
+    const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId) + '/lifecycle', { cache: 'no-store' });
+    if (!response.ok) throw new Error(await readApiError(response, 'No se pudo obtener el estado e historial'));
+    const payload = await response.json() as { data: DeviceLifecycleSnapshot };
+    return payload.data;
+  }
+
+  async changeLifecycle(inventoryId: string, status: DeviceLifecycleStatus, reason: string): Promise<void> {
+    const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId) + '/lifecycle', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, reason }),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'No se pudo actualizar el estado operativo'));
+  }
+
   async updateDevice(inventoryId: string, fields: InventoryDeviceEditDto): Promise<void> {
     const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId), {
       method: 'PATCH',
