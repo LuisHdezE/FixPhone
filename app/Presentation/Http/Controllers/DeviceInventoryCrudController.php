@@ -177,6 +177,9 @@ final class DeviceInventoryCrudController extends Controller
 
     private function assertNoFinancialHistory(InventoryItem $item, string $verb): void
     {
+        if (DB::table('device_technical_evaluations')->where('inventory_item_id', $item->id)->exists()) {
+            abort(409, 'No se puede '.$verb.' un equipo con evaluaciones técnicas registradas. Conservá su identidad e historial.');
+        }
         if (DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.inventory_item_id', $item->id)
