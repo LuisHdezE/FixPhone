@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->string('overall_result', 20);
             $table->text('notes')->nullable();
             $table->string('evaluated_by_actor_id', 50);
+            $table->string('technician_name_snapshot', 255);
             $table->timestamps();
             $table->foreign('inventory_item_id')->references('id')->on('inventory_items')->restrictOnDelete();
             $table->unique(['inventory_item_id', 'revision']);
