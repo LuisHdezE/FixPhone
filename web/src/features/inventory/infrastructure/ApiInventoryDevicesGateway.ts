@@ -144,6 +144,17 @@ async function readApiError(response: Response, fallback: string): Promise<strin
 }
 
 export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
+  async updateDestination(inventoryId: string, destination: DeviceDestination, reason: string): Promise<void> {
+    const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId) + '/routing', {
+      method: 'PATCH',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ destination, reason: reason.trim() }),
+    });
+    if (!response.ok) {
+      throw new Error(await readApiError(response, 'No se pudo cambiar el destino del equipo'));
+    }
+  }
+
   async updateDevice(inventoryId: string, fields: InventoryDeviceEditDto): Promise<void> {
     const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId), {
       method: 'PATCH',
