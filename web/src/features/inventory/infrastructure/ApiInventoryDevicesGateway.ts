@@ -105,6 +105,11 @@ function isDismantlingStatus(value: unknown): value is DismantlingStatus {
 
 function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
   const mappedDestination = destination(item);
+  const recordedDestination = stringMeta(item.metadata, 'destination');
+  const initialDestination: DeviceDestination | null =
+    recordedDestination === 'Pending Evaluation' || recordedDestination === 'Donor'
+    || recordedDestination === 'Refurbish' || recordedDestination === 'Hold'
+    || recordedDestination === 'Discard' ? recordedDestination : null;
   const accountLock = stringMeta(item.metadata, 'account_lock');
 
   return {
@@ -136,6 +141,7 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
     acquisitionSource: stringMeta(item.metadata, 'acquisition_source', 'source') || '—',
     acquisitionCost: money(item.cost_amount_minor, item.currency_code),
     destination: mappedDestination,
+    initialDestination,
     destinationTone: destinationTones[mappedDestination],
   };
 }
