@@ -96,12 +96,13 @@ export interface InventoryDeviceListItemDto {
   acquisitionSource: string;
   acquisitionCost: string;
   destination: DeviceDestination;
+  initialDestination: DeviceDestination | null;
   destinationTone: StatusBadgeTone;
 }
 
 // Static presentation reference data is not a persisted inventory record.
 export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
-  'inventoryId' | 'isDonor' | 'operationalStatus' | 'inventoryPurpose' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId'>;
+  'inventoryId' | 'isDonor' | 'operationalStatus' | 'inventoryPurpose' | 'initialDestination' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId'>;
 
 export interface InventoryFilterOptionDto {
   value: string;
