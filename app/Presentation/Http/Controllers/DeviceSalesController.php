@@ -82,6 +82,19 @@ final class DeviceSalesController extends Controller
                 ]);
             }
 
+            // Prevent direct sales bypassing quantities held by open orders.
+            // The inventory device row is already locked for this transaction.
+            $heldByOrder = DB::table('order_items')
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->where('order_items.inventory_item_id', $device->id)
+                ->whereIn('orders.status', ['pending', 'processing', 'ready'])
+                ->exists();
+            if ($heldByOrder) {
+                throw ValidationException::withMessages([
+                    'effective_sale_price_minor' => 'El equipo está reservado en un pedido comercial. Cancelá o conciliá el pedido antes de registrar una venta directa.',
+                ]);
+            }
+
             if (in_array($device->inventory_purpose, ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'], true)) {
                 if (empty($device->consignor_id)) {
                     throw ValidationException::withMessages(['consignor_id' => 'El equipo no tiene propietario registrado en el inventario. Regularice el equipo antes de venderlo.']);
