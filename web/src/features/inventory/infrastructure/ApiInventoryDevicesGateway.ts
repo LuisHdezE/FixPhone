@@ -153,6 +153,25 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
     if (!response.ok) {
       throw new Error(await readApiError(response, 'No se pudo cambiar el destino del equipo'));
     }
+
+    // HTTP 200 alone does not prove persistence. Validate the response and then
+    // read from the inventory endpoint again without any browser HTTP cache.
+    const result = await response.json().catch(() => null) as
+      | { data?: { id?: string; destination?: string } } | null;
+    if (result?.data?.id !== inventoryId || result.data.destination !== destination) {
+      throw new Error('El servidor respondió, pero no confirmó el destino solicitado. No se puede dar por guardado.');
+    }
+
+    let devices: readonly InventoryDeviceListItemDto[];
+    try {
+      devices = await this.listDevices();
+    } catch {
+      throw new Error('Se recibió confirmación del guardado, pero falló su verificación. Recargá la lista antes de repetir el cambio.');
+    }
+    const saved = devices.find(item => item.inventoryId === inventoryId);
+    if (!saved || saved.destination !== destination) {
+      throw new Error('El destino no coincide con la nueva lectura de la base de datos. No se mostrará como guardado.');
+    }
   }
 
   async updateDevice(inventoryId: string, fields: InventoryDeviceEditDto): Promise<void> {
@@ -201,7 +220,8 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
 
   async listDevices(): Promise<readonly InventoryDeviceListItemDto[]> {
     const response = await adminFetch('/api/v1/admin/inventory', {
-      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      headers: { Accept: 'application/json', 'Cache-Control': 'no-cache' },
     });
 
     if (!response.ok) {
