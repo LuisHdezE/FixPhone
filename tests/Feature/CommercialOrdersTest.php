@@ -167,6 +167,37 @@ final class CommercialOrdersTest extends TestCase
         $this->assertDatabaseCount('orders', 0);
     }
 
+    public function test_direct_sale_cannot_bypass_open_order_reservation(): void
+    {
+        $this->signIn('owner');
+        $customer = $this->customer();
+        $device = $this->item();
+        $orderId = $this->postJson('/api/v1/admin/orders', $this->requestBody($customer, $device))
+            ->assertCreated()->json('data.id');
+
+        $salePayload = [
+            'request_id' => (string) Str::uuid(),
+            'effective_sale_price_minor' => 490000,
+            'notes' => 'Venta directa de prueba',
+        ];
+
+        $this->postJson('/api/v1/admin/devices/'.$device->id.'/sell', $salePayload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['effective_sale_price_minor']);
+        $this->assertDatabaseCount('device_sale_records', 0);
+        $this->assertSame('en_stock', $device->fresh()->operational_status);
+
+        $this->patchJson('/api/v1/admin/orders/'.$orderId.'/status', [
+            'status' => 'cancelled',
+            'reason' => 'Se cancela la reserva comercial',
+        ])->assertOk();
+
+        $this->postJson('/api/v1/admin/devices/'.$device->id.'/sell', $salePayload)
+            ->assertCreated();
+        $this->assertDatabaseCount('device_sale_records', 1);
+        $this->assertSame('vendido', $device->fresh()->operational_status);
+    }
+
     public function test_invalid_transitions_and_edits_after_preparing_are_blocked(): void
     {
         $this->signIn();
