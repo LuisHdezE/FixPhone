@@ -18,6 +18,7 @@ use App\Presentation\Http\Controllers\MediaStorageSettingsController;
 use App\Presentation\Http\Controllers\ValuationPhotosController;
 use App\Presentation\Http\Controllers\PartsDonorStorefrontController;
 use App\Presentation\Http\Controllers\ConsignorsController;
+use App\Presentation\Http\Controllers\CustomerDirectoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -80,6 +81,12 @@ Route::prefix('v1')->group(function (): void {
   Route::get('/admin/dashboard/operational',[OperationalDashboardController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.dashboard.operational.show');
   Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.index');
   Route::apiResource('admin/consignors', ConsignorsController::class)->except(['destroy'])->middleware('permission:catalog.manage');
+  // CRM directory: authenticated reads and catalog-maintenance writes.
+  Route::get('/admin/customers', [CustomerDirectoryController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.customers.index');
+  Route::get('/admin/customers/{id}', [CustomerDirectoryController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.customers.show');
+  Route::post('/admin/customers', [CustomerDirectoryController::class, 'store'])->middleware('permission:catalog.manage')->name('api.v1.admin.customers.store');
+  Route::patch('/admin/customers/{id}', [CustomerDirectoryController::class, 'update'])->middleware('permission:catalog.manage')->name('api.v1.admin.customers.update');
+  Route::delete('/admin/customers/{id}', [CustomerDirectoryController::class, 'destroy'])->middleware('permission:catalog.manage')->name('api.v1.admin.customers.destroy');
   
   // Operational inventory: one persisted source, separate permissions per action.
   Route::get('/admin/inventory/items',[OperationalInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.index');
