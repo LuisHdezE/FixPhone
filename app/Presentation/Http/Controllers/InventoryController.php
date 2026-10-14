@@ -33,7 +33,7 @@ class InventoryController extends Controller
                 'public_listing_status' => $publication ? 'published' : 'draft',
                 'public_valuation_id' => $publication?->id,
             ];
-        })]);
+        })])->header('Cache-Control', 'private, no-store, no-cache, must-revalidate');
     }
 
     public function create(Request $request)
