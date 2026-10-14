@@ -11,7 +11,8 @@ import { PageShell } from '@/shell/PageShell';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
-import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
+import { DeviceLifecycleModal } from './DeviceLifecycleModal';
+import { lifecycleLabel, type DismantlingStatus, type InventoryDeviceListItemDto } from '../application/devices.dto';
 
 const dismantlingNames: Record<DismantlingStatus, string> = {
   unknown: 'Sin verificar',
@@ -50,6 +51,8 @@ export function InventoryDevicesPage({
   const [canDismantle, setCanDismantle] = useState(false);
   const [canValuate, setCanValuate] = useState(false);
   const [canManage, setCanManage] = useState(false);
+  const [canChangeState, setCanChangeState] = useState(false);
+  const [lifecycleDevice, setLifecycleDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [editingDevice, setEditingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<{ device: InventoryDeviceListItemDto; kind: 'details' | 'dismantling' } | null>(null);
@@ -69,6 +72,7 @@ export function InventoryDevicesPage({
       setCanDismantle(permissions.includes('workshop.dismantle'));
       setCanValuate(permissions.includes('valuation.manage'));
       setCanManage(permissions.includes('catalog.manage'));
+      setCanChangeState(permissions.includes('inventory.adjust'));
       setDevices(items);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el inventario.');
@@ -177,6 +181,14 @@ export function InventoryDevicesPage({
       searchValue: (device) => device.destination,
     },
     {
+      id: 'operational',
+      header: 'Estado actual',
+      cell: (device) => <span className="text-xs font-semibold text-slate-700">{lifecycleLabel(device.operationalStatus)}</span>,
+      sortable: true,
+      sortValue: (device) => device.operationalStatus,
+      searchValue: (device) => lifecycleLabel(device.operationalStatus),
+    },
+    {
       id: 'dismantling',
       header: 'Despiece',
       cell: (device) => device.isDonor
@@ -212,6 +224,14 @@ export function InventoryDevicesPage({
           title={'Consultar evaluación técnica de ' + device.id}
           to={'/apps/inventory/devices/' + encodeURIComponent(device.inventoryId) + '/evaluation'}
         ><AppIcon className="size-3.5" name="check-circle" /></Link>
+        <button
+          aria-label={'Estado e historial de ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
+          disabled={busyId !== null}
+          onClick={() => setLifecycleDevice(device)}
+          title={'Consultar y cambiar estado de ' + device.id}
+          type="button"
+        ><AppIcon className="size-3.5" name="layers" /></button>
         {canManage ? <button
           aria-label={'Editar ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
@@ -328,7 +348,8 @@ export function InventoryDevicesPage({
           ['Bloqueo de cuenta', activeAction.device.accountLock],
           ['Origen', activeAction.device.acquisitionSource],
           ['Costo', activeAction.device.acquisitionCost],
-          ['Destino', optionLabel(view.filters.destinationOptions, activeAction.device.destination)],
+          ['Destino inicial', optionLabel(view.filters.destinationOptions, activeAction.device.destination)],
+          ['Estado actual', lifecycleLabel(activeAction.device.operationalStatus)],
           ['Despiece', activeAction.device.isDonor ? dismantlingNames[activeAction.device.dismantlingStatus] : 'No aplica'],
           ['Publicación', activeAction.device.publicListingStatus === 'published' ? 'Publicada' : 'Sin publicar'],
         ] as const).map(([label, value]) => <div className="min-w-0" key={label}>
@@ -350,6 +371,18 @@ export function InventoryDevicesPage({
         </div>
       </div>}
     </ModalShell> : null}
+    {lifecycleDevice ? <DeviceLifecycleModal
+      key={lifecycleDevice.inventoryId}
+      device={lifecycleDevice}
+      gateway={gateway}
+      canManage={canChangeState}
+      onClose={() => setLifecycleDevice(null)}
+      onSaved={(message) => {
+        setLifecycleDevice(null);
+        setNotice(message);
+        void loadDevices();
+      }}
+    /> : null}
     {editingDevice ? <InventoryDeviceIntakeModal
       key={editingDevice.inventoryId}
       editDevice={editingDevice}
