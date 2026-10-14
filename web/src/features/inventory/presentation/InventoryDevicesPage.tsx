@@ -269,8 +269,8 @@ export function InventoryDevicesPage({
         <div className="max-w-2xl">
           <p className="text-sm text-slate-500">{view.description}</p>
         </div>
-        <button className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700" onClick={() => setShowIntakeModal(true)} type="button">
-          {view.newDeviceLabel}
+        <button aria-label="Registrar dispositivo" className="inline-flex h-8 items-center rounded-md bg-brand-600 px-3 text-xs font-semibold text-white transition hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600" onClick={() => setShowIntakeModal(true)} type="button">
+          Registrar
         </button>
       </div>
 
