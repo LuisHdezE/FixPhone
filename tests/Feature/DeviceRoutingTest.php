@@ -123,8 +123,12 @@ final class DeviceRoutingTest extends TestCase
         $sold = $this->device(['operational_status' => 'vendido', 'metadata' => ['destination' => 'Donor']]);
         $this->patchJson($this->path($sold), $this->payload('Hold'))->assertStatus(409);
 
-        $listed = $this->device(['is_sellable' => true]);
+        $listed = $this->device(['is_sellable' => true, 'publication_status' => 'publicado']);
         $this->patchJson($this->path($listed), $this->payload())->assertStatus(409);
+
+        $availableButUnlisted = $this->device(['is_sellable' => true]);
+        $this->patchJson($this->path($availableButUnlisted), $this->payload())->assertOk();
+        $this->assertFalse($availableButUnlisted->fresh()->is_sellable);
 
         $dismantled = $this->device([
             'inventory_purpose' => 'parts_donor',
