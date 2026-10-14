@@ -169,6 +169,27 @@ final class DeviceTechnicalEvaluationTest extends TestCase
         $this->postJson($this->path($device), $this->body())->assertStatus(409);
     }
 
+    public function test_a_diagnosed_device_cannot_be_archived_or_have_its_identity_rewritten(): void
+    {
+        $this->signIn('technician');
+        $device = $this->device();
+        $this->postJson($this->path($device), $this->body())->assertCreated();
+
+        $this->signIn('owner');
+        $this->deleteJson('/api/v1/admin/inventory/'.$device->id)->assertStatus(409);
+
+        $this->patchJson('/api/v1/admin/inventory/'.$device->id, [
+            'brand_id' => 'brand-test',
+            'device_model_id' => 'model-test',
+            'powers_on' => 'Unknown',
+            'account_lock' => 'Unknown',
+            'currency_code' => 'UYU',
+        ])->assertStatus(409);
+
+        $this->assertDatabaseHas('inventory_items', ['id' => $device->id, 'deleted_at' => null]);
+        $this->assertDatabaseCount('device_technical_evaluations', 1);
+    }
+
     public function test_spare_part_cannot_be_evaluated_as_a_phone(): void
     {
         $this->signIn();
