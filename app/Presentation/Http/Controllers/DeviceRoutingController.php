@@ -91,6 +91,16 @@ final class DeviceRoutingController extends Controller
             $device->metadata = $metadata;
             $device->save();
 
+            // Confirm the new state through an independent database read while
+            // the transaction is still open. A false success must roll back.
+            $persisted = $device->fresh();
+            if (!$persisted
+                || ($persisted->metadata['destination'] ?? null) !== $next
+                || $persisted->inventory_purpose !== $route['purpose']
+                || $persisted->operational_status !== $route['status']) {
+                throw new \RuntimeException('No se pudo confirmar la actualización persistida del dispositivo.');
+            }
+
             DB::table('audit_events')->insert([
                 'id' => (string) Str::ulid(),
                 'event_type' => 'inventory.device_destination_changed',
@@ -113,7 +123,7 @@ final class DeviceRoutingController extends Controller
                 'occurred_at' => now(),
             ]);
 
-            return $device;
+            return $persisted;
         });
 
         return response()->json(['data' => [

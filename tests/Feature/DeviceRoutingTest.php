@@ -141,6 +141,33 @@ final class DeviceRoutingTest extends TestCase
         $this->patchJson($this->path($consigned), $this->payload('Discard'))->assertStatus(409);
     }
 
+    public function test_routing_is_persisted_and_visible_to_independent_inventory_get_without_cache(): void
+    {
+        $this->signIn();
+        $device = $this->device();
+
+        // Pending Evaluation and Hold share purpose/status. Only the JSON metadata
+        // distinguishes them, so this catches a particularly subtle lost update.
+        $this->patchJson($this->path($device), $this->payload('Hold'))
+            ->assertOk()->assertJsonPath('data.destination', 'Hold');
+
+        $firstGet = $this->getJson('/api/v1/admin/inventory')
+            ->assertOk()->assertJsonPath('data.0.metadata.destination', 'Hold');
+        $this->assertStringContainsString('no-store', (string) $firstGet->headers->get('Cache-Control'));
+        $this->assertSame('Hold', InventoryItem::query()->findOrFail($device->id)->metadata['destination']);
+
+        $this->patchJson($this->path($device), $this->payload('Pending Evaluation'))
+            ->assertOk()->assertJsonPath('data.destination', 'Pending Evaluation');
+
+        $this->getJson('/api/v1/admin/inventory')
+            ->assertOk()->assertJsonPath('data.0.metadata.destination', 'Pending Evaluation');
+        $saved = InventoryItem::query()->findOrFail($device->id);
+        $this->assertSame('Pending Evaluation', $saved->metadata['destination']);
+        $this->assertSame('internal_use', $saved->inventory_purpose);
+        $this->assertSame('ingresado', $saved->operational_status);
+        $this->assertDatabaseCount('audit_events', 2);
+    }
+
     public function test_open_commercial_order_prevents_rerouting(): void
     {
         $this->signIn();
