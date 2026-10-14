@@ -7,6 +7,8 @@ import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { PageShell } from '@/shell/PageShell';
 import { TechnicalEvaluationPanel } from './TechnicalEvaluationPanel';
+import { DeviceDestinationModal } from './DeviceDestinationModal';
+import { adminFetch } from '@/auth/adminApiSession';
 import type { InventoryDeviceListItemDto, DevicePowerState, DevicePhysicalCondition, DeviceAccountLock } from '../application/devices.dto';
 import type { InventoryDevicesGateway } from '../application/inventory.contracts';
 
@@ -52,6 +54,9 @@ export function InventoryDeviceEvaluationPage({ gateway }: { gateway: InventoryD
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [canRoute, setCanRoute] = useState(false);
+  const [showRouting, setShowRouting] = useState(false);
+  const [routingNotice, setRoutingNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -80,6 +85,17 @@ export function InventoryDeviceEvaluationPage({ gateway }: { gateway: InventoryD
 
     return () => { alive = false; };
   }, [deviceId, gateway, reloadKey]);
+
+  useEffect(() => {
+    let active = true;
+    adminFetch('/api/v1/auth/me', { cache: 'no-store' })
+      .then(async response => {
+        if (!response.ok) return;
+        const payload = await response.json() as { data?: { permissions?: string[] } };
+        if (active) setCanRoute((payload.data?.permissions ?? []).includes('routing.manage'));
+      }).catch(() => { if (active) setCanRoute(false); });
+    return () => { active = false; };
+  }, []);
 
   const breadcrumbs = [
     { label: 'Aplicaciones' },
@@ -115,6 +131,9 @@ export function InventoryDeviceEvaluationPage({ gateway }: { gateway: InventoryD
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge label={destinationLabels[device.destination]} tone={device.destinationTone} />
+            {canRoute ? <button type="button"
+              className="inline-flex h-8 items-center gap-1 rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              onClick={() => setShowRouting(true)}><AppIcon name="map" className="size-3.5"/> Cambiar estado</button> : null}
             <Link className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" to={returnPath}>
               <AppIcon name="device" className="size-4" /> Volver a dispositivos
             </Link>
@@ -122,6 +141,14 @@ export function InventoryDeviceEvaluationPage({ gateway }: { gateway: InventoryD
         </div>
       </SurfaceCard>
 
+      {routingNotice ? <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">{routingNotice}</p> : null}
+      {showRouting ? <DeviceDestinationModal inventoryId={device.inventoryId} code={device.id}
+        current={device.destination} gateway={gateway} onClose={() => setShowRouting(false)}
+        onSaved={next => {
+          setShowRouting(false);
+          setRoutingNotice('Estado actualizado: ' + destinationLabels[next] + '.');
+          setReloadKey(key => key + 1);
+        }}/> : null}
       <section className="grid gap-3 md:grid-cols-3" aria-label="Estado técnico registrado">
         <MetricCard label="Condición física" value={physicalLabels[device.physicalCondition]} tone={device.physicalCondition === 'Unknown' ? 'warning' : 'neutral'} note="Dato del inventario" />
         <MetricCard label="Encendido" value={powerLabels[device.powersOn]} tone={device.powersOn === 'Unknown' ? 'warning' : 'neutral'} note="Dato del inventario" />

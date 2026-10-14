@@ -11,6 +11,7 @@ import { PageShell } from '@/shell/PageShell';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
+import { DeviceDestinationModal } from './DeviceDestinationModal';
 import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
 
 const dismantlingNames: Record<DismantlingStatus, string> = {
@@ -50,6 +51,8 @@ export function InventoryDevicesPage({
   const [canDismantle, setCanDismantle] = useState(false);
   const [canValuate, setCanValuate] = useState(false);
   const [canManage, setCanManage] = useState(false);
+  const [canRoute, setCanRoute] = useState(false);
+  const [routingDevice, setRoutingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [editingDevice, setEditingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<{ device: InventoryDeviceListItemDto; kind: 'details' | 'dismantling' } | null>(null);
@@ -69,6 +72,7 @@ export function InventoryDevicesPage({
       setCanDismantle(permissions.includes('workshop.dismantle'));
       setCanValuate(permissions.includes('valuation.manage'));
       setCanManage(permissions.includes('catalog.manage'));
+      setCanRoute(permissions.includes('routing.manage'));
       setDevices(items);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el inventario.');
@@ -212,6 +216,14 @@ export function InventoryDevicesPage({
           title={'Consultar evaluación técnica de ' + device.id}
           to={'/apps/inventory/devices/' + encodeURIComponent(device.inventoryId) + '/evaluation'}
         ><AppIcon className="size-3.5" name="check-circle" /></Link>
+        {canRoute ? <button
+          aria-label={'Cambiar estado o destino de ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
+          disabled={busyId !== null}
+          onClick={() => { setActionError(null); setRoutingDevice(device); }}
+          title={'Cambiar estado o destino de ' + device.id}
+          type="button"
+        ><AppIcon className="size-3.5" name="map" /></button> : null}
         {canManage ? <button
           aria-label={'Editar ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
@@ -350,6 +362,19 @@ export function InventoryDevicesPage({
         </div>
       </div>}
     </ModalShell> : null}
+    {routingDevice ? <DeviceDestinationModal
+      key={routingDevice.inventoryId}
+      inventoryId={routingDevice.inventoryId}
+      code={routingDevice.id}
+      current={routingDevice.destination}
+      gateway={gateway}
+      onClose={() => setRoutingDevice(null)}
+      onSaved={next => {
+        setRoutingDevice(null);
+        setNotice('Destino del equipo actualizado a ' + optionLabel(view.filters.destinationOptions, next) + '.');
+        void loadDevices();
+      }}
+    /> : null}
     {editingDevice ? <InventoryDeviceIntakeModal
       key={editingDevice.inventoryId}
       editDevice={editingDevice}

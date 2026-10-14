@@ -322,7 +322,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
             <SelectField id="device-destination" label={view.fields.destination} disabled={Boolean(editDevice)} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
           </div>
           <p className="mt-2 text-[11px] text-slate-500">{editDevice
-            ? 'El destino, el stock, el código FXP y la publicación son operaciones independientes y no se cambian desde la edición de ficha.'
+            ? 'Para cambiar el destino, usá la acción Cambiar estado del equipo o la ficha de evaluación técnica. Stock, código FXP y publicación se gestionan por separado.'
             : 'El dispositivo ingresa con stock inicial 1, sin habilitar venta ni publicación. Podrás completar identificación y diagnóstico después.'}</p>
           {editDevice && (!form.brandId || !form.deviceModelId) ? <p role="alert" className="mt-2 text-xs font-semibold text-amber-700">
             Este equipo no tiene una marca o modelo reconocido en el catálogo. Seleccioná ambos antes de guardar. No se modificarán datos hasta confirmarlo.
