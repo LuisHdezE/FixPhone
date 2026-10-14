@@ -13,6 +13,7 @@ use App\Presentation\Http\Controllers\DeviceValuationController;
 use App\Presentation\Http\Controllers\RepairQuoteController;
 use App\Presentation\Http\Controllers\DeviceInstalledPartsController;
 use App\Presentation\Http\Controllers\DeviceSalesController;
+use App\Presentation\Http\Controllers\DeviceTechnicalEvaluationController;
 use App\Presentation\Http\Controllers\FinancialReportsController;
 use App\Presentation\Http\Controllers\MediaStorageSettingsController;
 use App\Presentation\Http\Controllers\ValuationPhotosController;
@@ -101,6 +102,9 @@ Route::prefix('v1')->group(function (): void {
   Route::patch('/admin/inventory/items/{id}',[OperationalInventoryController::class, 'update'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.items.update');
   Route::get('/admin/inventory/items/{id}/adjustments',[OperationalInventoryController::class, 'adjustments'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.adjustments.index');
   Route::post('/admin/inventory/items/{id}/adjustments',[OperationalInventoryController::class, 'adjust'])->middleware('permission:inventory.adjust')->name('api.v1.admin.inventory.items.adjustments.store');
+
+  Route::get('/admin/devices/{id}/technical-evaluations', [DeviceTechnicalEvaluationController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.devices.technical-evaluations.index');
+  Route::post('/admin/devices/{id}/technical-evaluations', [DeviceTechnicalEvaluationController::class, 'store'])->middleware('permission:diagnosis.manage')->name('api.v1.admin.devices.technical-evaluations.store');
 
   Route::get('/admin/devices/{id}/installed-parts', [DeviceInstalledPartsController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.devices.installed-parts.index');
   Route::post('/admin/devices/{id}/installed-parts', [DeviceInstalledPartsController::class, 'store'])->middleware('permission:inventory.adjust')->name('api.v1.admin.devices.installed-parts.store');
