@@ -134,7 +134,13 @@ final class CustomerDirectoryCrudTest extends TestCase
 
         DB::table('orders')->insert([
             'id' => (string) Str::ulid(),
+            'order_number' => 'FP-TEST-LOCK',
             'customer_id' => $customer->id,
+            'customer_name_snapshot' => $customer->full_name,
+            'created_by_actor_id' => 'test-actor',
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $this->deleteJson('/api/v1/admin/customers/'.$customer->id)->assertStatus(409);
