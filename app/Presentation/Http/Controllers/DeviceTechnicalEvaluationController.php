@@ -47,7 +47,7 @@ final class DeviceTechnicalEvaluationController extends Controller
             $checks = collect($data['checks'])->keyBy('key');
             $results = $checks->pluck('result');
             $overall = $results->contains('fault') ? 'with_faults'
-                : ($results->contains('not_tested') ? 'partial' : 'passed');
+                : (($results->contains('not_tested') || !$results->contains('ok')) ? 'partial' : 'passed');
             $revision = (int) DB::table('device_technical_evaluations')
                 ->where('inventory_item_id', $device->id)->max('revision') + 1;
             $evaluationId = (string) Str::ulid();
@@ -124,9 +124,9 @@ final class DeviceTechnicalEvaluationController extends Controller
             throw ValidationException::withMessages(['checks' => 'Registrá cada una de las ocho pruebas una sola vez.']);
         }
         if (!collect($data['checks'])->contains(
-            static fn (array $check): bool => $check['result'] !== 'not_tested'
+            static fn (array $check): bool => in_array($check['result'], ['ok', 'fault'], true)
         )) {
-            throw ValidationException::withMessages(['checks' => 'Evaluá al menos una prueba antes de guardar.']);
+            throw ValidationException::withMessages(['checks' => 'Registrá al menos una prueba comprobada como correcta o con falla.']);
         }
         return $data;
     }
