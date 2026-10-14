@@ -45,7 +45,7 @@ export function DeviceDestinationModal({ inventoryId, code, current, gateway, on
       <p className="text-xs text-slate-600">
         Actualizá el destino operativo del dispositivo sin volver a registrarlo.
         Se conservarán el código FXP, el historial técnico y todos los costos.
-        Esta operación no registra ventas, publicaciones ni movimientos de stock.
+        Esta operación no registra ventas ni movimientos de stock. Si el equipo estaba habilitado para venta, quedará deshabilitado hasta que se autorice nuevamente.
       </p>
       <label className="grid gap-1 text-xs font-semibold text-slate-800">
         Estado actual
