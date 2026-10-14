@@ -175,10 +175,10 @@ export function InventoryDevicesPage({
     {
       id: 'destination',
       header: view.columns.destination,
-      cell: (device) => <StatusBadge label={optionLabel(view.filters.destinationOptions, device.destination)} tone={device.destinationTone} />,
+      cell: (device) => <StatusBadge label={device.initialDestination ? optionLabel(view.filters.destinationOptions, device.initialDestination) : 'Sin registro histórico'} tone={device.initialDestination ? device.destinationTone : 'neutral'} />,
       sortable: true,
-      sortValue: (device) => device.destination,
-      searchValue: (device) => device.destination,
+      sortValue: (device) => device.initialDestination ?? '',
+      searchValue: (device) => device.initialDestination ?? 'Sin registro histórico',
     },
     {
       id: 'operational',
@@ -272,7 +272,7 @@ export function InventoryDevicesPage({
       label: view.filters.destinationLabel,
       allLabel: view.filters.allDestinationsLabel,
       options: view.filters.destinationOptions,
-      value: (device) => device.destination,
+      value: (device) => device.initialDestination ?? 'unrecorded',
     },
     {
       id: 'condition',
@@ -348,7 +348,7 @@ export function InventoryDevicesPage({
           ['Bloqueo de cuenta', activeAction.device.accountLock],
           ['Origen', activeAction.device.acquisitionSource],
           ['Costo', activeAction.device.acquisitionCost],
-          ['Destino inicial', optionLabel(view.filters.destinationOptions, activeAction.device.destination)],
+          ['Destino inicial', activeAction.device.initialDestination ? optionLabel(view.filters.destinationOptions, activeAction.device.initialDestination) : 'Sin registro histórico'],
           ['Estado actual', lifecycleLabel(activeAction.device.operationalStatus)],
           ['Despiece', activeAction.device.isDonor ? dismantlingNames[activeAction.device.dismantlingStatus] : 'No aplica'],
           ['Publicación', activeAction.device.publicListingStatus === 'published' ? 'Publicada' : 'Sin publicar'],
