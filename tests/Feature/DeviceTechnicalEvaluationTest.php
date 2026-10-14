@@ -169,7 +169,7 @@ final class DeviceTechnicalEvaluationTest extends TestCase
         $this->postJson($this->path($device), $this->body())->assertStatus(409);
     }
 
-    public function test_a_diagnosed_device_cannot_be_archived_or_have_its_identity_rewritten(): void
+    public function test_a_diagnosed_device_cannot_be_archived_and_invalid_identity_is_rejected(): void
     {
         $this->signIn('technician');
         $device = $this->device();
@@ -184,7 +184,7 @@ final class DeviceTechnicalEvaluationTest extends TestCase
             'powers_on' => 'Unknown',
             'account_lock' => 'Unknown',
             'currency_code' => 'UYU',
-        ])->assertStatus(409);
+        ])->assertStatus(422);
 
         $this->assertDatabaseHas('inventory_items', ['id' => $device->id, 'deleted_at' => null]);
         $this->assertDatabaseCount('device_technical_evaluations', 1);

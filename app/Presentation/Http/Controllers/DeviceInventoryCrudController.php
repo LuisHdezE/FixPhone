@@ -46,7 +46,7 @@ final class DeviceInventoryCrudController extends Controller
         $item = DB::transaction(function () use ($request, $id, $values): InventoryItem {
             $item = InventoryItem::query()->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->assertDevice($item);
-            $this->assertNoFinancialHistory($item, 'editar');
+            $this->assertNoFinancialHistory($item, 'editar', false);
             if ($item->publication_status === 'publicado' || $item->is_sellable) {
                 abort(409, 'Primero despublicá o deshabilitá la venta del equipo para modificar su ficha.');
             }
@@ -175,9 +175,9 @@ final class DeviceInventoryCrudController extends Controller
         }
     }
 
-    private function assertNoFinancialHistory(InventoryItem $item, string $verb): void
+    private function assertNoFinancialHistory(InventoryItem $item, string $verb, bool $blockTechnicalEvaluations = true): void
     {
-        if (DB::table('device_technical_evaluations')->where('inventory_item_id', $item->id)->exists()) {
+        if ($blockTechnicalEvaluations && DB::table('device_technical_evaluations')->where('inventory_item_id', $item->id)->exists()) {
             abort(409, 'No se puede '.$verb.' un equipo con evaluaciones técnicas registradas. Conservá su identidad e historial.');
         }
         if (DB::table('order_items')

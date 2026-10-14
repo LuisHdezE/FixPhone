@@ -194,6 +194,27 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
       }),
     });
     if (!response.ok) throw new Error(await readApiError(response, 'No se pudo editar el equipo'));
+
+    const confirmation = await response.json().catch(() => null) as { data?: { id?: string } } | null;
+    if (confirmation?.data?.id !== inventoryId) {
+      throw new Error('El servidor no confirmó la identidad del equipo actualizado.');
+    }
+    let saved: InventoryDeviceListItemDto | undefined;
+    try {
+      saved = (await this.listDevices()).find(item => item.inventoryId === inventoryId);
+    } catch {
+      throw new Error('El cambio pudo guardarse, pero falló la comprobación. Recargá antes de volver a intentarlo.');
+    }
+    if (!saved || saved.brandId !== fields.brandId || saved.deviceModelId !== fields.deviceModelId ||
+        (fields.storageCapacityId !== null && saved.storageCapacityId !== fields.storageCapacityId) ||
+        (fields.colorId !== null && saved.colorId !== fields.colorId) ||
+        (fields.conditionId !== null && saved.conditionId !== fields.conditionId) || saved.serialOrImei !== (fields.serialOrImei || '—') ||
+        saved.powersOn !== fields.powersOn || saved.accountLock !== fields.accountLock ||
+        saved.acquisitionSource !== (fields.acquisitionSource || '—') ||
+        saved.acquisitionCostMinor !== fields.acquisitionCostMinor || saved.currencyCode !== fields.currencyCode ||
+        saved.description !== fields.description) {
+      throw new Error('La ficha no coincide con los cambios solicitados tras consultar nuevamente el inventario.');
+    }
   }
 
   async deleteDevice(inventoryId: string): Promise<void> {
