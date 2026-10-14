@@ -85,7 +85,7 @@ function EvaluationEntryModal({ inventoryId, onClose, onSaved }: {
         {technicalChecks.map((item, i) => <div className="grid gap-2 rounded-md border border-slate-200 p-2" key={item.key}>
           <label className="grid gap-1 text-xs font-semibold text-slate-800">
             {item.label}
-            <select className={inputClass} value={checks[i].result}
+            <select className={inputClass} value={checks[i]?.result ?? 'not_tested'}
               onChange={event => change(i, { result: event.target.value as TechnicalCheckResult })}>
               <option value="not_tested">Sin probar</option>
               <option value="ok">Correcto</option>
@@ -96,7 +96,7 @@ function EvaluationEntryModal({ inventoryId, onClose, onSaved }: {
           <label className="grid gap-1 text-[11px] font-medium text-slate-600">
             Nota de esta prueba (opcional)
             <input className={inputClass} maxLength={800} placeholder="Resultado observado"
-              value={checks[i].notes} onChange={event => change(i, { notes: event.target.value })}/>
+              value={checks[i]?.notes ?? ''} onChange={event => change(i, { notes: event.target.value })}/>
           </label>
         </div>)}
       </div>
@@ -179,7 +179,7 @@ export function TechnicalEvaluationPanel({ inventoryId }: { inventoryId: string 
       </div>
     </div> : null}
     {!loading && !error && evaluations.length > 0 ? <div className="mt-3 grid gap-3">
-      <EvaluationSummary evaluation={evaluations[0]}/>
+      {evaluations[0] ? <EvaluationSummary evaluation={evaluations[0]}/> : null}
       {evaluations.length > 1 ? <details className="rounded-md border border-slate-200 p-3">
         <summary className="cursor-pointer text-xs font-semibold text-slate-800">Ver {evaluations.length - 1} revisiones anteriores</summary>
         <div className="mt-3 grid gap-4">
