@@ -6,6 +6,8 @@ export interface InventoryDevicesGateway {
   deleteDevice(inventoryId: string): Promise<void>;
   listDevices(): Promise<readonly import('./devices.dto').InventoryDeviceListItemDto[]>;
   updateDismantling(inventoryId: string, status: 'not_started' | 'partial' | 'exhausted'): Promise<void>;
+  getLifecycle(inventoryId: string): Promise<import('./devices.dto').DeviceLifecycleSnapshot>;
+  changeLifecycle(inventoryId: string, status: import('./devices.dto').DeviceLifecycleStatus, reason: string): Promise<void>;
 }
 
 export interface OperationalDashboardGateway {
