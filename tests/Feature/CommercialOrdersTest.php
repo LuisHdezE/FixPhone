@@ -243,7 +243,7 @@ final class CommercialOrdersTest extends TestCase
             'request_id' => (string) Str::uuid(),
             'delta' => -1,
             'reason' => 'Ajuste verificado por el operador',
-        ])->assertCreated();
+        ])->assertOk();
         $this->assertSame(4, $spare->fresh()->stock_quantity);
         $this->assertDatabaseCount('device_sale_records', 0);
     }
