@@ -174,20 +174,25 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [consignorsLoading, setConsignorsLoading] = useState(false);
+  const [consignorsError, setConsignorsError] = useState<string | null>(null);
   const [consignors, setConsignors] = useState<{ id: string; full_name: string }[]>([]);
 
   useEffect(() => {
-    if (!editDevice) return;
+    if (!editDevice && form.ownershipType !== 'consignment') return;
     let alive = true;
+    setConsignorsLoading(true);
+    setConsignorsError(null);
     adminFetch('/api/v1/admin/consignors', { headers: { Accept: 'application/json' } })
       .then(async response => {
         if (!response.ok) throw new Error('No se pudo cargar el catálogo de consignantes.');
         return response.json() as Promise<{ data: { id: string; full_name: string }[] }>;
       })
       .then(payload => { if (alive) setConsignors(payload.data); })
-      .catch(() => { if (alive) setError('No se pudo cargar el catálogo de consignantes.'); });
+      .catch(() => { if (alive) setConsignorsError('No se pudo cargar el catálogo de consignantes. Volvé a seleccionar En consignación para reintentar.'); })
+      .finally(() => { if (alive) setConsignorsLoading(false); });
     return () => { alive = false; };
-  }, [editDevice]);
+  }, [editDevice, form.ownershipType]);
 
   const brandOptions = useMemo(() => [
     { value: '', label: view.placeholders.brandId },
@@ -236,7 +241,8 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const selectedCondition = conditions.find((condition) => condition.id === form.conditionId);
 
   const canSubmit = Boolean(
-    selectedBrand && selectedModel && selectedModel.brandId === form.brandId && Boolean(form.destination) && !saving,
+    selectedBrand && selectedModel && selectedModel.brandId === form.brandId && Boolean(form.destination) && !saving
+      && (form.ownershipType === 'owned' || (!consignorsLoading && !consignorsError && consignors.some(item => item.id === form.consignorId))),
   );
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -281,7 +287,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         description: form.notes.trim() || null,
         operational_status: operationalStatus(form.destination),
         publication_status: 'no_publicable',
-        inventory_purpose: inventoryPurpose(form.destination),
+        inventory_purpose: form.ownershipType === 'consignment' ? 'consignation' : inventoryPurpose(form.destination),
+        ownership_type: form.ownershipType,
+        consignor_id: form.ownershipType === 'consignment' ? form.consignorId : null,
         is_sellable: false,
         stock_quantity: 1,
         cost_amount_minor: amountMinor,
@@ -317,8 +325,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       });
 
       if (!response.ok) {
-        const body = await response.text();
-        throw new Error(body || `No se pudo registrar el dispositivo (${response.status}).`);
+        const body = await response.json().catch(() => null) as { message?: string; errors?: Record<string, string[]> } | null;
+        const message = body?.errors ? Object.values(body.errors).flat().join(' ') : body?.message;
+        throw new Error(message || `No se pudo registrar el dispositivo (${response.status}).`);
       }
 
       const created = await response.json() as { id?: string; sku?: string | null };
@@ -365,15 +374,18 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       </fieldset>
       <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">
         <legend className="text-[11px] font-semibold text-slate-900">Adquisición</legend>
-        <div className="grid gap-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="grid gap-2 sm:grid-cols-[1fr_1.5fr_1fr]">
+          <SelectField id="device-ownership" label="Propiedad" value={form.ownershipType} onChange={value => { setField('ownershipType', value as 'owned' | 'consignment'); setField('consignorId', ''); }} options={[{ value: 'owned', label: 'Propio' }, { value: 'consignment', label: 'En consignación' }]} />
           <TextField id="device-source" label={view.fields.acquisitionSource} onChange={(value) => setField('acquisitionSource', value)} placeholder={view.placeholders.acquisitionSource} value={form.acquisitionSource} />
           <TextField id="device-cost" label={view.fields.acquisitionCost} onChange={(value) => setField('acquisitionCost', value)} placeholder="UYU 4500 / USD 120" value={form.acquisitionCost} />
         </div>
-        {editDevice && <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          <SelectField id="device-ownership" label="Tipo de propiedad" value={form.ownershipType} onChange={value => setField('ownershipType', value as 'owned' | 'consignment')} options={[{ value: 'owned', label: 'Propio' }, { value: 'consignment', label: 'Consignación' }]} />
-          {form.ownershipType === 'consignment' && <SelectField id="device-consignor" label="Consignante" value={form.consignorId} onChange={value => setField('consignorId', value)} options={[{ value: '', label: 'Seleccionar consignante' }, ...consignors.map(item => ({ value: item.id, label: item.full_name }))]} />}
-          {(form.ownershipType !== editDevice.ownershipType || (form.ownershipType === 'consignment' && form.consignorId !== (editDevice.consignorId ?? ''))) && <div className="sm:col-span-2"><TextAreaField id="device-ownership-reason" rows={2} label="Motivo de corrección de titularidad" value={form.ownershipCorrectionReason} onChange={value => setField('ownershipCorrectionReason', value)} placeholder="Ej.: se registró como propio por error" /></div>}
-        </div>}
+        <div className={form.ownershipType === 'consignment' || (editDevice && form.ownershipType !== editDevice.ownershipType) ? 'mt-2 grid gap-2 sm:grid-cols-2' : 'contents'}>
+          {form.ownershipType === 'consignment' && <SelectField id="device-consignor" label="Consignante (obligatorio)" disabled={consignorsLoading} value={form.consignorId} onChange={value => setField('consignorId', value)} options={[{ value: '', label: 'Seleccionar consignante' }, ...consignors.map(item => ({ value: item.id, label: item.full_name }))]} />}
+          {editDevice && (form.ownershipType !== editDevice.ownershipType || (form.ownershipType === 'consignment' && form.consignorId !== (editDevice.consignorId ?? ''))) && <div className="sm:col-span-2"><TextAreaField id="device-ownership-reason" rows={2} label="Motivo de corrección de titularidad" value={form.ownershipCorrectionReason} onChange={value => setField('ownershipCorrectionReason', value)} placeholder="Ej.: se registró como propio por error" /></div>}
+          {form.ownershipType === 'consignment' && consignorsLoading ? <p role="status" className="text-[11px] text-slate-500">Cargando consignantes…</p> : null}
+          {form.ownershipType === 'consignment' && consignorsError ? <p role="alert" className="text-[11px] text-red-700">{consignorsError}</p> : null}
+          {form.ownershipType === 'consignment' && !consignorsLoading && !consignorsError && consignors.length === 0 ? <p className="text-[11px] text-amber-700">Registrá primero al propietario en Consignantes.</p> : null}
+        </div>
       </fieldset>
       <TextAreaField id="device-notes" rows={2} label={view.fields.notes} onChange={(value) => setField('notes', value)} placeholder={view.placeholders.notes} value={form.notes} />
       {error ? <InlineFeedback title={editDevice ? 'No se pudo editar el dispositivo' : 'No se pudo registrar el dispositivo'} message={error} tone="error" /> : null}

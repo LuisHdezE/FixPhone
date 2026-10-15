@@ -9,6 +9,8 @@ use App\Infrastructure\Inventory\DeviceCodeAllocator;
 use App\Infrastructure\Valuation\PublishedPartsDonor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class InventoryController extends Controller
 {
@@ -57,7 +59,26 @@ class InventoryController extends Controller
             'social_publish_status' => 'nullable|string',
             'auto_publish_to_social' => 'boolean',
             'metadata' => 'nullable|array',
+            'ownership_type' => ['sometimes', 'required', 'in:owned,consignment'],
+            'consignor_id' => ['nullable', 'string', Rule::exists('consignors', 'id')],
         ]);
+
+        $consignedPurposes = ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'];
+        $ownership = $validated['ownership_type'] ?? (in_array($validated['inventory_purpose'], $consignedPurposes, true) ? 'consignment' : 'owned');
+        if ($ownership === 'consignment' && empty($validated['consignor_id'])) {
+            throw ValidationException::withMessages(['consignor_id' => 'Seleccioná el consignante registrado.']);
+        }
+        if ($ownership === 'owned' && (!empty($validated['consignor_id']) || in_array($validated['inventory_purpose'], $consignedPurposes, true))) {
+            throw ValidationException::withMessages(['ownership_type' => 'Un equipo propio no puede tener consignante ni destino de consignación.']);
+        }
+        if ($ownership === 'consignment') {
+            if (!in_array($validated['item_type'], ['device', 'used_phone'], true)) {
+                throw ValidationException::withMessages(['ownership_type' => 'La consignación está limitada al alta de dispositivos.']);
+            }
+            $validated['inventory_purpose'] = 'consignation';
+        }
+        $validated['consignor_id'] = $ownership === 'consignment' ? $validated['consignor_id'] : null;
+        unset($validated['ownership_type']);
 
         $item = DB::transaction(function () use ($validated, $request) {
             // New physical devices receive an immutable human-readable reference.
