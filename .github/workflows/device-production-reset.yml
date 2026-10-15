@@ -1,0 +1,66 @@
+name: One-time production device reset
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Preview counts or execute approved cleanup
+        type: choice
+        options: [preview, execute]
+        default: preview
+        required: true
+      fingerprint:
+        description: SHA256 returned by the latest preview (execute only)
+        type: string
+        required: false
+      confirmation:
+        description: BORRAR DISPOSITIVOS FIXPHONE PRODUCCION (execute only)
+        type: string
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: fixphone-production-deploy
+  cancel-in-progress: false
+jobs:
+  reset:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preview or execute one-time device cleanup
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          MODE: ${{ inputs.mode }}
+          FINGERPRINT: ${{ inputs.fingerprint }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error
+          mode = os.environ["MODE"]
+          if mode == "execute":
+              if os.environ["CONFIRMATION"] != "BORRAR DISPOSITIVOS FIXPHONE PRODUCCION":
+                  raise SystemExit("Exact confirmation is required.")
+              fingerprint = os.environ["FINGERPRINT"]
+              if len(fingerprint) != 64 or any(c not in "0123456789abcdef" for c in fingerprint):
+                  raise SystemExit("Valid preview SHA256 is required.")
+          if not os.environ["DEPLOY_TOKEN"]:
+              raise SystemExit("Missing deploy credential.")
+          request = urllib.request.Request(
+              "https://fixphone.eliasworks.uy/api/_deploy/device-production-reset",
+              data=json.dumps({"mode": mode, "fingerprint": os.environ["FINGERPRINT"], "confirmation": os.environ["CONFIRMATION"]}).encode(),
+              headers={"Content-Type": "application/json", "Accept": "application/json", "X-Deploy-Token": os.environ["DEPLOY_TOKEN"], "User-Agent": "FixPhone-Deploy/1.0"},
+              method="POST",
+          )
+          # Never automatically retry a destructive request after a timeout.
+          try:
+              with urllib.request.urlopen(request, timeout=180) as response:
+                  result = json.load(response)
+          except urllib.error.HTTPError as error:
+              print("HTTP", error.code)
+              raise SystemExit("Reset request failed. Inspect server state before another attempt.")
+          output = json.dumps(result, indent=2, ensure_ascii=False)
+          print(output)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("### FixPhone device reset\n\n```json\n" + output + "\n```\n")
+          if mode == "execute" and (result.get("remaining_devices") != 0 or not result.get("backup_verified")):
+              raise SystemExit("Post-cleanup verification failed.")
+          PY
