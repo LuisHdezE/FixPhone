@@ -22,6 +22,7 @@ use App\Presentation\Http\Controllers\PartsDonorStorefrontController;
 use App\Presentation\Http\Controllers\ConsignorsController;
 use App\Presentation\Http\Controllers\CustomerDirectoryController;
 use App\Presentation\Http\Controllers\CommercialOrdersController;
+use App\Presentation\Http\Controllers\AiPromptCatalogController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -29,8 +30,20 @@ Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $reque
     if (!$token || !hash_equals($token, (string) $request->header('X-Deploy-Token'))) {
         abort(401, 'Unauthorized');
     }
-    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-    return response()->json(['message' => 'Migrations run successfully.']);
+    $migrationStatus = \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+    if ($migrationStatus !== 0) {
+        return response()->json(['message' => 'Migrations failed.'], 500);
+    }
+    // Production deploy normally only runs migrations. Seed this
+    // non-destructive prompt without touching demo data.
+    $seedStatus = \Illuminate\Support\Facades\Artisan::call('db:seed', [
+        '--class' => \Database\Seeders\AiPromptCatalogSeeder::class,
+        '--force' => true,
+    ]);
+    if ($seedStatus !== 0) {
+        return response()->json(['message' => 'AI prompt catalog seed failed.'], 500);
+    }
+    return response()->json(['message' => 'Migrations and AI prompt catalog seed completed.']);
 });
 
 Route::post('/_deploy/mvp-action', function (\Illuminate\Http\Request $request) {
@@ -131,6 +144,10 @@ Route::prefix('v1')->group(function (): void {
    Route::post('/{id}/select', [MediaStorageSettingsController::class, 'select'])->name('api.v1.admin.media.storage.select');
    Route::post('/{id}/test', [MediaStorageSettingsController::class, 'testConnection'])->middleware('throttle:6,1')->name('api.v1.admin.media.storage.test');
   });
+
+  // Reusable prompts are private; only the read-only catalog is available in this stage.
+  Route::get('/admin/ai-prompts', [AiPromptCatalogController::class, 'index'])->middleware('permission:integrations.manage')->name('api.v1.admin.ai-prompts.index');
+  Route::get('/admin/ai-prompts/{code}', [AiPromptCatalogController::class, 'show'])->middleware('permission:integrations.manage')->name('api.v1.admin.ai-prompts.show');
 
   Route::post('/auth/logout',AuthLogoutController::class)->name('api.v1.auth.logout');
   Route::get('/auth/me',AuthMeController::class)->name('api.v1.auth.me');

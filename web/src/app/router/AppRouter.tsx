@@ -39,6 +39,7 @@ import { StorefrontWarrantyPage } from '@/features/storefront/presentation/Store
 import { ValuPhonePage } from '@/features/valuation/presentation/ValuPhonePage';
 import { RepairQuotesPage } from '@/features/repair-quotes/presentation/RepairQuotesPage';
 import { MediaStorageSettingsPage } from '@/features/media-storage/presentation/MediaStorageSettingsPage';
+import { AiPromptCatalogPage } from '@/features/prompts/presentation/AiPromptCatalogPage';
 import { FinancialSettlementsPage } from '@/features/inventory/presentation/FinancialSettlementsPage';
 import { ConsignedPhonesSoldPage } from '@/features/inventory/presentation/ConsignedPhonesSoldPage';
 import { AccountSettingsPage } from '@/features/user/presentation/AccountSettingsPage';
@@ -162,6 +163,7 @@ export function AppRouter() {
         <Route path="admin/master-data/spare-part-types" element={<MasterDataSparePartTypesPage masterDataProvider={masterDataProvider} gateway={masterDataGateway} onChanged={refreshMasterData} />} />
         <Route path="admin/valuations" element={<ValuPhonePage />} />
         <Route path="admin/repair-quotes" element={<RepairQuotesPage />} />
+        <Route path="admin/ai-prompts" element={<AiPromptCatalogPage />} />
         <Route path="admin/settings/media-storage" element={<MediaStorageSettingsPage />} />
         <Route path="admin/finance/settlements" element={<FinancialSettlementsPage />} />
         <Route path="admin/finance/consignment-sales" element={<ConsignedPhonesSoldPage />} />
