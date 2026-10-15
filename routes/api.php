@@ -108,6 +108,28 @@ Route::post('/_deploy/device-production-reset', function (\Illuminate\Http\Reque
     }
 })->middleware('throttle:3,1');
 
+Route::post('/_deploy/spare-parts-production-reset', function (\Illuminate\Http\Request $request) {
+    $token = env('DEPLOY_TOKEN');
+    if (!$token || !hash_equals($token, (string) $request->header('X-Deploy-Token'))) {
+        abort(401);
+    }
+    $input = $request->validate([
+        'mode' => 'required|in:preview,execute',
+        'fingerprint' => 'nullable|string|size:64',
+        'confirmation' => 'nullable|string|max:100',
+    ]);
+    try {
+        $result = app(\App\Infrastructure\Maintenance\SparePartsProductionReset::class)->run(
+            $input['mode'] === 'execute',
+            $input['fingerprint'] ?? '',
+            $input['confirmation'] ?? '',
+        );
+        return response()->json($result)->header('Cache-Control', 'no-store');
+    } catch (\RuntimeException $exception) {
+        return response()->json(['message' => $exception->getMessage()], 409);
+    }
+})->middleware('throttle:3,1');
+
 Route::prefix('v1')->group(function (): void {
  Route::post('/auth/login',AuthLoginController::class)->name('api.v1.auth.login');
  Route::get('/store/parts-donors', [PartsDonorStorefrontController::class, 'index'])->name('api.v1.store.parts-donors.index');

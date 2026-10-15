@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Inventory\InventoryItem;
+use App\Infrastructure\Inventory\SparePartCodeAllocator;
 use App\Infrastructure\MasterData\MasterDataEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ final class SparePartsInventoryController extends Controller
         }
         $item = DB::transaction(function () use ($request, $data, $brand, $model): InventoryItem {
             $item = InventoryItem::query()->create([
-                'sku' => 'REP-'.strtoupper((string) Str::ulid()),
+                'sku' => SparePartCodeAllocator::reserve(),
                 'title' => trim($data['name']),
                 'description' => $data['description'] ?? null,
                 'item_type' => 'spare_part',
