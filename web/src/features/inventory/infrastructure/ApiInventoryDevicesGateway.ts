@@ -138,9 +138,9 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
 
 async function readApiError(response: Response, fallback: string): Promise<string> {
   const payload = await response.json().catch(() => null) as
-    | { message?: string; errors?: Record<string, string[]> } | null;
+    | { message?: string; detail?: string; errors?: Record<string, string[]> } | null;
   const details = payload?.errors ? Object.values(payload.errors).flat().join(' ') : '';
-  return details || payload?.message || fallback + ' (' + response.status + ').';
+  return details || payload?.detail || payload?.message || fallback + ' (' + response.status + ').';
 }
 
 export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
