@@ -4,6 +4,7 @@ namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Inventory\InventoryItem;
 use App\Infrastructure\MasterData\MasterDataEntry;
+use App\Infrastructure\Valuation\DeviceValuation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -47,9 +48,6 @@ final class DeviceInventoryCrudController extends Controller
             $item = InventoryItem::query()->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->assertDevice($item);
             $this->assertNoFinancialHistory($item, 'editar', false);
-            if ($item->publication_status === 'publicado' || $item->is_sellable) {
-                abort(409, 'Primero despublicá o deshabilitá la venta del equipo para modificar su ficha.');
-            }
 
             $brand = $this->masterItem('brands', $values['brand_id'], 'brand_id');
             $model = $this->masterItem('deviceModels', $values['device_model_id'], 'device_model_id');
@@ -107,6 +105,12 @@ final class DeviceInventoryCrudController extends Controller
             ]);
             if ($item->isDirty()) {
                 $item->save();
+                // Keep the separately stored public-facing model in sync with identity edits.
+                // Never change price, public description, photos or publication eligibility.
+                $newModelName = trim($brand['name'].' '.$model['name']);
+                DeviceValuation::query()->where('inventory_item_id', $item->id)
+                    ->where('model_name', '!=', $newModelName)
+                    ->update(['model_name' => $newModelName]);
                 $this->audit($request, $item, 'inventory.device_updated', 'update', [
                     'before' => $before,
                     'after' => $item->only(array_keys($before)),
@@ -190,7 +194,7 @@ final class DeviceInventoryCrudController extends Controller
 
         if (DB::table('device_sale_records')->where('inventory_item_id', $item->id)->exists()
             || DB::table('device_installed_parts')->where('inventory_item_id', $item->id)->exists()
-            || DB::table('device_valuations')->where('inventory_item_id', $item->id)->exists()
+            || ($blockTechnicalEvaluations && DB::table('device_valuations')->where('inventory_item_id', $item->id)->exists())
             || DB::table('inventory_stock_adjustments')->where('inventory_item_id', $item->id)->exists()
             || in_array($item->operational_status, ['vendido', 'sold'], true)
         ) {

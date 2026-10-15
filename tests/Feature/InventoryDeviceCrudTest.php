@@ -198,6 +198,42 @@ final class InventoryDeviceCrudTest extends TestCase
         $this->assertSame('FXP-9001', $device->fresh()->sku);
     }
 
+    public function test_published_device_identity_can_be_corrected_without_changing_commercial_terms(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device([
+            'publication_status' => 'publicado',
+            'is_sellable' => true,
+            'inventory_purpose' => 'parts_donor',
+            'sale_price_amount_minor' => 650000,
+        ]);
+        $valuationId = (string) Str::ulid();
+        DB::table('device_valuations')->insert([
+            'id' => $valuationId,
+            'inventory_item_id' => $device->id,
+            'model_name' => 'Apple iPhone 11',
+            'fault_type' => 'other',
+            'asking_price_minor' => 600000,
+            'public_listing_status' => 'published',
+            'public_image_url' => 'https://example.test/phone.jpg',
+            'public_description' => 'Pantalla rota; dispositivo para repuestos, revisado.',
+            'provenance_confirmed' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->patchJson('/api/v1/admin/inventory/'.$device->id, $this->updatePayload())
+            ->assertOk()->assertJsonPath('data.model', 'iPhone 11 Pro');
+        $this->getJson('/api/v1/admin/inventory')->assertOk()
+            ->assertJsonPath('data.0.metadata.device_model_id', 'model-iphone-11-pro');
+        $valuation = DB::table('device_valuations')->where('id', $valuationId)->first();
+        $this->assertSame('Apple iPhone 11 Pro', $valuation->model_name);
+        $this->assertSame(600000, $valuation->asking_price_minor);
+        $this->assertSame('published', $valuation->public_listing_status);
+        $this->assertSame(650000, $device->fresh()->sale_price_amount_minor);
+        $this->assertTrue((bool) $device->fresh()->is_sellable);
+        $this->assertSame('publicado', $device->fresh()->publication_status);
+        $this->assertDatabaseHas('audit_events', ['entity_id' => $device->id, 'event_type' => 'inventory.device_updated']);
+    }
+
     public function test_delete_is_logical_and_keeps_permanent_device_code_and_audit(): void
     {
         $this->signIn('owner');
