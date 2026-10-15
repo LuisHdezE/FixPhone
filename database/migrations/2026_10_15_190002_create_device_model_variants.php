@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->boolean('active')->default(true);
             $table->timestamps();
             $table->unique(['device_model_id', 'variant_key'], 'device_model_variant_unique');
+            $table->unique(['id', 'device_model_id'], 'device_model_variant_model_pair');
             $table->foreign('device_model_id')->references('id')->on('master_data_entries')->restrictOnDelete();
             $table->foreign('ram_capacity_id')->references('id')->on('master_data_entries')->restrictOnDelete();
             $table->foreign('storage_capacity_id')->references('id')->on('master_data_entries')->restrictOnDelete();
