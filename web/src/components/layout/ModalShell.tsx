@@ -24,7 +24,8 @@ export function ModalShell({
     previousFocusRef.current = document.activeElement as HTMLElement;
     
     if (modalRef.current) {
-      modalRef.current.focus();
+      const initial = modalRef.current.querySelector<HTMLElement>('[data-modal-initial-focus]');
+      (initial ?? modalRef.current).focus();
     }
 
     return () => {
@@ -36,6 +37,22 @@ export function ModalShell({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && modalRef.current) {
+        const elements = Array.from(modalRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]'))
+          .filter(element => element.getClientRects().length > 0);
+        const first = elements[0];
+        const last = elements[elements.length - 1];
+        if (!first || !last) {
+          e.preventDefault();
+          modalRef.current.focus();
+        } else if (e.shiftKey && (document.activeElement === first || document.activeElement === modalRef.current)) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && (document.activeElement === last || document.activeElement === modalRef.current)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
       if (e.key === 'Escape' && !disabled) {
         onClose();
       }
@@ -52,7 +69,7 @@ export function ModalShell({
       <div 
         ref={modalRef} 
         tabIndex={-1} 
-        className={density === 'compact' ? 'w-full max-w-lg overflow-y-auto max-h-[calc(100dvh-1rem)] rounded-md border border-slate-200 bg-white shadow-2xl outline-none' : `w-full ${width === 'medium' ? 'max-w-3xl' : 'max-w-4xl'} overflow-y-auto max-h-[90vh] rounded-md border border-slate-200 bg-white shadow-2xl outline-none`}
+        className={density === 'compact' ? `w-full ${width === 'medium' ? 'max-w-3xl' : 'max-w-lg'} overflow-y-auto max-h-[calc(100dvh-1rem)] rounded-md border border-slate-200 bg-white shadow-2xl outline-none` : `w-full ${width === 'medium' ? 'max-w-3xl' : 'max-w-4xl'} overflow-y-auto max-h-[90vh] rounded-md border border-slate-200 bg-white shadow-2xl outline-none`}
       >
         <div className={density === 'compact' ? 'sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-3 py-2' : 'sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3'}>
           <h2 className="text-sm font-semibold text-slate-900">{title}</h2>

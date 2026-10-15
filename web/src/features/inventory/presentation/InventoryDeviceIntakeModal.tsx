@@ -5,7 +5,6 @@ import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SelectField } from '@/components/forms/SelectField';
 import { TextAreaField } from '@/components/forms/TextAreaField';
 import { TextField } from '@/components/forms/TextField';
-import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { ModalShell } from '@/components/layout/ModalShell';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
@@ -334,87 +333,55 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     }
   }
 
-  return <ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving} hideCloseButton={Boolean(editDevice)} width={editDevice ? 'medium' : 'default'}>
-    <div className="p-2.5" data-device-intake data-device-mode={editDevice ? "edit" : "create"}>
-      <form className="grid gap-2" onSubmit={submit}>
-        <SurfaceCard className="!p-2">
-          <h2 className="text-xs font-semibold text-slate-950">{editDevice ? 'Actualizar ficha de dispositivo' : 'Ingreso rápido de dispositivo'}</h2>
-          <p className="mt-0.5 text-[11px] text-slate-600">{editDevice
-            ? 'Usá el mismo catálogo del alta. El modelo depende de la marca seleccionada. El código FXP permanece igual.'
-            : 'Marca, modelo y destino son suficientes para registrar el equipo. FixPhone le asignará un código FXP único. No necesitás IMEI.'}</p>
-          <div className="mt-2 grid gap-2 md:grid-cols-3">
-            <SelectField id="device-brand" label={view.fields.brandId} onChange={setBrand} options={brandOptions} value={form.brandId} />
-            <SelectField id="device-model" label={view.fields.deviceModelId} onChange={(value) => setField('deviceModelId', value)} options={filteredModelOptions} value={form.deviceModelId} />
-            <SelectField id="device-destination" label={view.fields.destination} disabled={Boolean(editDevice)} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500">{editDevice
-            ? 'Para cambiar el destino, usá la acción Cambiar estado del equipo o la ficha de evaluación técnica. Stock, código FXP y publicación se gestionan por separado.'
-            : 'El dispositivo ingresa con stock inicial 1, sin habilitar venta ni publicación. Podrás completar identificación y diagnóstico después.'}</p>
-          {editDevice && (!form.brandId || !form.deviceModelId) ? <p role="alert" className="mt-2 text-xs font-semibold text-amber-700">
-            Este equipo no tiene una marca o modelo reconocido en el catálogo. Seleccioná ambos antes de guardar. No se modificarán datos hasta confirmarlo.
-          </p> : null}
-        </SurfaceCard>
-
-        <details open={Boolean(editDevice)} className="rounded-lg border border-slate-200 bg-white" data-device-optional-details>
-          <summary className="cursor-pointer px-3 py-1.5 text-xs font-semibold text-slate-800">Completar datos opcionales: IMEI, características, condición y costo</summary>
-          <div className={editDevice ? 'grid gap-2 p-2 pt-0 md:grid-cols-3' : 'grid gap-2 p-2 pt-0'}>
-          <SurfaceCard className="!p-2">
-            <h2 className="text-xs font-semibold text-slate-950">{view.identitySectionTitle}</h2>
-            <div className="mt-2 grid gap-2">
-              <TextField id="device-identity" label={view.fields.serialOrImei} onChange={(value) => setField('serialOrImei', value)} placeholder={view.placeholders.serialOrImei} value={form.serialOrImei} />
-              <SelectField id="device-storage" label={view.fields.storageCapacityId} onChange={(value) => setField('storageCapacityId', value)} options={storageOptions} value={form.storageCapacityId} />
-              <SelectField id="device-color" label={view.fields.colorId} onChange={(value) => setField('colorId', value)} options={colorOptions} value={form.colorId} />
-            </div>
-          </SurfaceCard>
-          <SurfaceCard className="!p-2">
-          <h2 className="text-xs font-semibold text-slate-950">{view.conditionSectionTitle}</h2>
-          <div className="mt-2 grid gap-2">
-            <SelectField id="device-powers-on" label={view.fields.powersOn} onChange={(value) => setField('powersOn', value as DevicePowerState)} options={view.options.powersOn} value={form.powersOn} />
-            <SelectField id="device-condition" label={view.fields.conditionId} onChange={(value) => setField('conditionId', value)} options={conditionOptions} value={form.conditionId} />
-            <SelectField id="device-lock" label={view.fields.accountLock} onChange={(value) => setField('accountLock', value as DeviceAccountLock)} options={view.options.accountLock} value={form.accountLock} />
-          </div>
-          {selectedCondition ? <p className="mt-3 text-xs text-slate-500" data-device-condition-hint>Condición canónica: {selectedCondition.name} · {selectedCondition.grade}</p> : null}
-        </SurfaceCard>
-
-        <SurfaceCard className="!p-2">
-          <h2 className="text-xs font-semibold text-slate-950">{view.acquisitionSectionTitle}</h2>
-          {editDevice && <div className="mt-2 grid gap-2">
-            <SelectField id="device-ownership" label="Tipo de propiedad" value={form.ownershipType} onChange={value => setField('ownershipType', value as 'owned' | 'consignment')} options={[{ value: 'owned', label: 'Propio' }, { value: 'consignment', label: 'Consignación' }]} />
-            {form.ownershipType === 'consignment' && <SelectField id="device-consignor" label="Consignante" value={form.consignorId} onChange={value => setField('consignorId', value)} options={[{ value: '', label: 'Seleccionar consignante' }, ...consignors.map(item => ({ value: item.id, label: item.full_name }))]} />}
-            {(form.ownershipType !== editDevice.ownershipType || (form.ownershipType === 'consignment' && form.consignorId !== (editDevice.consignorId ?? ''))) && <TextAreaField id="device-ownership-reason" label="Motivo de corrección de titularidad" value={form.ownershipCorrectionReason} onChange={value => setField('ownershipCorrectionReason', value)} placeholder="Ej.: se registró como propio por error" />}
-          </div>}
-          <div className="mt-2 grid gap-2">
-            <TextField id="device-source" label={view.fields.acquisitionSource} onChange={(value) => setField('acquisitionSource', value)} placeholder={view.placeholders.acquisitionSource} value={form.acquisitionSource} />
-            <TextField id="device-cost" label={view.fields.acquisitionCost} onChange={(value) => setField('acquisitionCost', value)} placeholder={view.placeholders.acquisitionCost} value={form.acquisitionCost} />
-          </div>
-        </SurfaceCard>
-
-        <SurfaceCard className={editDevice ? '!p-2 md:col-span-3' : '!p-2'}>
-          <h2 className="text-xs font-semibold text-slate-950">{view.routingSectionTitle}</h2>
-          <div className="mt-2 grid gap-2">
-            <TextAreaField id="device-notes" label={view.fields.notes} onChange={(value) => setField('notes', value)} placeholder={view.placeholders.notes} value={form.notes} />
-          </div>
-        </SurfaceCard>
-          </div>
-        </details>
-
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-2">
-          <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50" onClick={onClose} disabled={saving} type="button">
-            {editDevice ? 'Cancelar' : view.cancelLabel}
-          </button>
-          <button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50" disabled={!canSubmit} type="submit">
-            {saving ? 'Guardando...' : editDevice ? 'Guardar cambios' : 'Registrar dispositivo'}
-          </button>
+  return <ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving} hideCloseButton density="compact" width="medium">
+    <form className="device-intake-form grid gap-2 p-3" data-device-intake data-device-mode={editDevice ? 'edit' : 'create'} onSubmit={submit}>
+      <p className="text-[11px] leading-4 text-slate-500">{editDevice
+        ? 'El código FXP se conserva. El destino se modifica desde Cambiar estado.'
+        : 'Marca, modelo y destino son obligatorios. Código FXP automático; IMEI opcional.'}</p>
+      <fieldset className="min-w-0 border-0 p-0">
+        <legend className="mb-1 text-[11px] font-semibold text-slate-900">Equipo</legend>
+        <div className="grid gap-2 sm:grid-cols-[1fr_1.4fr_1.2fr]">
+          <SelectField id="device-brand" label={view.fields.brandId} onChange={setBrand} options={brandOptions} value={form.brandId} />
+          <SelectField id="device-model" label={view.fields.deviceModelId} onChange={(value) => setField('deviceModelId', value)} options={filteredModelOptions} value={form.deviceModelId} />
+          <SelectField id="device-destination" label={view.fields.destination} disabled={Boolean(editDevice)} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
         </div>
-      </form>
-      
-      {error ? <div className="mt-2"><InlineFeedback title={editDevice ? "No se pudo editar el dispositivo" : "No se pudo registrar el dispositivo"} message={error} tone="error" /></div> : null}
-      
-      {!editDevice && createdId ? (
-        <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-          Dispositivo registrado: {createdCode ?? createdId}. Puedes buscarlo en el listado.
+        {editDevice && (!form.brandId || !form.deviceModelId) ? <p role="alert" className="mt-1 text-[11px] text-amber-700">Seleccioná una marca y un modelo válidos del catálogo antes de guardar.</p> : null}
+      </fieldset>
+      <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">
+        <legend className="text-[11px] font-semibold text-slate-900">Identificación</legend>
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,1fr)]">
+          <TextField id="device-identity" label={view.fields.serialOrImei} onChange={(value) => setField('serialOrImei', value)} placeholder="IMEI o número de serie" value={form.serialOrImei} />
+          <SelectField id="device-storage" label={view.fields.storageCapacityId} onChange={(value) => setField('storageCapacityId', value)} options={storageOptions} value={form.storageCapacityId} />
+          <SelectField id="device-color" label={view.fields.colorId} onChange={(value) => setField('colorId', value)} options={colorOptions} value={form.colorId} />
         </div>
-      ) : null}
-    </div>
+      </fieldset>
+      <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">
+        <legend className="text-[11px] font-semibold text-slate-900">Estado</legend>
+        <div className="grid gap-2 sm:grid-cols-[1fr_1.4fr_1.2fr]">
+          <SelectField id="device-powers-on" label={view.fields.powersOn} onChange={(value) => setField('powersOn', value as DevicePowerState)} options={view.options.powersOn} value={form.powersOn} />
+          <SelectField id="device-condition" label={view.fields.conditionId} onChange={(value) => setField('conditionId', value)} options={conditionOptions} value={form.conditionId} />
+          <SelectField id="device-lock" label={view.fields.accountLock} onChange={(value) => setField('accountLock', value as DeviceAccountLock)} options={view.options.accountLock} value={form.accountLock} />
+        </div>
+      </fieldset>
+      <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">
+        <legend className="text-[11px] font-semibold text-slate-900">Adquisición</legend>
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <TextField id="device-source" label={view.fields.acquisitionSource} onChange={(value) => setField('acquisitionSource', value)} placeholder={view.placeholders.acquisitionSource} value={form.acquisitionSource} />
+          <TextField id="device-cost" label={view.fields.acquisitionCost} onChange={(value) => setField('acquisitionCost', value)} placeholder="UYU 4500 / USD 120" value={form.acquisitionCost} />
+        </div>
+        {editDevice && <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <SelectField id="device-ownership" label="Tipo de propiedad" value={form.ownershipType} onChange={value => setField('ownershipType', value as 'owned' | 'consignment')} options={[{ value: 'owned', label: 'Propio' }, { value: 'consignment', label: 'Consignación' }]} />
+          {form.ownershipType === 'consignment' && <SelectField id="device-consignor" label="Consignante" value={form.consignorId} onChange={value => setField('consignorId', value)} options={[{ value: '', label: 'Seleccionar consignante' }, ...consignors.map(item => ({ value: item.id, label: item.full_name }))]} />}
+          {(form.ownershipType !== editDevice.ownershipType || (form.ownershipType === 'consignment' && form.consignorId !== (editDevice.consignorId ?? ''))) && <div className="sm:col-span-2"><TextAreaField id="device-ownership-reason" rows={2} label="Motivo de corrección de titularidad" value={form.ownershipCorrectionReason} onChange={value => setField('ownershipCorrectionReason', value)} placeholder="Ej.: se registró como propio por error" /></div>}
+        </div>}
+      </fieldset>
+      <TextAreaField id="device-notes" rows={2} label={view.fields.notes} onChange={(value) => setField('notes', value)} placeholder={view.placeholders.notes} value={form.notes} />
+      {error ? <InlineFeedback title={editDevice ? 'No se pudo editar el dispositivo' : 'No se pudo registrar el dispositivo'} message={error} tone="error" /> : null}
+      {!editDevice && createdId ? <p role="status" className="text-xs text-emerald-800">Dispositivo registrado: {createdCode ?? createdId}.</p> : null}
+      <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
+        <button className="h-7 rounded-md border border-slate-200 px-3 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-50" onClick={onClose} disabled={saving} type="button">Cancelar</button>
+        <button className="h-7 rounded-md bg-[var(--theme-primary)] px-3 text-xs font-medium text-white hover:brightness-95 disabled:opacity-50" disabled={!canSubmit} aria-busy={saving} type="submit">Guardar</button>
+      </div>
+    </form>
   </ModalShell>;
 }
