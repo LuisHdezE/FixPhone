@@ -130,7 +130,7 @@ final class ExtractDeviceComponents
                 $created = $spare === null;
                 if ($created) {
                     $title = $row['title'] ?: $type['name'].' · '.$brand['name'].' '.$model['name'].($row['variant'] ? ' · '.$row['variant'] : '').' · Recuperado';
-                    $description = $row['description'] ?: $type['name'].' recuperado de '.$brand['name'].' '.$model['name'].'.'.($row['variant'] ? ' Variante: '.$row['variant'].'.' : '').' Consultá la condición indicada en esta ficha.';
+                    $description = $row['description'] ?: 'Repuesto recuperado: '.$type['name'].'. Equipo de origen: '.$brand['name'].' '.$model['name'].'.'.($row['variant'] ? ' Variante: '.$row['variant'].'.' : '').' Consultá la condición indicada en esta ficha.';
                     if (mb_strlen($title) > 255) {
                         throw ValidationException::withMessages(['components' => 'Acortá el título del repuesto a 255 caracteres.']);
                     }

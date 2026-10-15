@@ -7,13 +7,13 @@
 3. Marcar los componentes realmente recuperados. Cada selección representa exactamente una unidad. El catálogo de tipos es administrable; esta entrega añade cámaras frontal y trasera bajo Cámara si ese tipo padre existe.
 4. Declarar por pieza **Sin probar / Funcional / Con fallas**. Opcionalmente indicar precio, moneda e imagen pública HTTPS. Marcar **Publicar** solo para las piezas funcionales con precio.
 5. Guardar. Se crea el repuesto REP si no existe uno equivalente, o se suma +1 al existente. El resultado informa cuántos se crearon y cuántos se actualizaron.
-6. Para completar o retirar una publicación después, usar **Inventario → icono tienda → Publicación de repuesto**. Desde allí se indica condición, precio, moneda, imagen y publicación. La condición declarada abarca todas las unidades agrupadas en esa ficha.
+6. Para completar o retirar una publicación después, usar **Inventario → icono tienda → Publicación de repuesto**. Desde allí se editan título, descripción, condición, precio, moneda, imagen y publicación. La condición declarada abarca todas las unidades agrupadas en esa ficha.
 
 La compatibilidad proviene del modelo seleccionado. La planilla no afirma que todos los tipos genéricos existan físicamente en todos los modelos; el operador selecciona los recuperados. Nuevos tipos se administran en Catálogo maestro.
 
 ## Identidad y trazabilidad
 
-La identidad de un artículo recuperado combina marca, modelo, tipo de pieza, condición, propietario y moneda. Solo piezas equivalentes comparten existencias. Dos donantes propios del mismo modelo aportan dos unidades al mismo repuesto. Un consignante diferente o una condición diferente producen otra ficha. No se convierten piezas nuevas o de origen desconocido en recuperadas por similitud de nombre.
+La identidad de un artículo recuperado combina marca, modelo, tipo de pieza, variante, condición, propietario y moneda. Solo piezas equivalentes comparten existencias. Dos donantes propios del mismo modelo aportan dos unidades al mismo repuesto. Un consignante diferente o una condición diferente producen otra ficha. No se convierten piezas nuevas o de origen desconocido en recuperadas por similitud de nombre.
 
 `device_extraction_batches` conserva solicitud UUID, hash, actor y resultado. `device_part_extractions` conserva donante, repuesto, tipo, condición y cantidades antes/después, con snapshot de marca/modelo y propiedad. Además se escribe un ajuste +1 en el historial operativo con el código FXP de procedencia.
 

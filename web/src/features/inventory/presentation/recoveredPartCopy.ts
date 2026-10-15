@@ -2,6 +2,6 @@ export function recoveredPartCopy(type: string, brand: string, model: string, va
   const detail = variant.trim().replace(/\s+/gu, ' ');
   return {
     title: `${type} · ${brand} ${model}${detail ? ` · ${detail}` : ''} · Recuperado`,
-    description: `${type} recuperado de ${brand} ${model}.${detail ? ` Variante: ${detail}.` : ''} Consultá la condición indicada en esta ficha.`,
+    description: `Repuesto recuperado: ${type}. Equipo de origen: ${brand} ${model}.${detail ? ` Variante: ${detail}.` : ''} Consultá la condición indicada en esta ficha.`,
   };
 }
