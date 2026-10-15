@@ -233,6 +233,7 @@ export function AiPromptCatalogPage() {
           </button>
         </div>
         {error ? <p role="alert" className="mb-2 rounded border border-rose-200 bg-rose-50 p-2 text-xs text-rose-800">{error}</p> : null}
+        {notice ? <p role="status" className="mb-2 rounded border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">{notice}</p> : null}
         {formOpen ? <form onSubmit={(e) => void save(e)} className="grid gap-2">
           <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
             <label className="grid gap-0.5 text-[11px] font-semibold">Código
