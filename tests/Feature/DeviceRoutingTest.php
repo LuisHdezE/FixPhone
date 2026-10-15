@@ -141,6 +141,36 @@ final class DeviceRoutingTest extends TestCase
         $this->patchJson($this->path($consigned), $this->payload('Discard'))->assertStatus(409);
     }
 
+    public function test_consigned_device_can_change_operational_destination_without_losing_ownership(): void
+    {
+        $this->signIn();
+        $device = $this->device([
+            'inventory_purpose' => 'consignation',
+            'is_sellable' => true,
+            'sale_price_amount_minor' => 320000,
+        ]);
+        $sku = $device->sku;
+        foreach (['Refurbish', 'Hold', 'Donor'] as $destination) {
+            $this->patchJson($this->path($device), $this->payload($destination))
+                ->assertOk()->assertJsonPath('data.destination', $destination)
+                ->assertJsonPath('data.inventory_purpose', 'consignation');
+            $device->refresh();
+            $this->assertSame('consignation', $device->inventory_purpose);
+            $this->assertSame($sku, $device->sku);
+            $this->assertSame(320000, $device->sale_price_amount_minor);
+            $this->assertFalse($device->is_sellable);
+        }
+        $this->assertSame('para_deshuesar', $device->operational_status);
+        $this->getJson('/api/v1/admin/inventory')->assertOk()
+            ->assertJsonPath('data.0.metadata.destination', 'Donor')
+            ->assertJsonPath('data.0.inventory_purpose', 'consignation');
+        $this->patchJson($this->path($device), $this->payload('Discard'))
+            ->assertStatus(409)
+            ->assertJsonPath('detail', 'No se puede descartar un equipo consignado sin autorización y procedimiento de devolución o baja.');
+        $this->assertSame('Donor', $device->fresh()->metadata['destination']);
+        $this->assertDatabaseCount('audit_events', 3);
+    }
+
     public function test_routing_is_persisted_and_visible_to_independent_inventory_get_without_cache(): void
     {
         $this->signIn();

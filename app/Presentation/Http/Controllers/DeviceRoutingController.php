@@ -69,9 +69,10 @@ final class DeviceRoutingController extends Controller
                 abort(409, 'Un despiece iniciado o agotado no puede revertirse mediante un cambio de destino.');
             }
 
-            if ($device->consignor_id !== null
-                || in_array($device->inventory_purpose, ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'], true)) {
-                abort(409, 'El equipo es de consignación. Requiere un procedimiento específico para preservar la titularidad.');
+            $isConsigned = $device->consignor_id !== null
+                || in_array($device->inventory_purpose, ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'], true);
+            if ($isConsigned && $next === 'Discard') {
+                abort(409, 'No se puede descartar un equipo consignado sin autorización y procedimiento de devolución o baja.');
             }
 
             $before = [
@@ -83,7 +84,12 @@ final class DeviceRoutingController extends Controller
 
             $route = self::ROUTES[$next];
             $metadata['destination'] = $next;
-            $device->inventory_purpose = $route['purpose'];
+            // A routing decision must never convert consigned property into owned stock.
+            // Keep the consignment purpose and consignor link; the selected
+            // operational destination is tracked in metadata and status.
+            if (!$isConsigned) {
+                $device->inventory_purpose = $route['purpose'];
+            }
             $device->operational_status = $route['status'];
             // Rerouting is not a sale. Disable sale eligibility until the
             // corresponding commercial workflow explicitly re-enables it.
@@ -96,7 +102,7 @@ final class DeviceRoutingController extends Controller
             $persisted = $device->fresh();
             if (!$persisted
                 || ($persisted->metadata['destination'] ?? null) !== $next
-                || $persisted->inventory_purpose !== $route['purpose']
+                || $persisted->inventory_purpose !== ($isConsigned ? $before['inventory_purpose'] : $route['purpose'])
                 || $persisted->operational_status !== $route['status']) {
                 throw new \RuntimeException('No se pudo confirmar la actualización persistida del dispositivo.');
             }
