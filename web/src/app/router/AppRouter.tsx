@@ -41,6 +41,7 @@ import { RepairQuotesPage } from '@/features/repair-quotes/presentation/RepairQu
 import { MediaStorageSettingsPage } from '@/features/media-storage/presentation/MediaStorageSettingsPage';
 import { AiPromptCatalogPage } from '@/features/prompts/presentation/AiPromptCatalogPage';
 import { ReferencePriceImportPage } from '@/features/reference-prices/presentation/ReferencePriceImportPage';
+import { ReferencePriceComparisonPage } from '@/features/reference-prices/presentation/ReferencePriceComparisonPage';
 import { FinancialSettlementsPage } from '@/features/inventory/presentation/FinancialSettlementsPage';
 import { ConsignedPhonesSoldPage } from '@/features/inventory/presentation/ConsignedPhonesSoldPage';
 import { AccountSettingsPage } from '@/features/user/presentation/AccountSettingsPage';
@@ -166,6 +167,7 @@ export function AppRouter() {
         <Route path="admin/repair-quotes" element={<RepairQuotesPage />} />
         <Route path="admin/ai-prompts" element={<AiPromptCatalogPage />} />
         <Route path="admin/reference-prices" element={<ReferencePriceImportPage />} />
+        <Route path="admin/reference-prices/compare" element={<ReferencePriceComparisonPage />} />
         <Route path="admin/settings/media-storage" element={<MediaStorageSettingsPage />} />
         <Route path="admin/finance/settlements" element={<FinancialSettlementsPage />} />
         <Route path="admin/finance/consignment-sales" element={<ConsignedPhonesSoldPage />} />
