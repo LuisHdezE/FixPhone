@@ -53,6 +53,7 @@ export function InventoryDevicesPage({
   const [canManage, setCanManage] = useState(false);
   const [canRoute, setCanRoute] = useState(false);
   const [routingDevice, setRoutingDevice] = useState<InventoryDeviceListItemDto | null>(null);
+  const [deletingDevice, setDeletingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [editingDevice, setEditingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<{ device: InventoryDeviceListItemDto; kind: 'details' | 'dismantling' } | null>(null);
@@ -109,13 +110,13 @@ export function InventoryDevicesPage({
 
   async function deleteDevice(device: InventoryDeviceListItemDto) {
     if (!canManage || busyId !== null) return;
-    if (!window.confirm('¿Eliminar ' + device.id + '? Se retirará del inventario, pero su código y auditoría se conservarán. Los equipos con ventas, repuestos, tasaciones o movimientos asociados no se pueden eliminar.')) return;
 
     setBusyId(device.inventoryId);
     setNotice(null);
     setActionError(null);
     try {
       await gateway.deleteDevice(device.inventoryId);
+      setDeletingDevice(null);
       await loadDevices();
       setActiveAction(null);
       setNotice('El dispositivo ' + device.id + ' se retiró del inventario sin perder su código ni auditoría.');
@@ -236,7 +237,7 @@ export function InventoryDevicesPage({
           aria-label={'Eliminar ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-red-600 transition hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red-600 disabled:opacity-40"
           disabled={busyId !== null}
-          onClick={() => void deleteDevice(device)}
+          onClick={() => { setActionError(null); setDeletingDevice(device); }}
           title={'Eliminar ' + device.id + ' (conservar auditoría)'}
           type="button"
         ><AppIcon className="size-3.5" name="trash" /></button> : null}
@@ -293,7 +294,7 @@ export function InventoryDevicesPage({
       ) : null}
 
       {notice ? <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">{notice}</p> : null}
-      {actionError ? <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">{actionError}</p> : null}
+      {actionError && !deletingDevice ? <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">{actionError}</p> : null}
 
       {error ? (
         <div className="mt-5 space-y-3">
@@ -361,6 +362,23 @@ export function InventoryDevicesPage({
             >{dismantlingNames[status]}</button>)}
         </div>
       </div>}
+    </ModalShell> : null}
+    {deletingDevice ? <ModalShell title="Eliminar dispositivo" density="compact" hideCloseButton disabled={busyId !== null} onClose={() => { if (busyId === null) { setDeletingDevice(null); setActionError(null); } }}>
+      <div className="grid gap-3 p-3" data-device-delete-confirmation>
+        <div className="flex items-start gap-2">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-red-50 text-red-600"><AppIcon name="trash" className="size-4" /></span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-slate-900">¿Eliminar {deletingDevice.id}?</p>
+            <p className="mt-0.5 break-words text-xs text-slate-600">{deletingDevice.manufacturer} {deletingDevice.model}</p>
+          </div>
+        </div>
+        <p className="text-xs leading-5 text-slate-600">Se retirará del inventario. Su código y auditoría se conservarán. Los equipos con ventas, repuestos, tasaciones o movimientos asociados no se pueden eliminar.</p>
+        {actionError ? <p role="alert" className="rounded-md bg-red-50 p-2 text-xs text-red-700">{actionError}</p> : null}
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
+          <button data-modal-initial-focus className="h-7 rounded-md border border-slate-200 px-3 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-50" disabled={busyId !== null} onClick={() => { setDeletingDevice(null); setActionError(null); }} type="button">Cancelar</button>
+          <button className="h-7 rounded-md bg-red-600 px-3 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50" disabled={busyId !== null} aria-busy={busyId !== null} onClick={() => void deleteDevice(deletingDevice)} type="button">{busyId !== null ? 'Eliminando…' : 'Eliminar'}</button>
+        </div>
+      </div>
     </ModalShell> : null}
     {routingDevice ? <DeviceDestinationModal
       key={routingDevice.inventoryId}
