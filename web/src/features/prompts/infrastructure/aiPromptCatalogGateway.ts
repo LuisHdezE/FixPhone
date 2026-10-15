@@ -35,7 +35,7 @@ async function decode<T>(response: Response): Promise<T> {
   if (!payload || typeof payload !== 'object') throw new Error('Respuesta vacía del servidor.');
   return payload as T;
 }
-const json = (data: unknown) => ({ 'Content-Type': 'application/json' } as const);
+const json = () => ({ 'Content-Type': 'application/json' } as const);
 const path = (code: string) => '/api/v1/admin/ai-prompts/' + encodeURIComponent(code);
 
 export async function listAiPrompts(): Promise<AiPromptList> {
@@ -51,28 +51,28 @@ export async function getAiPromptHistory(code: string): Promise<AiPromptRevision
 }
 export async function createAiPrompt(data: AiPromptInput): Promise<AiPromptDetail> {
   return (await decode<{ data: AiPromptDetail }>(await adminFetch('/api/v1/admin/ai-prompts', {
-    method: 'POST', headers: json(data), body: JSON.stringify(data),
+    method: 'POST', headers: json(), body: JSON.stringify(data),
   }))).data;
 }
 export async function updateAiPrompt(code: string, data: Pick<AiPromptInput, 'description' | 'content'>, expectedVersion: number): Promise<AiPromptDetail> {
   return (await decode<{ data: AiPromptDetail }>(await adminFetch(path(code), {
-    method: 'PATCH', headers: json(data), body: JSON.stringify({ ...data, expected_version: expectedVersion }),
+    method: 'PATCH', headers: json(), body: JSON.stringify({ ...data, expected_version: expectedVersion }),
   }))).data;
 }
 export async function archiveAiPrompt(code: string, expectedVersion: number): Promise<AiPromptDetail> {
   return (await decode<{ data: AiPromptDetail }>(await adminFetch(path(code), {
-    method: 'DELETE', headers: json({}), body: JSON.stringify({ expected_version: expectedVersion }),
+    method: 'DELETE', headers: json(), body: JSON.stringify({ expected_version: expectedVersion }),
   }))).data;
 }
 export async function reactivateAiPrompt(code: string, expectedVersion: number): Promise<AiPromptDetail> {
   return (await decode<{ data: AiPromptDetail }>(await adminFetch(path(code) + '/reactivate', {
-    method: 'POST', headers: json({}), body: JSON.stringify({ expected_version: expectedVersion }),
+    method: 'POST', headers: json(), body: JSON.stringify({ expected_version: expectedVersion }),
   }))).data;
 }
 export async function restoreAiPromptRevision(code: string, version: number, expectedVersion: number): Promise<AiPromptDetail> {
   return (await decode<{ data: AiPromptDetail }>(await adminFetch(
     path(code) + '/revisions/' + version + '/restore', {
-      method: 'POST', headers: json({}), body: JSON.stringify({ expected_version: expectedVersion }),
+      method: 'POST', headers: json(), body: JSON.stringify({ expected_version: expectedVersion }),
     },
   ))).data;
 }
