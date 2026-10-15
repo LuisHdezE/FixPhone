@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { ModalShell } from '@/components/layout/ModalShell';
 
-type Publication = { title: string; sku: string; condition: string; price_minor: number | null; currency: string; image_url: string | null; published: boolean; stock_quantity: number };
+type Publication = { title: string; description: string | null; variant: string; sku: string; condition: string; price_minor: number | null; currency: string; image_url: string | null; published: boolean; stock_quantity: number };
 
 export function SparePartPublicationModal({ id, onClose, onSaved }: { id: string; onClose: () => void; onSaved: () => void }) {
   const [data, setData] = useState<Publication | null>(null);
@@ -28,7 +28,7 @@ export function SparePartPublicationModal({ id, onClose, onSaved }: { id: string
     try {
       const minor = price.trim() ? Math.round(Number(price.replace(',', '.')) * 100) : null;
       if (minor !== null && (!Number.isSafeInteger(minor) || minor <= 0 || minor > 2147483647)) throw new Error('Indicá un precio válido mayor que cero.');
-      const response = await adminFetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ condition: data.condition, price_minor: minor, currency: data.currency, image_url: data.image_url?.trim() || null, published: data.published }) });
+      const response = await adminFetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ title: data.title, description: data.description, condition: data.condition, price_minor: minor, currency: data.currency, image_url: data.image_url?.trim() || null, published: data.published }) });
       const body = await response.json().catch(() => null) as { message?: string; errors?: Record<string, string[]> } | null;
       if (!response.ok) throw new Error(body?.errors ? Object.values(body.errors).flat().join(' ') : body?.message || 'No se pudo guardar la publicación.');
       onSaved();
@@ -40,6 +40,9 @@ export function SparePartPublicationModal({ id, onClose, onSaved }: { id: string
       {data ? <>
         <p className="font-medium">{data.sku} · {data.title}</p>
         <p className="text-slate-500">Existencias: {data.stock_quantity}. La condición se aplica a todas las unidades de esta ficha.</p>
+        {data.variant ? <p>Variante: {data.variant}</p> : null}
+        <label className="grid gap-1">Título<input className="h-7 rounded border border-slate-200 px-2" required maxLength={255} value={data.title} disabled={busy} onChange={event => setData({ ...data, title: event.target.value })} /></label>
+        <label className="grid gap-1">Descripción<textarea className="rounded border border-slate-200 px-2 py-1" rows={2} maxLength={2000} value={data.description ?? ''} disabled={busy} onChange={event => setData({ ...data, description: event.target.value })} /></label>
         <label className="grid gap-1">Condición<select className="h-7 rounded border border-slate-200 px-2" value={data.condition} disabled={busy} onChange={event => setData({ ...data, condition: event.target.value, published: false })}><option value="untested">Sin probar</option><option value="functional">Funcional</option><option value="faulty">Con fallas</option></select></label>
         <div className="grid grid-cols-[1fr_6rem] gap-2"><label className="grid gap-1">Precio<input className="h-7 rounded border border-slate-200 px-2" inputMode="decimal" value={price} disabled={busy} onChange={event => setPrice(event.target.value)} /></label><label className="grid gap-1">Moneda<select className="h-7 rounded border border-slate-200 px-2" value={data.currency} disabled={busy} onChange={event => setData({ ...data, currency: event.target.value })}><option>UYU</option><option>USD</option></select></label></div>
         <label className="grid gap-1">URL de imagen (opcional)<input className="h-7 rounded border border-slate-200 px-2" type="url" placeholder="https://…" value={data.image_url ?? ''} disabled={busy} onChange={event => setData({ ...data, image_url: event.target.value })} /></label>

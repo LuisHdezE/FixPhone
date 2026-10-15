@@ -20,7 +20,7 @@ final class MasterDataEndpointsTest extends TestCase
             ->assertJsonCount(5, 'data.storageCapacities')
             ->assertJsonCount(6, 'data.ramCapacities')
             ->assertJsonCount(5, 'data.conditions')
-            ->assertJsonCount(10, 'data.sparePartTypes')
+            ->assertJsonCount(18, 'data.sparePartTypes')
             ->assertJsonPath('data.brands.0.id', 'brand-apple')
             ->assertJsonPath('data.deviceModels.0.brandId', 'brand-apple');
     }

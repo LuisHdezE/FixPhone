@@ -44,3 +44,14 @@ Consultar planilla requiere inventory.view. Extraer exige workshop.dismantle e i
 Pruebas PHP: creación +1, agregación entre donantes, separación por propietario/condición, idempotencia, conflictos de jerarquía, reversión del lote, permisos, estados del donante, persistencia y exposición pública. Prueba frontend del proveedor: listado/home/detalle dinámico, etiqueta recuperada, precio minor/100 y ausencia de productos demo cuando la API está vacía.
 
 La limpieza previa de producción se verificó en la ejecución 38776045707: 60 repuestos eliminados, cero restantes, respaldo cifrado verificado y próximo código REP-0001. Esta entrega no repite ninguna limpieza.
+
+
+### Nombres, descripciones y variantes
+
+La ficha propone `Tipo · Marca Modelo · Variante · Recuperado` y una descripción factual propia. Ambos textos se pueden editar antes de guardar o desde Publicación de repuesto. La condición funcional se presenta en su campo separado; el texto automático no afirma originalidad, pruebas ni compatibilidad con otros modelos.
+
+Variante es un campo explícito (hasta 120 caracteres) para color, marco, revisión, conjunto u otras diferencias comprobadas. Forma parte de la identidad de existencias; mayúsculas y espacios repetidos no crean otro artículo. Una variante vacía no coincide con una informada. Los títulos y descripciones no se usan para decidir equivalencia ni se sobrescriben al sumar unidades a un artículo existente. Para corregirlos se utiliza la publicación. La variante queda en el snapshot de extracción y no se edita desde publicación. Elegir otra variante tampoco permite extraer dos veces la misma pieza del mismo donante.
+
+Se añaden opciones para pin suelto, placa y flex de carga, auricular interno, tapa trasera, bandeja SIM, vibrador y flex de encendido. Los tres formatos de carga son alternativas excluyentes por donante: no se cuenta el conector separado y además su conjunto completo. La planilla sigue siendo selección manual; no supone que cada modelo incluya todas las piezas.
+
+Referencia editorial consultada: https://www.carmelimportaciones.com/productos/?path=0.2547&secc=productos (15/10/2026). Se tomó el criterio de identificar pieza, marca, modelo y características; no se importan descripciones, fotografías, precios ni compatibilidades del proveedor.

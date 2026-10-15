@@ -23,3 +23,16 @@ test('published recovered inventory populates listing, home and product detail w
     assert.equal(empty.getHomeView().productSection.products.length, 0);
   } finally { await server.close(); }
 });
+
+
+test('recovered copy describes only the selected model and known variant', async () => {
+  const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
+  try {
+    const { recoveredPartCopy } = await server.ssrLoadModule('/src/features/inventory/presentation/recoveredPartCopy.ts');
+    const copy = recoveredPartCopy('Display', 'Apple', 'iPhone 11', ' Negro   con marco ');
+    assert.equal(copy.title, 'Display · Apple iPhone 11 · Negro con marco · Recuperado');
+    assert.match(copy.description, /Variante: Negro con marco/);
+    assert.doesNotMatch(copy.description, /original|probada|funcional|iPhone 12/i);
+    assert.equal(recoveredPartCopy('Batería', 'Apple', 'iPhone 11', '').title, 'Batería · Apple iPhone 11 · Recuperado');
+  } finally { await server.close(); }
+});

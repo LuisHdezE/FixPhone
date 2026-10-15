@@ -1,11 +1,13 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { Fragment, useEffect, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { ModalShell } from '@/components/layout/ModalShell';
 import type { InventoryDeviceListItemDto } from '../application/devices.dto';
 
+import { recoveredPartCopy } from './recoveredPartCopy';
+
 type PartType = { id: string; name: string; parentId?: string | null };
 type PartCondition = 'untested' | 'functional' | 'faulty';
-type Row = { selected: boolean; condition: PartCondition; price: string; image: string; publish: boolean };
+type Row = { selected: boolean; condition: PartCondition; price: string; image: string; publish: boolean; variant: string; title: string | null; description: string | null };
 type Sheet = { donor_sku: string; brand: string; model: string; exhausted: boolean; types: PartType[]; extracted: { part_type_id: string; part_name: string }[] };
 
 async function read<T>(response: Response): Promise<T> {
@@ -32,7 +34,7 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
       .then(response => read<{ data: Sheet }>(response)).then(payload => {
         if (!alive) return;
         setSheet(payload.data);
-        setRows(Object.fromEntries(payload.data.types.map(type => [type.id, { selected: false, condition: 'untested', price: '', image: '', publish: false }])));
+        setRows(Object.fromEntries(payload.data.types.map(type => [type.id, { selected: false, condition: 'untested', price: '', image: '', publish: false, variant: '', title: null, description: null }])));
       }).catch(cause => { if (alive) setError(cause instanceof Error ? cause.message : 'No se pudo cargar la planilla.'); });
     return () => { alive = false; };
   }, [device.inventoryId, reload]);
@@ -47,7 +49,7 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
   }
   function conflict(a: string, b: string) {
     const left = path(a); const right = path(b);
-    return a === b || left.includes(b) || right.includes(a) || (left.includes('part-display') && right.includes('part-display'));
+    return a === b || left.includes(b) || right.includes(a) || (left.includes('part-display') && right.includes('part-display')) || (left.includes('part-charge-port') && right.includes('part-charge-port'));
   }
   const selected = Object.entries(rows).filter(([, row]) => row.selected);
   function change(id: string, patch: Partial<Row>) {
@@ -65,7 +67,8 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
         const minor = number === null ? null : Math.round(number * 100);
         if (minor !== null && (!Number.isSafeInteger(minor) || minor <= 0 || minor > 2147483647)) throw new Error('Indicá precios válidos mayores que cero.');
         if (row.publish && (row.condition !== 'functional' || minor === null)) throw new Error('Cada pieza a publicar necesita condición funcional y precio.');
-        return { type_id, condition: row.condition, sale_price_minor: minor, image_url: row.image.trim() || null, publish: row.publish };
+        const copy = recoveredPartCopy(sheet?.types.find(type => type.id === type_id)?.name ?? '', sheet?.brand ?? '', sheet?.model ?? '', row.variant);
+        return { type_id, variant: row.variant, title: row.title ?? copy.title, description: row.description ?? copy.description, condition: row.condition, sale_price_minor: minor, image_url: row.image.trim() || null, publish: row.publish };
       });
       const payload = await read<{ data: { items: { created: boolean }[]; replayed: boolean } }>(await adminFetch('/api/v1/admin/devices/' + encodeURIComponent(device.inventoryId) + '/components', {
         method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -83,7 +86,7 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
         <p className="text-xs font-medium">{sheet ? sheet.brand + ' ' + sheet.model : device.manufacturer + ' ' + device.model}</p>
         <label className="flex items-center gap-2 text-xs">Moneda<select className="h-7 rounded border border-slate-200 px-2" value={currency} disabled={busy} onChange={event => { setCurrency(event.target.value); setRequestId(crypto.randomUUID()); }}><option>UYU</option><option>USD</option></select></label>
       </div>
-      <p className="text-[11px] leading-4 text-slate-600">Seleccioná las piezas recuperadas de este equipo. Cada una ingresa con cantidad 1. Precio e imagen son opcionales para guardar; Publicar requiere pieza funcional y precio.</p>
+      <p className="text-[11px] leading-4 text-slate-600">Seleccioná las piezas recuperadas de este equipo. Cada una ingresa con cantidad 1. Completá la variante si cambia color, marco o conjunto. Al sumar a un repuesto existente se conservan sus textos. Publicar requiere pieza funcional y precio.</p>
       {!sheet && !error ? <p role="status" className="text-xs">Cargando planilla…</p> : null}
       {sheet?.exhausted ? <p role="alert" className="text-xs text-amber-700">Este donante está agotado y no admite nuevas extracciones.</p> : null}
       {sheet && sheet.types.length === 0 ? <p className="text-xs text-amber-700">Agregá tipos de repuesto activos en el catálogo maestro.</p> : null}
@@ -94,13 +97,22 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
             const extracted = sheet.extracted.some(item => conflict(type.id, item.part_type_id));
             const overlaps = selected.some(([id]) => id !== type.id && conflict(type.id, id));
             const disabled = busy || extracted || overlaps || sheet.exhausted;
-            return <tr className="border-t border-slate-100 align-top" key={type.id}>
+            const copy = recoveredPartCopy(type.name, sheet.brand, sheet.model, row.variant);
+            return <Fragment key={type.id}><tr className="border-t border-slate-100 align-top" key={type.id}>
               <td className="p-2"><label className="flex items-center gap-2"><input type="checkbox" checked={row.selected} disabled={disabled} onChange={event => change(type.id, { selected: event.target.checked })} /><span>{type.name}{extracted ? <small className="block text-emerald-700">Ya registrado</small> : null}</span></label>
-                {row.selected ? <input aria-label={'Imagen de ' + type.name} type="url" placeholder="URL https de imagen (opcional)" className="mt-1 h-6 w-full max-w-64 rounded border border-slate-200 px-1 text-[10px]" disabled={busy} value={row.image} onChange={event => change(type.id, { image: event.target.value })} /> : null}</td>
+</td>
               <td className="p-2"><select aria-label={'Condición de ' + type.name} className="h-7 max-w-32 rounded border border-slate-200 px-1" disabled={!row.selected || disabled} value={row.condition} onChange={event => change(type.id, { condition: event.target.value as PartCondition, publish: false })}><option value="untested">Sin probar</option><option value="functional">Funcional</option><option value="faulty">Con fallas</option></select></td>
               <td className="p-2"><input aria-label={'Precio de ' + type.name} className="h-7 w-24 rounded border border-slate-200 px-2" disabled={!row.selected || disabled} inputMode="decimal" placeholder="0,00" value={row.price} onChange={event => change(type.id, { price: event.target.value })} /></td>
               {canPublish ? <td className="p-2 text-center"><input aria-label={'Publicar ' + type.name} type="checkbox" checked={row.publish} disabled={!row.selected || disabled || row.condition !== 'functional'} onChange={event => change(type.id, { publish: event.target.checked })} /></td> : null}
-            </tr>;
+            </tr>{row.selected ? <tr className="bg-slate-50/60"><td colSpan={canPublish ? 4 : 3} className="px-2 pb-2">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="grid gap-1">Variante / características<input aria-label={'Variante de ' + type.name} className="h-7 rounded border border-slate-200 px-2" placeholder="Ej.: negro, con marco, flex completo" maxLength={120} disabled={busy} value={row.variant} onChange={event => change(type.id, { variant: event.target.value })} /></label>
+                <label className="grid gap-1">Título<input aria-label={'Título de ' + type.name} className="h-7 rounded border border-slate-200 px-2" maxLength={255} required disabled={busy} value={row.title ?? copy.title} onChange={event => change(type.id, { title: event.target.value })} /></label>
+                <label className="grid gap-1 sm:col-span-2">Descripción<textarea aria-label={'Descripción de ' + type.name} className="rounded border border-slate-200 px-2 py-1" rows={2} maxLength={2000} disabled={busy} value={row.description ?? copy.description} onChange={event => change(type.id, { description: event.target.value })} /></label>
+                <label className="grid gap-1">Imagen (URL opcional)<input aria-label={'Imagen de ' + type.name} type="url" placeholder="https://…" className="h-7 rounded border border-slate-200 px-2" disabled={busy} value={row.image} onChange={event => change(type.id, { image: event.target.value })} /></label>
+                <button type="button" className="justify-self-start text-slate-600 underline" disabled={busy} onClick={() => change(type.id, { title: null, description: null })}>Restaurar textos automáticos</button>
+              </div>
+            </td></tr> : null}</Fragment>;
           })}
         </tbody></table>
       </div> : null}

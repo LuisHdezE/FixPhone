@@ -183,4 +183,44 @@ final class DeviceComponentExtractionTest extends TestCase
         $this->assertDatabaseCount('device_part_extractions', 0);
     }
 
+    public function test_generated_copy_is_specific_and_variants_control_matching(): void
+    {
+        $this->signIn();
+        $first = $this->extract($this->donor(), [$this->partRow('part-display', ['variant' => 'Negro con marco'])])->assertOk();
+        $id = $first->json('data.items.0.id');
+        $this->assertDatabaseHas('inventory_items', ['id' => $id, 'title' => 'Display · Apple iPhone 11 · Negro con marco · Recuperado']);
+        $spare = InventoryItem::query()->findOrFail($id);
+        $this->assertStringContainsString('Variante: Negro con marco.', $spare->description);
+        $this->assertStringNotContainsString('original', $spare->description);
+        $this->extract($this->donor(), [$this->partRow('part-display', ['variant' => 'negro   CON marco', 'title' => 'Otro título', 'description' => 'Otro texto'])])->assertOk()->assertJsonPath('data.items.0.created', false);
+        $this->assertSame($spare->title, $spare->fresh()->title);
+        $this->assertSame($spare->description, $spare->fresh()->description);
+        $this->extract($this->donor(), [$this->partRow('part-display', ['variant' => 'Negro sin marco'])])->assertOk()->assertJsonPath('data.items.0.created', true);
+        $this->assertSame(2, InventoryItem::query()->where('item_type', 'spare_part')->count());
+        $this->assertSame(2, $spare->fresh()->stock_quantity);
+        $snapshot = json_decode(DB::table('device_part_extractions')->where('spare_item_id', $id)->first()->identity_snapshot, true);
+        $this->assertSame('Negro con marco', $snapshot['variant']);
+        $this->assertSame($spare->title, $snapshot['title']);
+    }
+
+    public function test_custom_copy_persists_and_can_be_edited_for_showroom(): void
+    {
+        $this->signIn();
+        $response = $this->extract($this->donor(), [$this->partRow('part-camera-front', ['title' => 'Cámara frontal para iPhone 11', 'description' => 'Recuperada, incluye flex.'])])->assertOk();
+        $id = $response->json('data.items.0.id');
+        $this->assertDatabaseHas('inventory_items', ['id' => $id, 'title' => 'Cámara frontal para iPhone 11', 'description' => 'Recuperada, incluye flex.']);
+        $this->patchJson('/api/v1/admin/inventory/spare-parts/'.$id.'/publication', ['title' => 'Cámara frontal · iPhone 11 · Recuperada', 'description' => 'Probada en taller.', 'condition' => 'functional', 'price_minor' => 10000, 'currency' => 'UYU', 'published' => true])->assertOk();
+        $this->getJson('/api/v1/store/products')->assertOk()->assertJsonPath('0.title', 'Cámara frontal · iPhone 11 · Recuperada')->assertJsonPath('0.description', 'Probada en taller.');
+        $this->extract($this->donor(), [$this->partRow('part-battery', ['title' => str_repeat('a', 256)])])->assertUnprocessable();
+        $this->assertDatabaseCount('device_part_extractions', 1);
+    }
+
+    public function test_charge_assembly_cannot_also_be_counted_as_a_loose_connector(): void
+    {
+        $this->signIn(); $donor = $this->donor();
+        $this->extract($donor, [$this->partRow('part-charge-pin'), $this->partRow('part-charge-board')])->assertUnprocessable();
+        $this->extract($donor, [$this->partRow('part-charge-flex')])->assertOk();
+        $this->extract($donor, [$this->partRow('part-charge-pin')])->assertUnprocessable();
+        $this->assertDatabaseCount('device_part_extractions', 1);
+    }
 }

@@ -34,16 +34,17 @@ return new class extends Migration {
             $table->timestamp('created_at');
             $table->unique(['donor_item_id', 'part_type_id'], 'donor_component_once');
         });
-        // Add granular camera options without altering any user-maintained entries.
-        foreach ([['part-camera-front', 'Cámara frontal', 'camara-frontal', 41], ['part-camera-rear', 'Cámara trasera (conjunto)', 'camara-trasera', 42]] as [$id, $name, $slug, $order]) {
-            $parent = DB::table('master_data_entries')->where('id', 'part-camera')->where('kind', 'sparePartTypes')->first();
-            if ($parent) {
-                DB::table('master_data_entries')->insertOrIgnore([
-                    'id' => $id, 'kind' => 'sparePartTypes',
-                    'payload' => json_encode(['id' => $id, 'parentId' => 'part-camera', 'name' => $name, 'slug' => $slug, 'active' => true, 'sortOrder' => $order], JSON_UNESCAPED_UNICODE),
-                    'created_at' => now(), 'updated_at' => now(),
-                ]);
-            }
+        // Extend the versioned catalogue without overwriting user-maintained entries.
+        $catalog = json_decode(file_get_contents(database_path('seed-data/master-data.catalog.json')), true, 512, JSON_THROW_ON_ERROR);
+        $ids = ['part-camera-front', 'part-camera-rear', 'part-charge-pin', 'part-charge-board', 'part-charge-flex', 'part-earpiece', 'part-back-cover', 'part-sim-tray', 'part-vibrator', 'part-power-flex'];
+        foreach ($catalog['sparePartTypes'] as $type) {
+            if (!in_array($type['id'], $ids, true)) continue;
+            if ($type['parentId'] && !DB::table('master_data_entries')->where('id', $type['parentId'])->where('kind', 'sparePartTypes')->exists()) continue;
+            DB::table('master_data_entries')->insertOrIgnore([
+                'id' => $type['id'], 'kind' => 'sparePartTypes',
+                'payload' => json_encode($type, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
         }
     }
 

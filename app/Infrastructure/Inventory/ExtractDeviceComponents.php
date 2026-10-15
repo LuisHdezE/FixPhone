@@ -52,13 +52,16 @@ final class ExtractDeviceComponents
         $a = $this->ancestors($left, $catalog);
         $b = $this->ancestors($right, $catalog);
         return $left === $right || in_array($left, $b, true) || in_array($right, $a, true)
-            || (in_array('part-display', $a, true) && in_array('part-display', $b, true));
+            || (in_array('part-display', $a, true) && in_array('part-display', $b, true))
+            || (in_array('part-charge-port', $a, true) && in_array('part-charge-port', $b, true));
     }
 
     public function execute(string $id, array $data, string $actor): array
     {
         $components = array_map(fn ($row) => [
             'type_id' => $row['type_id'], 'condition' => $row['condition'],
+            'variant' => trim(preg_replace('/\\s+/u', ' ', $row['variant'] ?? '')),
+            'title' => trim($row['title'] ?? ''), 'description' => trim($row['description'] ?? ''),
             'sale_price_minor' => isset($row['sale_price_minor']) ? (int) $row['sale_price_minor'] : null,
             'image_url' => $row['image_url'] ?? null, 'publish' => (bool) ($row['publish'] ?? false),
         ], $data['components']);
@@ -108,7 +111,7 @@ final class ExtractDeviceComponents
             $result = [];
             foreach ($components as $row) {
                 $type = $catalog[$row['type_id']];
-                $key = ExtractedPartIdentity::key($brand['id'], $model['id'], $type['id'], $row['condition'], $donor->consignor_id, $data['currency']);
+                $key = ExtractedPartIdentity::key($brand['id'], $model['id'], $type['id'], $row['condition'], $donor->consignor_id, $data['currency'], $row['variant']);
                 $spare = InventoryItem::query()->where('component_identity_key', $key)->lockForUpdate()->first();
                 if (!$spare) {
                     // Adopt only an unambiguous compatible manual entry; never guess by similar names.
@@ -117,6 +120,7 @@ final class ExtractDeviceComponents
                             $meta = $item->metadata ?? [];
                             return ($meta['origin'] ?? null) === 'recovered' && ($meta['brand_id'] ?? null) === $brand['id'] && ($meta['device_model_id'] ?? null) === $model['id']
                                 && (($meta['spare_part_type_id'] ?? null) === $type['id'] || mb_strtolower(trim($item->title)) === mb_strtolower(trim($type['name'])))
+                                && ExtractedPartIdentity::variant($meta['part_variant'] ?? '') === ExtractedPartIdentity::variant($row['variant'])
                                 && ($meta['part_condition'] ?? 'untested') === $row['condition']
                                 && $item->consignor_id === $donor->consignor_id && $item->currency_code === $data['currency'];
                         });
@@ -125,9 +129,14 @@ final class ExtractDeviceComponents
                 }
                 $created = $spare === null;
                 if ($created) {
+                    $title = $row['title'] ?: $type['name'].' · '.$brand['name'].' '.$model['name'].($row['variant'] ? ' · '.$row['variant'] : '').' · Recuperado';
+                    $description = $row['description'] ?: $type['name'].' recuperado de '.$brand['name'].' '.$model['name'].'.'.($row['variant'] ? ' Variante: '.$row['variant'].'.' : '').' Consultá la condición indicada en esta ficha.';
+                    if (mb_strlen($title) > 255) {
+                        throw ValidationException::withMessages(['components' => 'Acortá el título del repuesto a 255 caracteres.']);
+                    }
                     $spare = InventoryItem::query()->create([
-                        'sku' => SparePartCodeAllocator::reserve(), 'title' => $type['name'].' · '.$brand['name'].' '.$model['name'],
-                        'description' => 'Componente recuperado de equipo para despiece.', 'item_type' => 'spare_part',
+                        'sku' => SparePartCodeAllocator::reserve(), 'title' => $title,
+                        'description' => $description, 'item_type' => 'spare_part',
                         'brand' => $brand['name'], 'model' => $model['name'], 'consignor_id' => $donor->consignor_id,
                         'inventory_purpose' => 'sell_as_spare_part', 'operational_status' => 'en_stock',
                         'publication_status' => 'no_publicable', 'is_sellable' => false, 'stock_quantity' => 0,
@@ -145,7 +154,7 @@ final class ExtractDeviceComponents
                     'sale_price_amount_minor' => $row['sale_price_minor'] ?? $spare->sale_price_amount_minor,
                     'main_image_url' => $spare->main_image_url ?: $row['image_url'],
                     'metadata' => [...$meta, 'brand_id' => $brand['id'], 'device_model_id' => $model['id'],
-                        'spare_part_type_id' => $type['id'], 'part_condition' => $row['condition'], 'origin' => 'recovered'],
+                        'spare_part_type_id' => $type['id'], 'part_variant' => $row['variant'], 'part_condition' => $row['condition'], 'origin' => 'recovered'],
                 ]);
                 if ($row['publish']) {
                     if (!$spare->sale_price_amount_minor || $spare->sale_price_amount_minor <= 0) {
@@ -161,7 +170,8 @@ final class ExtractDeviceComponents
                     'part_type_id' => $type['id'], 'part_name' => $type['name'], 'part_condition' => $row['condition'],
                     'quantity_before' => $before, 'quantity_after' => $before + 1,
                     'identity_snapshot' => json_encode(['donor_sku' => $donor->sku, 'brand_id' => $brand['id'], 'brand' => $brand['name'],
-                        'model_id' => $model['id'], 'model' => $model['name'], 'consignor_id' => $donor->consignor_id], JSON_THROW_ON_ERROR),
+                        'model_id' => $model['id'], 'model' => $model['name'], 'variant' => $row['variant'],
+                        'title' => $spare->title, 'description' => $spare->description, 'consignor_id' => $donor->consignor_id], JSON_THROW_ON_ERROR),
                     'created_at' => now(),
                 ]);
                 DB::table('inventory_stock_adjustments')->insert([
