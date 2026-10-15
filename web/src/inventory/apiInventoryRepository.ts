@@ -12,6 +12,8 @@ type InventoryRecord = {
   item_type: string;
   brand: string | null;
   model: string | null;
+  brand_id?: string | null;
+  device_model_id?: string | null;
   inventory_purpose: string;
   operational_status: string;
   publication_status: string;
@@ -43,6 +45,8 @@ function mapRecord(record: InventoryRecord): InventoryItem {
     itemType: record.item_type,
     brand: record.brand,
     model: record.model,
+    brandId: record.brand_id ?? null,
+    modelId: record.device_model_id ?? null,
     description: record.description,
     inventoryPurpose: record.inventory_purpose,
     operationalStatus: record.operational_status,
@@ -88,6 +92,13 @@ export const apiInventoryRepository: InventoryRepository = {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(edit),
+    }));
+  },
+
+  async createSpare(data): Promise<void> {
+    await readPayload(await adminFetch('/api/v1/admin/inventory/spare-parts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(data),
     }));
   },
 

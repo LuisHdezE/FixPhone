@@ -5,6 +5,7 @@ use App\Presentation\Http\Controllers\AuthMeController;
 use App\Presentation\Http\Controllers\IamController;
 use App\Presentation\Http\Controllers\InventoryController;
 use App\Presentation\Http\Controllers\OperationalInventoryController;
+use App\Presentation\Http\Controllers\SparePartsInventoryController;
 use App\Presentation\Http\Controllers\DeviceInventoryCrudController;
 use App\Presentation\Http\Controllers\OperationalDashboardController;
 use App\Presentation\Http\Controllers\DeviceDismantlingController;
@@ -113,6 +114,7 @@ Route::prefix('v1')->group(function (): void {
   Route::patch('/admin/orders/{id}/status', [CommercialOrdersController::class, 'changeStatus'])->middleware('permission:orders.manage')->name('api.v1.admin.orders.status');
   
   // Operational inventory: one persisted source, separate permissions per action.
+  Route::post('/admin/inventory/spare-parts',[SparePartsInventoryController::class, 'store'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.spare-parts.store');
   Route::get('/admin/inventory/items',[OperationalInventoryController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.index');
   Route::get('/admin/inventory/items/{id}',[OperationalInventoryController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.show');
   Route::patch('/admin/inventory/items/{id}',[OperationalInventoryController::class, 'update'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.items.update');

@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Inventory\InventoryItem;
+use App\Infrastructure\MasterData\MasterDataEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -32,6 +33,8 @@ final class OperationalInventoryController extends Controller
             'description' => ['sometimes', 'nullable', 'string', 'max:4000'],
             'brand' => ['sometimes', 'nullable', 'string', 'max:150'],
             'model' => ['sometimes', 'nullable', 'string', 'max:150'],
+            'brand_id' => ['sometimes', 'required', 'string'],
+            'device_model_id' => ['sometimes', 'required', 'string'],
             'consignor_id' => ['sometimes', 'nullable', 'string', \Illuminate\Validation\Rule::exists('consignors', 'id')],
         ]);
         if ($validated === []) {
@@ -39,6 +42,32 @@ final class OperationalInventoryController extends Controller
         }
         $item = DB::transaction(function () use ($request, $id, $validated): InventoryItem {
             $item = InventoryItem::query()->whereKey($id)->lockForUpdate()->firstOrFail();
+            if ($item->item_type === 'spare_part'
+                && (array_key_exists('brand', $validated) || array_key_exists('model', $validated))
+                && (!array_key_exists('brand_id', $validated) || !array_key_exists('device_model_id', $validated))) {
+                throw ValidationException::withMessages(['device_model_id' => 'Para editar la marca y el modelo de un repuesto, seleccioná ambos codificadores.']);
+            }
+            if (array_key_exists('brand_id', $validated) || array_key_exists('device_model_id', $validated)) {
+                if ($item->item_type !== 'spare_part') {
+                    throw ValidationException::withMessages(['brand_id' => 'Los codificadores de repuesto solo se editan en repuestos.']);
+                }
+                $brandId = $validated['brand_id'] ?? null;
+                $modelId = $validated['device_model_id'] ?? null;
+                $brandEntry = MasterDataEntry::query()->where('kind', 'brands')->whereKey($brandId)->first();
+                $modelEntry = MasterDataEntry::query()->where('kind', 'deviceModels')->whereKey($modelId)->first();
+                $brand = $brandEntry?->payload;
+                $model = $modelEntry?->payload;
+                if (!is_array($brand) || ($brand['active'] ?? false) !== true || !is_array($model) || ($model['active'] ?? false) !== true || ($model['brandId'] ?? null) !== $brandId) {
+                    throw ValidationException::withMessages(['device_model_id' => 'Seleccioná una marca y un modelo activo correspondiente.']);
+                }
+                $validated['brand'] = $brand['name'];
+                $validated['model'] = $model['name'];
+                $metadata = is_array($item->metadata) ? $item->metadata : [];
+                $metadata['brand_id'] = $brandId;
+                $metadata['device_model_id'] = $modelId;
+                $validated['metadata'] = $metadata;
+                unset($validated['brand_id'], $validated['device_model_id']);
+            }
             $previous = $item->only(array_keys($validated));
             $item->fill($validated);
             if ($item->isDirty()) {
@@ -161,6 +190,8 @@ final class OperationalInventoryController extends Controller
             'item_type' => $item->item_type,
             'brand' => $item->brand,
             'model' => $item->model,
+            'brand_id' => $item->metadata['brand_id'] ?? null,
+            'device_model_id' => $item->metadata['device_model_id'] ?? null,
             'inventory_purpose' => $item->inventory_purpose,
             'operational_status' => $item->operational_status,
             'publication_status' => $item->publication_status,
