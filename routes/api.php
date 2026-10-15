@@ -148,6 +148,12 @@ Route::prefix('v1')->group(function (): void {
   // Reusable prompts are private; only the read-only catalog is available in this stage.
   Route::get('/admin/ai-prompts', [AiPromptCatalogController::class, 'index'])->middleware('permission:integrations.manage')->name('api.v1.admin.ai-prompts.index');
   Route::get('/admin/ai-prompts/{code}', [AiPromptCatalogController::class, 'show'])->middleware('permission:integrations.manage')->name('api.v1.admin.ai-prompts.show');
+  Route::get('/admin/ai-prompts/{code}/history', [AiPromptCatalogController::class, 'history'])->middleware('permission:integrations.manage')->name('api.v1.admin.ai-prompts.history');
+  Route::post('/admin/ai-prompts', [AiPromptCatalogController::class, 'store'])->middleware('permission:ai_prompts.manage')->name('api.v1.admin.ai-prompts.store');
+  Route::patch('/admin/ai-prompts/{code}', [AiPromptCatalogController::class, 'update'])->middleware('permission:ai_prompts.manage')->name('api.v1.admin.ai-prompts.update');
+  Route::delete('/admin/ai-prompts/{code}', [AiPromptCatalogController::class, 'destroy'])->middleware('permission:ai_prompts.manage')->name('api.v1.admin.ai-prompts.archive');
+  Route::post('/admin/ai-prompts/{code}/reactivate', [AiPromptCatalogController::class, 'reactivate'])->middleware('permission:ai_prompts.manage')->name('api.v1.admin.ai-prompts.reactivate');
+  Route::post('/admin/ai-prompts/{code}/revisions/{version}/restore', [AiPromptCatalogController::class, 'restoreRevision'])->middleware('permission:ai_prompts.manage')->whereNumber('version')->name('api.v1.admin.ai-prompts.revisions.restore');
 
   Route::post('/auth/logout',AuthLogoutController::class)->name('api.v1.auth.logout');
   Route::get('/auth/me',AuthMeController::class)->name('api.v1.auth.me');

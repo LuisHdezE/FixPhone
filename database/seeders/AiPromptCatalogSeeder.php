@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Safe to rerun in production: never overwrites administrator-edited prompts.
@@ -68,13 +69,28 @@ Si ninguna tarifa se puede verificar, NO fabriques un CSV con precios: explicá 
 El objetivo es ejecutar este mismo procedimiento periódicamente simplemente pegando este texto en un chat nuevo.
 FIXPHONE_PROMPT;
 
-        DB::table('ai_prompts')->insertOrIgnore([
-            'id' => (string) Str::ulid(),
-            'code' => 'PRICE_REF_001',
-            'description' => 'Actualizar precios de reparación Apple y MundoMac (CSV FixPhone)',
-            'content' => $content,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        DB::transaction(function () use ($content): void {
+            $id = (string) Str::ulid();
+            $created = DB::table('ai_prompts')->insertOrIgnore([
+                'id' => $id,
+                'code' => 'PRICE_REF_001',
+                'description' => 'Actualizar precios de reparación Apple y MundoMac (CSV FixPhone)',
+                'content' => $content,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            if ($created === 1 && Schema::hasTable('ai_prompt_revisions')) {
+                DB::table('ai_prompt_revisions')->insert([
+                    'id' => (string) Str::ulid(),
+                    'ai_prompt_id' => $id,
+                    'version' => 1,
+                    'description' => 'Actualizar precios de reparación Apple y MundoMac (CSV FixPhone)',
+                    'content' => $content,
+                    'action' => 'seeded',
+                    'actor_id' => null,
+                    'created_at' => now(),
+                ]);
+            }
+        });
     }
 }
