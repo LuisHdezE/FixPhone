@@ -24,6 +24,7 @@ use App\Presentation\Http\Controllers\CustomerDirectoryController;
 use App\Presentation\Http\Controllers\CommercialOrdersController;
 use App\Presentation\Http\Controllers\AiPromptCatalogController;
 use App\Presentation\Http\Controllers\ReferencePriceImportController;
+use App\Presentation\Http\Controllers\ReferencePriceComparisonController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -144,6 +145,14 @@ Route::prefix('v1')->group(function (): void {
    Route::patch('/{id}', [MediaStorageSettingsController::class, 'update'])->name('api.v1.admin.media.storage.update');
    Route::post('/{id}/select', [MediaStorageSettingsController::class, 'select'])->name('api.v1.admin.media.storage.select');
    Route::post('/{id}/test', [MediaStorageSettingsController::class, 'testConnection'])->middleware('throttle:6,1')->name('api.v1.admin.media.storage.test');
+  });
+
+  Route::prefix('admin/reference-prices')->middleware('permission:reference_prices.import')->group(function (): void {
+   Route::get('/comparison/options', [ReferencePriceComparisonController::class, 'options'])->name('api.v1.admin.reference-prices.compare.options');
+   Route::get('/comparison', [ReferencePriceComparisonController::class, 'index'])->name('api.v1.admin.reference-prices.compare');
+   Route::post('/own-prices', [ReferencePriceComparisonController::class, 'store'])->name('api.v1.admin.reference-prices.own-prices.store');
+   Route::patch('/own-prices/{id}', [ReferencePriceComparisonController::class, 'update'])->name('api.v1.admin.reference-prices.own-prices.update');
+   Route::delete('/own-prices/{id}', [ReferencePriceComparisonController::class, 'destroy'])->name('api.v1.admin.reference-prices.own-prices.destroy');
   });
 
   Route::prefix('admin/reference-prices/imports')->middleware(['permission:reference_prices.import', 'throttle:20,1'])->group(function (): void {
