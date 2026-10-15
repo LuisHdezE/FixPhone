@@ -308,7 +308,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     }
   }
 
-  return <ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving}>
+  return <ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving} hideCloseButton={Boolean(editDevice)} width={editDevice ? 'medium' : 'default'}>
     <div className="p-2.5" data-device-intake data-device-mode={editDevice ? "edit" : "create"}>
       <form className="grid gap-2" onSubmit={submit}>
         <SurfaceCard className="!p-2">
@@ -331,10 +331,10 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
 
         <details open={Boolean(editDevice)} className="rounded-lg border border-slate-200 bg-white" data-device-optional-details>
           <summary className="cursor-pointer px-3 py-1.5 text-xs font-semibold text-slate-800">Completar datos opcionales: IMEI, características, condición y costo</summary>
-          <div className="grid gap-2 p-2 pt-0">
+          <div className={editDevice ? 'grid gap-2 p-2 pt-0 md:grid-cols-3' : 'grid gap-2 p-2 pt-0'}>
           <SurfaceCard className="!p-2">
             <h2 className="text-xs font-semibold text-slate-950">{view.identitySectionTitle}</h2>
-            <div className="mt-2 grid gap-2 md:grid-cols-3">
+            <div className="mt-2 grid gap-2">
               <TextField id="device-identity" label={view.fields.serialOrImei} onChange={(value) => setField('serialOrImei', value)} placeholder={view.placeholders.serialOrImei} value={form.serialOrImei} />
               <SelectField id="device-storage" label={view.fields.storageCapacityId} onChange={(value) => setField('storageCapacityId', value)} options={storageOptions} value={form.storageCapacityId} />
               <SelectField id="device-color" label={view.fields.colorId} onChange={(value) => setField('colorId', value)} options={colorOptions} value={form.colorId} />
@@ -342,7 +342,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
           </SurfaceCard>
           <SurfaceCard className="!p-2">
           <h2 className="text-xs font-semibold text-slate-950">{view.conditionSectionTitle}</h2>
-          <div className="mt-2 grid gap-2 md:grid-cols-3">
+          <div className="mt-2 grid gap-2">
             <SelectField id="device-powers-on" label={view.fields.powersOn} onChange={(value) => setField('powersOn', value as DevicePowerState)} options={view.options.powersOn} value={form.powersOn} />
             <SelectField id="device-condition" label={view.fields.conditionId} onChange={(value) => setField('conditionId', value)} options={conditionOptions} value={form.conditionId} />
             <SelectField id="device-lock" label={view.fields.accountLock} onChange={(value) => setField('accountLock', value as DeviceAccountLock)} options={view.options.accountLock} value={form.accountLock} />
@@ -352,13 +352,13 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
 
         <SurfaceCard className="!p-2">
           <h2 className="text-xs font-semibold text-slate-950">{view.acquisitionSectionTitle}</h2>
-          <div className="mt-2 grid gap-2 md:grid-cols-2">
+          <div className="mt-2 grid gap-2">
             <TextField id="device-source" label={view.fields.acquisitionSource} onChange={(value) => setField('acquisitionSource', value)} placeholder={view.placeholders.acquisitionSource} value={form.acquisitionSource} />
             <TextField id="device-cost" label={view.fields.acquisitionCost} onChange={(value) => setField('acquisitionCost', value)} placeholder={view.placeholders.acquisitionCost} value={form.acquisitionCost} />
           </div>
         </SurfaceCard>
 
-        <SurfaceCard className="!p-2">
+        <SurfaceCard className={editDevice ? '!p-2 md:col-span-3' : '!p-2'}>
           <h2 className="text-xs font-semibold text-slate-950">{view.routingSectionTitle}</h2>
           <div className="mt-2 grid gap-2">
             <TextAreaField id="device-notes" label={view.fields.notes} onChange={(value) => setField('notes', value)} placeholder={view.placeholders.notes} value={form.notes} />
@@ -369,7 +369,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
 
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-2">
           <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50" onClick={onClose} disabled={saving} type="button">
-            {view.cancelLabel}
+            {editDevice ? 'Cancelar' : view.cancelLabel}
           </button>
           <button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50" disabled={!canSubmit} type="submit">
             {saving ? 'Guardando...' : editDevice ? 'Guardar cambios' : 'Registrar dispositivo'}
