@@ -56,3 +56,20 @@ export async function listReferencePriceImports(): Promise<ImportedBatch[]> {
     await adminFetch('/api/v1/admin/reference-prices/imports'),
   )).data;
 }
+
+export type ImportedObservation = {
+  source: string; source_country: string; source_url: string;
+  observed_date: string; brand: string; model: string;
+  service_code: string; service_name: string; currency: string;
+  price_minor: number; minor_digits: number; tax_included: string;
+  price_type: string; notes: string | null;
+};
+export type ImportBatchDetail = {
+  batch: ImportedBatch & { created_by: string };
+  rows: ImportedObservation[];
+  rows_limit: number;
+};
+export async function getReferencePriceImport(batchId: string): Promise<ImportBatchDetail> {
+  const response = await adminFetch('/api/v1/admin/reference-prices/imports/' + encodeURIComponent(batchId));
+  return (await parse<{ data: ImportBatchDetail }>(response)).data;
+}
