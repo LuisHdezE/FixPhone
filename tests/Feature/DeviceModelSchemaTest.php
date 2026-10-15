@@ -39,4 +39,37 @@ class DeviceModelSchemaTest extends TestCase
         $this->expectException(\Illuminate\Database\QueryException::class);
         DB::table('device_model_specs')->insert($spec());
     }
+
+    public function test_orphan_model_spec_is_rejected(): void
+    {
+        $this->expectException(\Illuminate\Database\QueryException::class);
+        DB::table('device_model_specs')->insert([
+            'id' => (string) Str::ulid(),
+            'device_model_id' => 'missing-model',
+            'specs_json' => '{}',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_variant_key_is_unique_within_one_model(): void
+    {
+        $modelId = 'model-test-'.Str::lower((string) Str::ulid());
+        DB::table('master_data_entries')->insert([
+            'id' => $modelId, 'kind' => 'deviceModels',
+            'payload' => json_encode(['id' => $modelId, 'name' => 'Test Model']),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $variant = fn () => [
+            'id' => (string) Str::ulid(),
+            'device_model_id' => $modelId,
+            'variant_key' => '8gb-128gb',
+            'name' => '8 GB / 128 GB',
+            'created_at' => now(), 'updated_at' => now(),
+        ];
+        DB::table('device_model_variants')->insert($variant());
+        $this->expectException(\Illuminate\Database\QueryException::class);
+        DB::table('device_model_variants')->insert($variant());
+    }
 }
