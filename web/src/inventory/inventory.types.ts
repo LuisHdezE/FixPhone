@@ -10,6 +10,8 @@ export type InventoryItem = {
   itemType: string;
   brand: string | null;
   model: string | null;
+  brandId: string | null;
+  modelId: string | null;
   description: string | null;
   inventoryPurpose: string;
   operationalStatus: string;
@@ -21,10 +23,12 @@ export type InventoryItem = {
 };
 
 export type InventoryEdit = {
+  brand_id?: string;
+  device_model_id?: string;
   title: string;
   description: string | null;
-  brand: string | null;
-  model: string | null;
+  brand?: string | null;
+  model?: string | null;
 };
 
 export type StockAdjustment = {
@@ -46,6 +50,7 @@ export type InventoryDataState =
 export type InventoryRepository = {
   list: (filter: InventoryFilter) => Promise<InventoryDataState>;
   update: (id: string, edit: InventoryEdit) => Promise<void>;
+  createSpare: (data: { name: string; brand_id: string; device_model_id: string; description: string; initial_stock: number }) => Promise<void>;
   adjust: (id: string, delta: number, reason: string, requestId: string) => Promise<void>;
   adjustments: (id: string) => Promise<readonly StockAdjustment[]>;
 };
