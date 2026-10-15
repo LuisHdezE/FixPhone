@@ -148,6 +148,7 @@ Route::prefix('v1')->group(function (): void {
 
   Route::prefix('admin/reference-prices/imports')->middleware(['permission:reference_prices.import', 'throttle:20,1'])->group(function (): void {
    Route::get('/', [ReferencePriceImportController::class, 'index'])->name('api.v1.admin.reference-prices.imports.index');
+   Route::get('/{batchId}', [ReferencePriceImportController::class, 'show'])->name('api.v1.admin.reference-prices.imports.show');
    Route::post('/preview', [ReferencePriceImportController::class, 'preview'])->name('api.v1.admin.reference-prices.imports.preview');
    Route::post('/{batchId}/confirm', [ReferencePriceImportController::class, 'confirm'])->name('api.v1.admin.reference-prices.imports.confirm');
   });

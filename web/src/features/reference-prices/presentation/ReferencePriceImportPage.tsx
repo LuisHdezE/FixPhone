@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PageShell } from '@/shell/PageShell';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
+import { ReferencePriceBatchDetailDialog } from './ReferencePriceBatchDetailDialog';
 import {
   confirmReferencePrices, listReferencePriceImports, previewReferencePrices,
   REFERENCE_PRICE_HEADER,
@@ -16,6 +17,7 @@ export function ReferencePriceImportPage() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [fileName, setFileName] = useState('');
+  const [detailBatchId, setDetailBatchId] = useState<string | null>(null);
   const [history, setHistory] = useState<ImportedBatch[]>([]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -118,12 +120,27 @@ export function ReferencePriceImportPage() {
         <h2 className="text-sm font-bold text-slate-900">Historial de importaciones confirmadas</h2>
         {loading ? <p className="mt-2 text-xs text-slate-500">Cargando…</p> : null}
         {!loading && history.length === 0 ? <p className="mt-2 text-xs text-slate-500">Todavía no hay importaciones.</p> : null}
-        {history.length > 0 ? <div className="mt-2 overflow-x-auto">
+        {history.length > 0 ? <div className="mt-2 grid gap-1.5 sm:hidden">
+          {history.map((item) => <button key={item.id} type="button"
+            className="w-full min-w-0 rounded-md border border-slate-200 p-2 text-left hover:bg-slate-50"
+            onClick={() => setDetailBatchId(item.id)}>
+            <div className="flex min-w-0 items-center justify-between gap-2">
+              <span className="min-w-0 truncate text-[11px] font-semibold" title={item.file_name}>{item.file_name}</span>
+              <span className="shrink-0 text-[11px] text-blue-700">Ver →</span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">{item.committed_at?.slice(0, 16).replace('T', ' ')}</p>
+            <p className="mt-1 text-[11px] text-slate-600">
+              {item.total_rows} filas · {item.inserted_rows} nuevas · {item.duplicate_rows} duplicadas
+            </p>
+          </button>)}
+        </div> : null}
+        {history.length > 0 ? <div className="mt-2 hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[540px] text-left text-xs">
             <thead><tr className="border-b text-slate-500">
               <th className="px-2 py-1.5">Archivo</th><th className="px-2 py-1.5">Fecha</th>
               <th className="px-2 py-1.5 text-right">Filas</th><th className="px-2 py-1.5 text-right">Nuevas</th>
               <th className="px-2 py-1.5 text-right">Duplicadas</th>
+              <th className="px-2 py-1.5 text-right">Acción</th>
             </tr></thead>
             <tbody>{history.map((item) => <tr key={item.id} className="border-b border-slate-100">
               <td className="max-w-[260px] truncate px-2 py-1.5" title={item.file_name}>{item.file_name}</td>
@@ -131,6 +148,10 @@ export function ReferencePriceImportPage() {
               <td className="px-2 py-1.5 text-right tabular-nums">{item.total_rows}</td>
               <td className="px-2 py-1.5 text-right tabular-nums">{item.inserted_rows}</td>
               <td className="px-2 py-1.5 text-right tabular-nums">{item.duplicate_rows}</td>
+              <td className="px-2 py-1.5 text-right">
+                <button type="button" className="rounded border border-slate-200 px-2 py-1 text-[11px] font-semibold hover:bg-slate-50"
+                  onClick={() => setDetailBatchId(item.id)} aria-label={'Ver lote ' + item.file_name}>Ver</button>
+              </td>
             </tr>)}</tbody>
           </table>
         </div> : null}
@@ -165,7 +186,17 @@ export function ReferencePriceImportPage() {
           </p>)}
           {preview.summary.errors > preview.errors.length ? <p className="text-[11px]">Se muestran los primeros 30 errores.</p> : null}
         </div> : null}
-        {preview.preview.length > 0 ? <div className="max-h-[34dvh] overflow-y-auto">
+        {preview.preview.length > 0 ? <div className="grid max-h-[34dvh] gap-1.5 overflow-y-auto sm:hidden">
+          {preview.preview.map((item, index) => <div key={index} className="min-w-0 rounded-md border border-slate-200 p-2">
+            <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-0.5">
+              <span className="text-xs font-semibold">{item.model}</span>
+              <span className="text-xs font-semibold tabular-nums">{item.price_amount} {item.currency}</span>
+            </div>
+            <p className="mt-1 text-[11px]">{item.service_name}</p>
+            <p className="mt-1 text-[11px] text-slate-500">{item.source} · {item.observed_date} · {item.status === 'new' ? 'Nueva' : 'Duplicada'}</p>
+          </div>)}
+        </div> : null}
+        {preview.preview.length > 0 ? <div className="hidden max-h-[34dvh] overflow-x-auto overflow-y-auto sm:block">
           <table className="w-full min-w-[520px] text-left text-[11px]">
             <thead className="sticky top-0 bg-white"><tr className="border-b text-slate-500">
               <th className="p-1.5">Fuente</th><th className="p-1.5">Modelo</th><th className="p-1.5">Servicio</th>
@@ -178,8 +209,8 @@ export function ReferencePriceImportPage() {
               <td className="p-1.5">{item.status === 'new' ? 'Nueva' : 'Duplicada'}</td>
             </tr>)}</tbody>
           </table>
-          <p className="mt-1 text-[11px] text-slate-500">Vista de las primeras 20 filas únicas. Los duplicados y los datos pueden cambiar si alguien importa otro archivo antes de confirmar.</p>
         </div> : null}
+        {preview.preview.length > 0 ? <p className="text-[11px] text-slate-500">Primeras 20 filas únicas. La clasificación de duplicados puede cambiar si otra persona importa precios antes de confirmar.</p> : null}
         <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-2">
           <button type="button" className={button} disabled={busy} onClick={closeDialog}>Cancelar</button>
           <button type="button" className={primary} disabled={busy || !preview.valid || !preview.batch_id}
@@ -187,5 +218,7 @@ export function ReferencePriceImportPage() {
         </div>
       </div> : null}
     </dialog>
+    {detailBatchId ? <ReferencePriceBatchDetailDialog key={detailBatchId} batchId={detailBatchId}
+      onClose={() => setDetailBatchId(null)} /> : null}
   </PageShell>;
 }

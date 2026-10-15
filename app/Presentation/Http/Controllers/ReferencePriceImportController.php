@@ -23,6 +23,38 @@ final class ReferencePriceImportController extends Controller
         ])->header('Cache-Control', 'no-store');
     }
 
+    /**
+     * Only committed imports are exposed. The staged CSV snapshot never leaves
+     * the preview/confirmation workflow and is deliberately omitted here.
+     */
+    public function show(string $batchId): JsonResponse
+    {
+        abort_unless(Str::isUlid($batchId), 404);
+
+        $batch = DB::table('reference_price_import_batches')
+            ->where('id', $batchId)->where('status', 'committed')
+            ->first(['id', 'file_name', 'file_sha256', 'total_rows', 'inserted_rows',
+                'duplicate_rows', 'committed_at', 'created_by']);
+
+        abort_if($batch === null, 404, 'No existe esa importación.');
+
+        $rows = DB::table('reference_price_observations')
+            ->where('import_batch_id', $batchId)
+            ->orderBy('source')->orderBy('model')->orderBy('service_name')
+            ->limit(50)
+            ->get(['source', 'source_country', 'source_url', 'observed_date', 'brand',
+                'model', 'service_code', 'service_name', 'currency', 'price_minor',
+                'minor_digits', 'tax_included', 'price_type', 'notes']);
+
+        return response()->json([
+            'data' => [
+                'batch' => $batch,
+                'rows' => $rows,
+                'rows_limit' => 50,
+            ],
+        ])->header('Cache-Control', 'no-store');
+    }
+
     public function preview(Request $request): JsonResponse
     {
         $data = $request->validate(['file' => ['required', 'file', 'max:1024']]);
