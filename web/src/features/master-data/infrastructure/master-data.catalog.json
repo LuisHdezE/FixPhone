@@ -68,6 +68,8 @@
     { "id": "part-battery", "parentId": null, "name": "Batería", "slug": "bateria", "active": true, "sortOrder": 20 },
     { "id": "part-charge-port", "parentId": null, "name": "Conector de carga", "slug": "conector-carga", "active": true, "sortOrder": 30 },
     { "id": "part-camera", "parentId": null, "name": "Cámara", "slug": "camara", "active": true, "sortOrder": 40 },
+    { "id": "part-camera-front", "parentId": "part-camera", "name": "Cámara frontal", "slug": "camara-frontal", "active": true, "sortOrder": 41 },
+    { "id": "part-camera-rear", "parentId": "part-camera", "name": "Cámara trasera (conjunto)", "slug": "camara-trasera", "active": true, "sortOrder": 42 },
     { "id": "part-speaker", "parentId": null, "name": "Parlante", "slug": "parlante", "active": true, "sortOrder": 50 },
     { "id": "part-board", "parentId": null, "name": "Placa", "slug": "placa", "active": true, "sortOrder": 60 }
   ]

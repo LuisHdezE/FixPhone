@@ -1,7 +1,7 @@
 <?php
 namespace App\Presentation\Http\Controllers;
 
-use App\Application\Inventory\ExtractDeviceComponents;
+use App\Infrastructure\Inventory\ExtractDeviceComponents;
 use App\Infrastructure\Inventory\InventoryItem;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;

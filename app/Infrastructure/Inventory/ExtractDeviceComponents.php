@@ -1,5 +1,5 @@
 <?php
-namespace App\Application\Inventory;
+namespace App\Infrastructure\Inventory;
 
 use App\Infrastructure\Inventory\ExtractedPartIdentity;
 use App\Infrastructure\Inventory\InventoryItem;
