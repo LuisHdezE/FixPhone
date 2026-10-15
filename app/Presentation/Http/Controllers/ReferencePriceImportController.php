@@ -2,7 +2,7 @@
 
 namespace App\Presentation\Http\Controllers;
 
-use App\Application\ReferencePrices\ReferencePriceCsvParser;
+use App\Infrastructure\ReferencePrices\ReferencePriceCsvParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -71,7 +71,7 @@ final class ReferencePriceImportController extends Controller
                 return ['id' => $batchId, 'inserted' => $batch->inserted_rows,
                     'duplicate' => $batch->duplicate_rows, 'already_confirmed' => true];
             }
-            abort_if($batch->status !== 'pending' || $batch->expires_at < now(),
+            abort_if($batch->status !== 'pending' || \Illuminate\Support\Carbon::parse($batch->expires_at)->isPast(),
                 409, 'Esta vista previa expiró. Seleccioná de nuevo el archivo CSV.');
 
             $rows = json_decode($batch->validated_rows, true, 512, JSON_THROW_ON_ERROR);
