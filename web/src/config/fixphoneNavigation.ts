@@ -57,6 +57,7 @@ export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
     items: [
       { label: 'Liquidaciones 50%', to: '/admin/finance/settlements', icon: 'chart' },
       { label: 'Prompts de IA', to: '/admin/ai-prompts', icon: 'book' },
+      { label: 'Precios de referencia', to: '/admin/reference-prices', icon: 'chart' },
       { label: 'Almacenamiento multimedia', to: '/admin/settings/media-storage', icon: 'pages' },
       { label: 'Configuración', to: '/user/account-settings', icon: 'settings' },
       { label: 'Usuarios y roles', icon: 'user', planned: true },

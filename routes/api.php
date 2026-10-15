@@ -23,6 +23,7 @@ use App\Presentation\Http\Controllers\ConsignorsController;
 use App\Presentation\Http\Controllers\CustomerDirectoryController;
 use App\Presentation\Http\Controllers\CommercialOrdersController;
 use App\Presentation\Http\Controllers\AiPromptCatalogController;
+use App\Presentation\Http\Controllers\ReferencePriceImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -143,6 +144,12 @@ Route::prefix('v1')->group(function (): void {
    Route::patch('/{id}', [MediaStorageSettingsController::class, 'update'])->name('api.v1.admin.media.storage.update');
    Route::post('/{id}/select', [MediaStorageSettingsController::class, 'select'])->name('api.v1.admin.media.storage.select');
    Route::post('/{id}/test', [MediaStorageSettingsController::class, 'testConnection'])->middleware('throttle:6,1')->name('api.v1.admin.media.storage.test');
+  });
+
+  Route::prefix('admin/reference-prices/imports')->middleware(['permission:reference_prices.import', 'throttle:20,1'])->group(function (): void {
+   Route::get('/', [ReferencePriceImportController::class, 'index'])->name('api.v1.admin.reference-prices.imports.index');
+   Route::post('/preview', [ReferencePriceImportController::class, 'preview'])->name('api.v1.admin.reference-prices.imports.preview');
+   Route::post('/{batchId}/confirm', [ReferencePriceImportController::class, 'confirm'])->name('api.v1.admin.reference-prices.imports.confirm');
   });
 
   // Reusable prompts are private; only the read-only catalog is available in this stage.
