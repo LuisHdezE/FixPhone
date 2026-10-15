@@ -197,4 +197,39 @@ final class ReferencePriceCsvImportTest extends TestCase
         $this->assertDatabaseHas('reference_price_observations', ['source' => 'APPLE', 'currency' => 'EUR', 'price_minor' => 24900]);
         $this->assertDatabaseHas('reference_price_observations', ['source' => 'MUNDOMAC', 'currency' => 'UYU', 'price_minor' => 1200050]);
     }
+    public function test_batch_detail_requires_permission_and_only_returns_persisted_rows(): void
+    {
+        $this->signIn('owner');
+        $batch = $this->preview($this->csv([$this->row()]))->assertOk()->json('batch_id');
+        $url = '/api/v1/admin/reference-prices/imports/'.$batch;
+        $this->getJson($url)->assertNotFound();
+        $this->postJson($url.'/confirm')->assertOk();
+        $this->getJson($url)->assertOk()
+            ->assertJsonPath('data.batch.total_rows', 1)
+            ->assertJsonPath('data.batch.inserted_rows', 1)
+            ->assertJsonPath('data.rows.0.model', 'iPhone 13')
+            ->assertJsonPath('data.rows.0.currency', 'EUR')
+            ->assertJsonCount(1, 'data.rows')
+            ->assertJsonMissingPath('data.batch.validated_rows');
+        $this->getJson('/api/v1/admin/reference-prices/imports/not-a-ulid')->assertNotFound();
+
+        $this->signIn('technician');
+        $this->getJson($url)->assertForbidden();
+    }
+
+    public function test_duplicate_only_batch_has_no_new_observations_in_detail(): void
+    {
+        $this->signIn();
+        $base = '/api/v1/admin/reference-prices/imports/';
+        $first = $this->preview($this->csv([$this->row()]))->assertOk()->json('batch_id');
+        $this->postJson($base.$first.'/confirm')->assertOk();
+        $duplicate = $this->preview($this->csv([$this->row()]))->assertOk()->json('batch_id');
+        $this->postJson($base.$duplicate.'/confirm')->assertOk();
+
+        $this->getJson($base.$duplicate)->assertOk()
+            ->assertJsonPath('data.batch.inserted_rows', 0)
+            ->assertJsonPath('data.batch.duplicate_rows', 1)
+            ->assertJsonCount(0, 'data.rows');
+    }
+
 }
