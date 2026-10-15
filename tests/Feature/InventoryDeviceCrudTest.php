@@ -232,7 +232,8 @@ final class InventoryDeviceCrudTest extends TestCase
 
         $path = '/api/v1/admin/inventory/'.$device->id;
         $this->deleteJson($path)->assertStatus(409);
-        $this->patchJson($path, $this->updatePayload())->assertStatus(409);
+        $this->patchJson($path, $this->updatePayload())->assertStatus(409)
+            ->assertJsonPath('detail', 'No se puede editar un equipo con ventas, repuestos, tasaciones, ajustes o historial de venta. Conservá su trazabilidad.');
         $this->assertDatabaseHas('inventory_items', ['id' => $device->id, 'deleted_at' => null]);
         DB::table('device_installed_parts')->where('inventory_item_id', $device->id)->delete();
 
