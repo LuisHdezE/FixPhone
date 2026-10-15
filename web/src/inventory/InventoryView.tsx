@@ -147,10 +147,15 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
         if (!canEdit) return;
         const brand = catalog.brands.find(x => x.id === edit.brand_id);
         const model = catalog.deviceModels.find(x => x.id === edit.device_model_id && x.brandId === brand?.id);
-        if (!brand || !model) throw new Error('Seleccioná marca y modelo válidos del catálogo.');
-        await repository.update(item.id, { title: edit.title, description: edit.description,
-          brand: brand.name, model: model.name,
-          ...(item.itemType === 'spare_part' ? { brand_id: brand.id, device_model_id: model.id } : {}) });
+        const selectedCatalog = Boolean(edit.brand_id || edit.device_model_id);
+        if (item.itemType === 'spare_part' && selectedCatalog && (!brand || !model)) {
+          throw new Error('Seleccioná marca y modelo válidos del catálogo.');
+        }
+        await repository.update(item.id, {
+          title: edit.title, description: edit.description,
+          ...(item.itemType === 'spare_part' && brand && model
+            ? { brand: brand.name, model: model.name, brand_id: brand.id, device_model_id: model.id } : {}),
+        });
         setMessage(item.sku + ': datos del catálogo actualizados.');
       } else if (selection.action === 'adjust') {
         if (!canAdjust || !adjustableTypes.has(item.itemType)) return;
@@ -292,10 +297,10 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
 
         {selection.action === 'edit' ? <form className="mt-2 grid gap-2" onSubmit={(event) => void save(event)}>
           <label className="grid gap-1 text-xs font-semibold">Nombre del artículo<input autoFocus className="rounded-md border border-slate-300 px-2 py-1.5 text-xs" maxLength={255} onChange={(e) => setEdit((v) => ({ ...v, title: e.target.value }))} required value={edit.title} /></label>
-          <div className="grid grid-cols-2 gap-2">
+          {item.itemType === 'spare_part' && <div className="grid grid-cols-2 gap-2">
             <SelectField id="inventory-edit-brand" label="Marca" value={edit.brand_id ?? ''} onChange={brandId => setEdit(v => ({ ...v, brand_id: brandId, device_model_id: '' }))} options={[{ value: '', label: 'Seleccionar marca' }, ...catalog.brands.map(x => ({ value: x.id, label: x.name }))]} />
             <SelectField id="inventory-edit-model" label="Modelo" value={edit.device_model_id ?? ''} onChange={modelId => setEdit(v => ({ ...v, device_model_id: modelId }))} options={[{ value: '', label: 'Seleccionar modelo' }, ...catalog.deviceModels.filter(x => x.brandId === edit.brand_id).map(x => ({ value: x.id, label: x.name }))]} />
-          </div>
+          </div>}
           <label className="grid gap-1 text-xs font-semibold">Descripción<textarea className="rounded-md border border-slate-300 p-2 text-sm" maxLength={4000} onChange={(e) => setEdit((v) => ({ ...v, description: e.target.value }))} rows={3} value={edit.description ?? ''} /></label>
           <p className="text-[11px] text-slate-500">Esta edición no modifica SKU, costos, publicación ni cantidad.</p>
           <button className="rounded-md bg-brand-600 p-2 text-xs font-bold text-white disabled:opacity-40" disabled={busy || !edit.title.trim()} type="submit">Guardar cambios</button>

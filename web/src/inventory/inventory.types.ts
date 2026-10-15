@@ -27,8 +27,8 @@ export type InventoryEdit = {
   device_model_id?: string;
   title: string;
   description: string | null;
-  brand: string | null;
-  model: string | null;
+  brand?: string | null;
+  model?: string | null;
 };
 
 export type StockAdjustment = {
