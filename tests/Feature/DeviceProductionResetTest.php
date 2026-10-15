@@ -99,6 +99,60 @@ class DeviceProductionResetTest extends TestCase
         $this->assertDatabaseHas('inventory_items', ['id' => $id]);
     }
 
+
+    public function test_mixed_order_blocks_cleanup_without_partial_changes(): void
+    {
+        $device = $this->item();
+        $spare = $this->item('spare_part');
+        $customer = (string) Str::ulid();
+        DB::table('crm_customers')->insert(['id' => $customer, 'full_name' => 'Test']);
+        $order = (string) Str::ulid();
+        DB::table('orders')->insert([
+            'id' => $order, 'order_number' => 'RESET-TEST', 'customer_id' => $customer,
+            'customer_name_snapshot' => 'Test', 'created_by_actor_id' => 'test',
+        ]);
+        foreach ([$device, $spare] as $id) {
+            DB::table('order_items')->insert([
+                'id' => (string) Str::ulid(), 'order_id' => $order, 'inventory_item_id' => $id,
+                'item_name_snapshot' => 'Test', 'item_type_snapshot' => 'device',
+                'quantity' => 1, 'unit_price_minor' => 100, 'line_total_minor' => 100,
+            ]);
+        }
+        try {
+            (new DeviceProductionReset())->run(false);
+            $this->fail('Mixed order was accepted.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('Mixed', $exception->getMessage());
+        }
+        $this->assertDatabaseCount('inventory_items', 2);
+        $this->assertDatabaseCount('order_items', 2);
+        $this->assertDatabaseCount('orders', 1);
+    }
+
+    public function test_device_order_is_removed_but_customer_is_preserved(): void
+    {
+        $device = $this->item();
+        $customer = (string) Str::ulid();
+        DB::table('crm_customers')->insert(['id' => $customer, 'full_name' => 'Test']);
+        $order = (string) Str::ulid();
+        DB::table('orders')->insert([
+            'id' => $order, 'order_number' => 'RESET-TEST', 'customer_id' => $customer,
+            'customer_name_snapshot' => 'Test', 'created_by_actor_id' => 'test',
+        ]);
+        DB::table('order_items')->insert([
+            'id' => (string) Str::ulid(), 'order_id' => $order, 'inventory_item_id' => $device,
+            'item_name_snapshot' => 'Test', 'item_type_snapshot' => 'device',
+            'quantity' => 1, 'unit_price_minor' => 100, 'line_total_minor' => 100,
+        ]);
+        $service = new DeviceProductionReset();
+        $preview = $service->run(false);
+        $result = $service->run(true, $preview['fingerprint'], DeviceProductionReset::CONFIRMATION);
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('order_items', 0);
+        $this->assertDatabaseHas('crm_customers', ['id' => $customer]);
+        unlink(storage_path('app/private/device-reset/').$result['backup_file']);
+    }
+
     public function test_endpoint_requires_deploy_authentication(): void
     {
         $this->postJson('/api/_deploy/device-production-reset', ['mode' => 'execute'])
