@@ -234,6 +234,44 @@ final class InventoryDeviceCrudTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['entity_id' => $device->id, 'event_type' => 'inventory.device_updated']);
     }
 
+    public function test_ownership_can_be_corrected_to_consignment_and_back(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device(['metadata' => ['destination' => 'Refurbish']]);
+        $id = (string) Str::ulid();
+        DB::table('consignors')->insert([
+            'id' => $id, 'full_name' => 'Consignante de prueba',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $path = '/api/v1/admin/inventory/'.$device->id;
+        $payload = $this->updatePayload();
+        $this->patchJson($path, [...$payload, 'ownership_type' => 'consignment',
+            'consignor_id' => $id, 'ownership_correction_reason' => 'Registrado como propio por error'])
+            ->assertOk()->assertJsonPath('data.consignor_id', $id)
+            ->assertJsonPath('data.inventory_purpose', 'consignation');
+        $this->assertSame('Refurbish', $device->fresh()->metadata['destination']);
+        $this->patchJson($path, [...$payload, 'ownership_type' => 'owned',
+            'consignor_id' => null, 'ownership_correction_reason' => 'En realidad es equipo propio'])
+            ->assertOk()->assertJsonPath('data.consignor_id', null)
+            ->assertJsonPath('data.inventory_purpose', 'repair_then_sell');
+        $this->assertSame('FXP-9001', $device->fresh()->sku);
+        $this->assertDatabaseCount('audit_events', 2);
+    }
+
+    public function test_ownership_correction_requires_reason_and_consignor(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device();
+        $path = '/api/v1/admin/inventory/'.$device->id;
+        $this->patchJson($path, [...$this->updatePayload(), 'ownership_type' => 'consignment',
+            'consignor_id' => null, 'ownership_correction_reason' => ''])
+            ->assertUnprocessable()->assertJsonValidationErrors(['ownership_correction_reason']);
+        $this->patchJson($path, [...$this->updatePayload(), 'ownership_type' => 'consignment',
+            'consignor_id' => null, 'ownership_correction_reason' => 'Error de registro detectado'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['consignor_id']);
+        $this->assertNull($device->fresh()->consignor_id);
+    }
+
     public function test_delete_is_logical_and_keeps_permanent_device_code_and_audit(): void
     {
         $this->signIn('owner');

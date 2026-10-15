@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 
 import { InlineFeedback } from '@/components/feedback/InlineFeedback';
@@ -25,6 +25,9 @@ type IntakeFormState = {
   acquisitionCost: string;
   destination: DeviceDestination;
   notes: string;
+  ownershipType: 'owned' | 'consignment';
+  consignorId: string;
+  ownershipCorrectionReason: string;
 };
 
 function mapCondition(grade: string | undefined): DevicePhysicalCondition {
@@ -135,6 +138,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         acquisitionCost: '',
         destination: view.defaults.destination,
         notes: '',
+        ownershipType: 'owned',
+        consignorId: '',
+        ownershipCorrectionReason: '',
       };
     }
     const brandId = catalogId(editDevice.brandId, editDevice.manufacturer, brands, (brand) => brand.name);
@@ -158,6 +164,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         ? '' : (editDevice.currencyCode === 'USD' ? 'USD ' : '') + (editDevice.acquisitionCostMinor / 100).toFixed(2),
       destination: editDevice.destination,
       notes: editDevice.description,
+      ownershipType: editDevice.ownershipType,
+      consignorId: editDevice.consignorId ?? '',
+      ownershipCorrectionReason: '',
     };
   };
 
@@ -166,6 +175,20 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [consignors, setConsignors] = useState<{ id: string; full_name: string }[]>([]);
+
+  useEffect(() => {
+    if (!editDevice) return;
+    let alive = true;
+    adminFetch('/api/v1/admin/consignors', { headers: { Accept: 'application/json' } })
+      .then(async response => {
+        if (!response.ok) throw new Error('No se pudo cargar el catálogo de consignantes.');
+        return response.json() as Promise<{ data: { id: string; full_name: string }[] }>;
+      })
+      .then(payload => { if (alive) setConsignors(payload.data); })
+      .catch(() => { if (alive) setError('No se pudo cargar el catálogo de consignantes.'); });
+    return () => { alive = false; };
+  }, [editDevice]);
 
   const brandOptions = useMemo(() => [
     { value: '', label: view.placeholders.brandId },
@@ -243,6 +266,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
           acquisitionSource: form.acquisitionSource.trim(),
           acquisitionCostMinor: amountMinor,
           currencyCode: currencyCode as 'UYU' | 'USD',
+          ownershipType: form.ownershipType,
+          consignorId: form.ownershipType === 'consignment' ? form.consignorId || null : null,
+          ownershipCorrectionReason: form.ownershipCorrectionReason.trim(),
           description: form.notes.trim(),
         });
         onSaved('Equipo ' + editDevice.id + ' actualizado correctamente.');
@@ -352,6 +378,11 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
 
         <SurfaceCard className="!p-2">
           <h2 className="text-xs font-semibold text-slate-950">{view.acquisitionSectionTitle}</h2>
+          {editDevice && <div className="mt-2 grid gap-2">
+            <SelectField id="device-ownership" label="Tipo de propiedad" value={form.ownershipType} onChange={value => setField('ownershipType', value as 'owned' | 'consignment')} options={[{ value: 'owned', label: 'Propio' }, { value: 'consignment', label: 'Consignación' }]} />
+            {form.ownershipType === 'consignment' && <SelectField id="device-consignor" label="Consignante" value={form.consignorId} onChange={value => setField('consignorId', value)} options={[{ value: '', label: 'Seleccionar consignante' }, ...consignors.map(item => ({ value: item.id, label: item.full_name }))]} />}
+            {(form.ownershipType !== editDevice.ownershipType || (form.ownershipType === 'consignment' && form.consignorId !== (editDevice.consignorId ?? ''))) && <TextAreaField id="device-ownership-reason" label="Motivo de corrección de titularidad" value={form.ownershipCorrectionReason} onChange={value => setField('ownershipCorrectionReason', value)} placeholder="Ej.: se registró como propio por error" />}
+          </div>}
           <div className="mt-2 grid gap-2">
             <TextField id="device-source" label={view.fields.acquisitionSource} onChange={(value) => setField('acquisitionSource', value)} placeholder={view.placeholders.acquisitionSource} value={form.acquisitionSource} />
             <TextField id="device-cost" label={view.fields.acquisitionCost} onChange={(value) => setField('acquisitionCost', value)} placeholder={view.placeholders.acquisitionCost} value={form.acquisitionCost} />

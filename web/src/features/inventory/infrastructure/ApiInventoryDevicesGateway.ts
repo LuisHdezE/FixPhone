@@ -22,6 +22,7 @@ type ApiInventoryItem = {
   dismantling_status?: string | null;
   public_listing_status?: 'draft' | 'published';
   public_valuation_id?: string | null;
+  consignor_id?: string | null;
   cost_amount_minor?: number | null;
   currency_code?: string | null;
   metadata?: Record<string, unknown> | null;
@@ -121,6 +122,8 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
     dismantlingStatus: isDismantlingStatus(item.dismantling_status) ? item.dismantling_status : 'unknown',
     publicListingStatus: item.public_listing_status === 'published' ? 'published' : 'draft',
     publicValuationId: item.public_valuation_id ?? null,
+    ownershipType: item.consignor_id || ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'].includes(item.inventory_purpose) ? 'consignment' : 'owned',
+    consignorId: item.consignor_id ?? null,
     manufacturer: item.brand?.trim() || 'Sin marca',
     model: item.model?.trim() || item.title,
     serialOrImei: stringMeta(item.metadata, 'serial_or_imei', 'imei', 'serial') || '—',
@@ -191,6 +194,9 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
         acquisition_source: fields.acquisitionSource || null,
         cost_amount_minor: fields.acquisitionCostMinor,
         currency_code: fields.currencyCode,
+        ownership_type: fields.ownershipType,
+        consignor_id: fields.consignorId,
+        ownership_correction_reason: fields.ownershipCorrectionReason,
       }),
     });
     if (!response.ok) throw new Error(await readApiError(response, 'No se pudo editar el equipo'));
@@ -212,7 +218,8 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
         saved.powersOn !== fields.powersOn || saved.accountLock !== fields.accountLock ||
         saved.acquisitionSource !== (fields.acquisitionSource || '—') ||
         saved.acquisitionCostMinor !== fields.acquisitionCostMinor || saved.currencyCode !== fields.currencyCode ||
-        saved.description !== fields.description) {
+        saved.description !== fields.description || saved.ownershipType !== fields.ownershipType ||
+        saved.consignorId !== fields.consignorId) {
       throw new Error('La ficha no coincide con los cambios solicitados tras consultar nuevamente el inventario.');
     }
   }

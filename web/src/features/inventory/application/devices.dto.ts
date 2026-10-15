@@ -19,6 +19,9 @@ export interface InventoryDeviceEditDto {
   acquisitionSource: string;
   acquisitionCostMinor: number | null;
   currencyCode: 'UYU' | 'USD';
+  ownershipType: 'owned' | 'consignment';
+  consignorId: string | null;
+  ownershipCorrectionReason: string;
 }
 
 export interface InventoryDeviceListItemDto {
@@ -37,6 +40,8 @@ export interface InventoryDeviceListItemDto {
   dismantlingStatus: DismantlingStatus;
   publicListingStatus: 'draft' | 'published';
   publicValuationId: string | null;
+  ownershipType: 'owned' | 'consignment';
+  consignorId: string | null;
   manufacturer: string;
   model: string;
   serialOrImei: string;
@@ -53,7 +58,7 @@ export interface InventoryDeviceListItemDto {
 
 // Static presentation reference data is not a persisted inventory record.
 export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
-  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId'>;
+  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
 
 export interface InventoryFilterOptionDto {
   value: string;
