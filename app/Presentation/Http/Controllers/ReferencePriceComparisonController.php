@@ -139,6 +139,10 @@ final class ReferencePriceComparisonController extends Controller
             'service_name' => ['prohibited'], 'currency' => ['prohibited'],
         ]);
 
+        if ($this->toMinor($data['price_amount']) < 1) {
+            throw ValidationException::withMessages(['price_amount' => 'El precio debe ser mayor que cero.']);
+        }
+
         DB::transaction(function () use ($request, $id, $data): void {
             $row = DB::table('own_repair_reference_prices')->where('id', $id)
                 ->lockForUpdate()->first();
@@ -204,6 +208,7 @@ final class ReferencePriceComparisonController extends Controller
 
     private function price(int $minor, int $digits): string
     {
+        if ($digits === 0) return (string) $minor;
         $factor = 10 ** $digits;
         return (string) intdiv($minor, $factor).'.'.str_pad((string) ($minor % $factor), $digits, '0', STR_PAD_LEFT);
     }
