@@ -11,6 +11,7 @@ import { PageShell } from '@/shell/PageShell';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
+import { DeviceComponentsModal } from './DeviceComponentsModal';
 import { DeviceDestinationModal } from './DeviceDestinationModal';
 import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
 
@@ -49,6 +50,8 @@ export function InventoryDevicesPage({
   const [notice, setNotice] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [canDismantle, setCanDismantle] = useState(false);
+  const [canAdjust, setCanAdjust] = useState(false);
+  const [extractingDevice, setExtractingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [canValuate, setCanValuate] = useState(false);
   const [canManage, setCanManage] = useState(false);
   const [canRoute, setCanRoute] = useState(false);
@@ -71,6 +74,7 @@ export function InventoryDevicesPage({
       const payload = await identity.json() as { data?: { permissions?: string[] } };
       const permissions = Array.isArray(payload.data?.permissions) ? payload.data.permissions : [];
       setCanDismantle(permissions.includes('workshop.dismantle'));
+      setCanAdjust(permissions.includes('inventory.adjust'));
       setCanValuate(permissions.includes('valuation.manage'));
       setCanManage(permissions.includes('catalog.manage'));
       setCanRoute(permissions.includes('routing.manage'));
@@ -241,6 +245,7 @@ export function InventoryDevicesPage({
           title={'Eliminar ' + device.id + ' (conservar auditoría)'}
           type="button"
         ><AppIcon className="size-3.5" name="trash" /></button> : null}
+        {device.isDonor && canDismantle && canAdjust ? <button aria-label={'Extraer componentes de ' + device.id} title={'Extraer componentes de ' + device.id} type="button" className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100" onClick={() => setExtractingDevice(device)}><AppIcon name="package" className="size-3.5" /></button> : null}
         {device.isDonor && canDismantle && transitions[device.dismantlingStatus].length > 1 ? <button
           aria-label={'Actualizar despiece de ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
@@ -380,6 +385,7 @@ export function InventoryDevicesPage({
         </div>
       </div>
     </ModalShell> : null}
+    {extractingDevice ? <DeviceComponentsModal key={extractingDevice.inventoryId} device={extractingDevice} canPublish={canManage} onClose={() => setExtractingDevice(null)} onSaved={message => { setExtractingDevice(null); setNotice(message); void loadDevices(); }} /> : null}
     {routingDevice ? <DeviceDestinationModal
       key={routingDevice.inventoryId}
       inventoryId={routingDevice.inventoryId}

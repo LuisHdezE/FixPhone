@@ -71,6 +71,10 @@ final class DeviceSalesController extends Controller
                 return ['sale' => $existing, 'replayed' => true];
             }
 
+            if (DB::table('device_part_extractions')->where('donor_item_id', $id)->exists()) {
+                abort(409, 'No se puede vender como equipo completo un donante con piezas extraídas.');
+            }
+
             $activeSale = DeviceSaleRecord::query()
                 ->where('inventory_item_id', $device->id)
                 ->whereNull('voided_at')

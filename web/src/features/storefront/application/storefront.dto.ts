@@ -136,6 +136,7 @@ export interface StorefrontCatalogViewDto {
 }
 
 export interface StorefrontProductDetailDto {
+  image?: StorefrontMediaDto;
   slug: string;
   title: string;
   subtitle: string;

@@ -32,13 +32,7 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
       <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="grid gap-3">
           <div className="grid min-h-[20rem] place-items-center rounded-xl border border-black/10 bg-white p-3 shadow-sm">
-            <div className="grid aspect-[4/3] w-full max-w-[34rem] place-items-center rounded-xl bg-[#f7f2ea] p-3 text-center">
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">{product.heroLabel}</p>
-                <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-slate-950">{product.badgeLabel}</p>
-                <p className="mt-2 max-w-xs text-[11px] leading-4 text-slate-600">Imagen preparada para galería comercial futura</p>
-              </div>
-            </div>
+            {product.image ? <img src={product.image.src} alt={product.image.alt} className="max-h-[24rem] w-full object-contain" /> : <div className="grid aspect-[4/3] w-full place-items-center rounded-xl bg-slate-50 text-xs text-slate-500">Sin imagen disponible</div>}
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3" aria-label="Galería del producto">
