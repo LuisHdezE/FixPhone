@@ -118,7 +118,7 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
     currencyCode: item.currency_code === 'USD' ? 'USD' : 'UYU',
     id: item.sku?.trim() || item.id,
     inventoryId: item.id,
-    isDonor: item.inventory_purpose === 'parts_donor',
+    isDonor: mappedDestination === 'Donor',
     dismantlingStatus: isDismantlingStatus(item.dismantling_status) ? item.dismantling_status : 'unknown',
     publicListingStatus: item.public_listing_status === 'published' ? 'published' : 'draft',
     publicValuationId: item.public_valuation_id ?? null,

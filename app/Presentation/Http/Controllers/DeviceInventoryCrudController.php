@@ -213,6 +213,9 @@ final class DeviceInventoryCrudController extends Controller
 
     private function assertNoFinancialHistory(InventoryItem $item, string $verb, bool $blockTechnicalEvaluations = true): void
     {
+        if (DB::table('device_part_extractions')->where('donor_item_id', $item->id)->exists()) {
+            abort(409, 'Un equipo con piezas extraídas conserva su identidad y titularidad.');
+        }
         if ($blockTechnicalEvaluations && DB::table('device_technical_evaluations')->where('inventory_item_id', $item->id)->exists()) {
             abort(409, 'No se puede '.$verb.' un equipo con evaluaciones técnicas registradas. Conservá su identidad e historial.');
         }

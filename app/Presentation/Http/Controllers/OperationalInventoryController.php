@@ -42,6 +42,9 @@ final class OperationalInventoryController extends Controller
         }
         $item = DB::transaction(function () use ($request, $id, $validated): InventoryItem {
             $item = InventoryItem::query()->whereKey($id)->lockForUpdate()->firstOrFail();
+            if ($item->component_identity_key !== null && array_intersect(array_keys($validated), ['brand', 'model', 'brand_id', 'device_model_id', 'consignor_id'])) {
+                abort(409, 'El repuesto recuperado conserva su compatibilidad y propietario para mantener la trazabilidad.');
+            }
             if ($item->item_type === 'spare_part'
                 && (array_key_exists('brand', $validated) || array_key_exists('model', $validated))
                 && (!array_key_exists('brand_id', $validated) || !array_key_exists('device_model_id', $validated))) {

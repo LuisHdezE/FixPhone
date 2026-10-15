@@ -115,13 +115,20 @@ class InventoryController extends Controller
     public function showroomList()
     {
         $items = InventoryItem::where('publication_status', 'publicado')
-            ->where('is_sellable', true)
-            ->where('stock_quantity', '>', 0)
-            ->whereNotNull('sale_price_amount_minor')
+            ->where('is_sellable', true)->where('stock_quantity', '>', 0)
+            ->where('sale_price_amount_minor', '>', 0)
             ->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
             ->whereIn('operational_status', ['reparado', 'en_stock'])
-            ->get();
-
-        return response()->json($items);
+            ->where(function ($query): void {
+                $query->whereNull('metadata->origin')->orWhere('metadata->origin', '!=', 'recovered')->orWhere('metadata->part_condition', 'functional');
+            })->get();
+        return response()->json($items->map(fn ($item) => [
+            'id' => $item->id, 'title' => $item->title, 'description' => $item->description,
+            'item_type' => $item->item_type, 'brand' => $item->brand, 'model' => $item->model,
+            'operational_status' => $item->operational_status, 'stock_quantity' => $item->stock_quantity,
+            'sale_price_amount_minor' => $item->sale_price_amount_minor, 'currency_code' => $item->currency_code,
+            'main_image_url' => $item->main_image_url,
+            'metadata' => ['origin' => $item->metadata['origin'] ?? null, 'part_condition' => $item->metadata['part_condition'] ?? null],
+        ]));
     }
 }
