@@ -129,4 +129,33 @@ final class DeviceCommercialPreviewTest extends TestCase
             ->assertOk()->assertJsonPath('data.status', 'insufficient_data')
             ->assertJsonPath('data.recommended_kind', null);
     }
+    public function test_spare_part_cannot_be_simulated_as_a_complete_phone(): void
+    {
+        $device = $this->device(['item_type' => 'spare_part']);
+        $this->signIn('owner');
+        $this->postJson($this->path($device), $this->payload())
+            ->assertUnprocessable();
+        $this->assertDatabaseCount('device_sale_records', 0);
+    }
+
+    public function test_repeated_previews_do_not_create_financial_or_inventory_records(): void
+    {
+        $device = $this->device();
+        $this->signIn('owner');
+        $original = $device->fresh()->only([
+            'stock_quantity', 'operational_status', 'sale_price_amount_minor',
+            'cost_amount_minor', 'inventory_purpose',
+        ]);
+
+        for ($i = 0; $i < 2; $i++) {
+            $this->postJson($this->path($device), $this->payload())
+                ->assertOk()->assertJsonPath('data.recommended_kind', null);
+        }
+
+        $this->assertSame($original, $device->fresh()->only(array_keys($original)));
+        foreach (['device_sale_records', 'device_part_extractions', 'device_installed_parts', 'audit_events'] as $table) {
+            $this->assertDatabaseCount($table, 0);
+        }
+    }
+
 }
