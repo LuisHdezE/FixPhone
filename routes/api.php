@@ -173,6 +173,7 @@ Route::prefix('v1')->group(function (): void {
   Route::get('/admin/inventory/spare-parts/{id}/publication', [\App\Presentation\Http\Controllers\SparePartPublicationController::class, 'show'])->middleware('permission:catalog.manage');
   Route::patch('/admin/inventory/spare-parts/{id}/publication', [\App\Presentation\Http\Controllers\SparePartPublicationController::class, 'update'])->middleware('permission:catalog.manage');
 
+  Route::post('/admin/devices/{id}/commercial-preview', \App\Presentation\Http\Controllers\DeviceCommercialPreviewController::class)->middleware(['permission:inventory.view', 'throttle:20,1'])->name('api.v1.admin.devices.commercial-preview');
   Route::get('/admin/devices/{id}/technical-evaluations', [DeviceTechnicalEvaluationController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.devices.technical-evaluations.index');
   Route::post('/admin/devices/{id}/technical-evaluations', [DeviceTechnicalEvaluationController::class, 'store'])->middleware('permission:diagnosis.manage')->name('api.v1.admin.devices.technical-evaluations.store');
 
