@@ -1,6 +1,6 @@
 export type InventoryHealth = 'healthy' | 'reorder' | 'out-of-stock' | 'available';
 export type InventoryHealthFilter = 'all' | InventoryHealth;
-export type InventoryFilter = { search: string; health: InventoryHealthFilter };
+export type InventoryFilter = { search: string; health: InventoryHealthFilter; category: string; publication: 'all' | 'published' | 'unpublished' };
 
 export type InventoryItem = {
   id: string;
@@ -10,10 +10,14 @@ export type InventoryItem = {
   itemType: string;
   brand: string | null;
   model: string | null;
+  brandId: string | null;
+  modelId: string | null;
   description: string | null;
   inventoryPurpose: string;
   operationalStatus: string;
   publicationStatus: string;
+  storeVisible: boolean;
+  storeUrl: string | null;
   stockQuantity: number;
   reorderPoint: number | null;
   health: InventoryHealth;
@@ -21,10 +25,12 @@ export type InventoryItem = {
 };
 
 export type InventoryEdit = {
+  brand_id?: string;
+  device_model_id?: string;
   title: string;
   description: string | null;
-  brand: string | null;
-  model: string | null;
+  brand?: string | null;
+  model?: string | null;
 };
 
 export type StockAdjustment = {
@@ -46,6 +52,7 @@ export type InventoryDataState =
 export type InventoryRepository = {
   list: (filter: InventoryFilter) => Promise<InventoryDataState>;
   update: (id: string, edit: InventoryEdit) => Promise<void>;
+  createSpare: (data: { name: string; brand_id: string; device_model_id: string; description: string; initial_stock: number }) => Promise<void>;
   adjust: (id: string, delta: number, reason: string, requestId: string) => Promise<void>;
   adjustments: (id: string) => Promise<readonly StockAdjustment[]>;
 };

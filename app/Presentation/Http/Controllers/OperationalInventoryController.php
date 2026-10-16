@@ -3,6 +3,8 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Inventory\InventoryItem;
+use App\Infrastructure\Valuation\PublishedPartsDonor;
+use App\Infrastructure\MasterData\MasterDataEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -15,7 +17,29 @@ final class OperationalInventoryController extends Controller
     public function index(): JsonResponse
     {
         $items = InventoryItem::query()->orderByDesc('created_at')->orderByDesc('id')->get();
-        return response()->json(['data' => $items->map(fn (InventoryItem $item) => $this->summary($item))]);
+        // Apply the same eligibility gates as the public product catalog.
+        $storeIds = InventoryItem::query()
+            ->where('publication_status', 'publicado')
+            ->where('is_sellable', true)->where('stock_quantity', '>', 0)
+            ->where('sale_price_amount_minor', '>', 0)
+            ->where(function ($query): void {
+                $query->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
+                    ->orWhere('metadata->destination', 'Direct Sale');
+            })
+            ->whereIn('operational_status', ['reparado', 'en_stock', 'disponible'])
+            ->where(function ($query): void {
+                $query->whereNull('metadata->origin')->orWhere('metadata->origin', '!=', 'recovered')
+                    ->orWhere('metadata->part_condition', 'functional');
+            })->pluck('id')->flip();
+        $donorListings = PublishedPartsDonor::query()
+            ->whereIn('inventory_item_id', $items->pluck('id'))
+            ->get(['id', 'inventory_item_id'])->keyBy('inventory_item_id');
+        return response()->json(['data' => $items->map(function (InventoryItem $item) use ($storeIds, $donorListings): array {
+            $donor = $donorListings->get($item->id);
+            $url = $storeIds->has($item->id) ? '/store/products/'.$item->id
+                : ($donor ? '/store/for-parts/'.$donor->id : null);
+            return [...$this->summary($item), 'store_visible' => $url !== null, 'store_url' => $url];
+        })])->header('Cache-Control', 'private, no-store');
     }
 
     public function show(string $id): JsonResponse
@@ -32,6 +56,8 @@ final class OperationalInventoryController extends Controller
             'description' => ['sometimes', 'nullable', 'string', 'max:4000'],
             'brand' => ['sometimes', 'nullable', 'string', 'max:150'],
             'model' => ['sometimes', 'nullable', 'string', 'max:150'],
+            'brand_id' => ['sometimes', 'required', 'string'],
+            'device_model_id' => ['sometimes', 'required', 'string'],
             'consignor_id' => ['sometimes', 'nullable', 'string', \Illuminate\Validation\Rule::exists('consignors', 'id')],
         ]);
         if ($validated === []) {
@@ -39,6 +65,38 @@ final class OperationalInventoryController extends Controller
         }
         $item = DB::transaction(function () use ($request, $id, $validated): InventoryItem {
             $item = InventoryItem::query()->whereKey($id)->lockForUpdate()->firstOrFail();
+            if (DB::table('device_part_extractions')->where('donor_item_id', $id)->exists()) {
+                abort(409, 'El donante con piezas extraídas conserva su identidad y titularidad.');
+            }
+            if ($item->component_identity_key !== null && array_intersect(array_keys($validated), ['brand', 'model', 'brand_id', 'device_model_id', 'consignor_id'])) {
+                abort(409, 'El repuesto recuperado conserva su compatibilidad y propietario para mantener la trazabilidad.');
+            }
+            if ($item->item_type === 'spare_part'
+                && (array_key_exists('brand', $validated) || array_key_exists('model', $validated))
+                && (!array_key_exists('brand_id', $validated) || !array_key_exists('device_model_id', $validated))) {
+                throw ValidationException::withMessages(['device_model_id' => 'Para editar la marca y el modelo de un repuesto, seleccioná ambos codificadores.']);
+            }
+            if (array_key_exists('brand_id', $validated) || array_key_exists('device_model_id', $validated)) {
+                if ($item->item_type !== 'spare_part') {
+                    throw ValidationException::withMessages(['brand_id' => 'Los codificadores de repuesto solo se editan en repuestos.']);
+                }
+                $brandId = $validated['brand_id'] ?? null;
+                $modelId = $validated['device_model_id'] ?? null;
+                $brandEntry = MasterDataEntry::query()->where('kind', 'brands')->whereKey($brandId)->first();
+                $modelEntry = MasterDataEntry::query()->where('kind', 'deviceModels')->whereKey($modelId)->first();
+                $brand = $brandEntry?->payload;
+                $model = $modelEntry?->payload;
+                if (!is_array($brand) || ($brand['active'] ?? false) !== true || !is_array($model) || ($model['active'] ?? false) !== true || ($model['brandId'] ?? null) !== $brandId) {
+                    throw ValidationException::withMessages(['device_model_id' => 'Seleccioná una marca y un modelo activo correspondiente.']);
+                }
+                $validated['brand'] = $brand['name'];
+                $validated['model'] = $model['name'];
+                $metadata = is_array($item->metadata) ? $item->metadata : [];
+                $metadata['brand_id'] = $brandId;
+                $metadata['device_model_id'] = $modelId;
+                $validated['metadata'] = $metadata;
+                unset($validated['brand_id'], $validated['device_model_id']);
+            }
             $previous = $item->only(array_keys($validated));
             $item->fill($validated);
             if ($item->isDirty()) {
@@ -161,6 +219,8 @@ final class OperationalInventoryController extends Controller
             'item_type' => $item->item_type,
             'brand' => $item->brand,
             'model' => $item->model,
+            'brand_id' => $item->metadata['brand_id'] ?? null,
+            'device_model_id' => $item->metadata['device_model_id'] ?? null,
             'inventory_purpose' => $item->inventory_purpose,
             'operational_status' => $item->operational_status,
             'publication_status' => $item->publication_status,

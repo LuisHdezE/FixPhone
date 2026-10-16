@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { adminFetch, adminToken } from '@/auth/adminApiSession';
@@ -192,7 +193,7 @@ export function ValuPhonePage() {
   return <PageShell breadcrumbs={[{ label: 'Operación' }, { label: 'ValuPhone' }]} title="ValuPhone" description="Valorar un teléfono por vez y preparar anuncios de FixPhone para Facebook.">
     <div className="grid gap-3" data-valuations>
       {error ? <p className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800" role="alert">{error}</p> : null}
-      {notice ? <p className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800" role="status">{notice}</p> : null}
+      <SuccessToast message={notice} />
       <SurfaceCard>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{id ? 'Editar valoración' : 'Nueva valoración'}</h2>

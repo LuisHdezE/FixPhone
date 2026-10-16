@@ -170,6 +170,108 @@ final class InventoryDeviceCrudTest extends TestCase
             ->assertJsonPath('data.metadata.origin_marker', 'preservar');
     }
 
+    public function test_owner_can_edit_brand_model_and_characteristics_after_technical_evaluation(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device();
+        $checks = array_map(static fn (string $key): array => [
+            'key' => $key,
+            'result' => $key === 'display_touch' ? 'ok' : 'not_tested',
+            'notes' => null,
+        ], ['display_touch', 'housing', 'moisture', 'battery_charging', 'cameras', 'audio_microphones', 'connectivity', 'biometrics']);
+        $this->postJson('/api/v1/admin/devices/'.$device->id.'/technical-evaluations', [
+            'request_id' => (string) Str::uuid(),
+            'notes' => 'Evaluación original',
+            'checks' => $checks,
+        ])->assertCreated();
+        $this->patchJson('/api/v1/admin/inventory/'.$device->id, $this->updatePayload())
+            ->assertOk()->assertJsonPath('data.model', 'iPhone 11 Pro')
+            ->assertJsonPath('data.metadata.color', 'Azul');
+        $this->getJson('/api/v1/admin/inventory')->assertOk()
+            ->assertJsonPath('data.0.metadata.device_model_id', 'model-iphone-11-pro');
+        $this->assertDatabaseCount('device_technical_evaluations', 1);
+        $this->assertDatabaseCount('device_technical_checks', 8);
+        $this->assertDatabaseHas('audit_events', [
+            'entity_id' => $device->id,
+            'event_type' => 'inventory.device_updated',
+        ]);
+        $this->assertSame('FXP-9001', $device->fresh()->sku);
+    }
+
+    public function test_published_device_identity_can_be_corrected_without_changing_commercial_terms(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device([
+            'publication_status' => 'publicado',
+            'is_sellable' => true,
+            'inventory_purpose' => 'parts_donor',
+            'sale_price_amount_minor' => 650000,
+        ]);
+        $valuationId = (string) Str::ulid();
+        DB::table('device_valuations')->insert([
+            'id' => $valuationId,
+            'inventory_item_id' => $device->id,
+            'model_name' => 'Apple iPhone 11',
+            'fault_type' => 'other',
+            'asking_price_minor' => 600000,
+            'public_listing_status' => 'published',
+            'public_image_url' => 'https://example.test/phone.jpg',
+            'public_description' => 'Pantalla rota; dispositivo para repuestos, revisado.',
+            'provenance_confirmed' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->patchJson('/api/v1/admin/inventory/'.$device->id, $this->updatePayload())
+            ->assertOk()->assertJsonPath('data.model', 'iPhone 11 Pro');
+        $this->getJson('/api/v1/admin/inventory')->assertOk()
+            ->assertJsonPath('data.0.metadata.device_model_id', 'model-iphone-11-pro');
+        $valuation = DB::table('device_valuations')->where('id', $valuationId)->first();
+        $this->assertSame('Apple iPhone 11 Pro', $valuation->model_name);
+        $this->assertSame(600000, $valuation->asking_price_minor);
+        $this->assertSame('published', $valuation->public_listing_status);
+        $this->assertSame(650000, $device->fresh()->sale_price_amount_minor);
+        $this->assertTrue((bool) $device->fresh()->is_sellable);
+        $this->assertSame('publicado', $device->fresh()->publication_status);
+        $this->assertDatabaseHas('audit_events', ['entity_id' => $device->id, 'event_type' => 'inventory.device_updated']);
+    }
+
+    public function test_ownership_can_be_corrected_to_consignment_and_back(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device(['metadata' => ['destination' => 'Refurbish']]);
+        $id = (string) Str::ulid();
+        DB::table('consignors')->insert([
+            'id' => $id, 'full_name' => 'Consignante de prueba',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $path = '/api/v1/admin/inventory/'.$device->id;
+        $payload = $this->updatePayload();
+        $this->patchJson($path, [...$payload, 'ownership_type' => 'consignment',
+            'consignor_id' => $id, 'ownership_correction_reason' => 'Registrado como propio por error'])
+            ->assertOk()->assertJsonPath('data.consignor_id', $id)
+            ->assertJsonPath('data.inventory_purpose', 'consignation');
+        $this->assertSame('Refurbish', $device->fresh()->metadata['destination']);
+        $this->patchJson($path, [...$payload, 'ownership_type' => 'owned',
+            'consignor_id' => null, 'ownership_correction_reason' => 'En realidad es equipo propio'])
+            ->assertOk()->assertJsonPath('data.consignor_id', null)
+            ->assertJsonPath('data.inventory_purpose', 'repair_then_sell');
+        $this->assertSame('FXP-9001', $device->fresh()->sku);
+        $this->assertDatabaseCount('audit_events', 2);
+    }
+
+    public function test_ownership_correction_requires_reason_and_consignor(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device();
+        $path = '/api/v1/admin/inventory/'.$device->id;
+        $this->patchJson($path, [...$this->updatePayload(), 'ownership_type' => 'consignment',
+            'consignor_id' => null, 'ownership_correction_reason' => ''])
+            ->assertUnprocessable()->assertJsonValidationErrors(['ownership_correction_reason']);
+        $this->patchJson($path, [...$this->updatePayload(), 'ownership_type' => 'consignment',
+            'consignor_id' => null, 'ownership_correction_reason' => 'Error de registro detectado'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['consignor_id']);
+        $this->assertNull($device->fresh()->consignor_id);
+    }
+
     public function test_delete_is_logical_and_keeps_permanent_device_code_and_audit(): void
     {
         $this->signIn('owner');
@@ -204,7 +306,8 @@ final class InventoryDeviceCrudTest extends TestCase
 
         $path = '/api/v1/admin/inventory/'.$device->id;
         $this->deleteJson($path)->assertStatus(409);
-        $this->patchJson($path, $this->updatePayload())->assertStatus(409);
+        $this->patchJson($path, $this->updatePayload())->assertStatus(409)
+            ->assertJsonPath('detail', 'No se puede editar un equipo con ventas, repuestos, tasaciones, ajustes o historial de venta. Conservá su trazabilidad.');
         $this->assertDatabaseHas('inventory_items', ['id' => $device->id, 'deleted_at' => null]);
         DB::table('device_installed_parts')->where('inventory_item_id', $device->id)->delete();
 

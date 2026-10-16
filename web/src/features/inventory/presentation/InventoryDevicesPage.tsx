@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { AppIcon } from '@/components/AppIcon';
@@ -12,7 +13,12 @@ import type { InventoryDemoProvider, InventoryDevicesGateway } from '../applicat
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
 import { DeviceLifecycleModal } from './DeviceLifecycleModal';
-import { lifecycleLabel, type DismantlingStatus, type InventoryDeviceListItemDto } from '../application/devices.dto';
+import { lifecycleLabel } from '../application/devices.dto';
+import { DeviceComponentsModal } from './DeviceComponentsModal';
+import { DeviceDestinationModal } from './DeviceDestinationModal';
+import { DeviceRepairCostsModal } from './DeviceRepairCostsModal';
+import { PhonePublicationModal } from './PhonePublicationModal';
+import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
 
 const dismantlingNames: Record<DismantlingStatus, string> = {
   unknown: 'Sin verificar',
@@ -49,10 +55,16 @@ export function InventoryDevicesPage({
   const [notice, setNotice] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [canDismantle, setCanDismantle] = useState(false);
+  const [lifecycleDevice, setLifecycleDevice] = useState<InventoryDeviceListItemDto | null>(null);
+  const [canAdjust, setCanAdjust] = useState(false);
+  const [extractingDevice, setExtractingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [canValuate, setCanValuate] = useState(false);
   const [canManage, setCanManage] = useState(false);
-  const [canChangeState, setCanChangeState] = useState(false);
-  const [lifecycleDevice, setLifecycleDevice] = useState<InventoryDeviceListItemDto | null>(null);
+  const [canRoute, setCanRoute] = useState(false);
+  const [routingDevice, setRoutingDevice] = useState<InventoryDeviceListItemDto | null>(null);
+  const [publishingPhone, setPublishingPhone] = useState<InventoryDeviceListItemDto | null>(null);
+  const [repairDevice, setRepairDevice] = useState<InventoryDeviceListItemDto | null>(null);
+  const [deletingDevice, setDeletingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [editingDevice, setEditingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<{ device: InventoryDeviceListItemDto; kind: 'details' | 'dismantling' } | null>(null);
@@ -70,9 +82,10 @@ export function InventoryDevicesPage({
       const payload = await identity.json() as { data?: { permissions?: string[] } };
       const permissions = Array.isArray(payload.data?.permissions) ? payload.data.permissions : [];
       setCanDismantle(permissions.includes('workshop.dismantle'));
+      setCanAdjust(permissions.includes('inventory.adjust'));
       setCanValuate(permissions.includes('valuation.manage'));
       setCanManage(permissions.includes('catalog.manage'));
-      setCanChangeState(permissions.includes('inventory.adjust'));
+      setCanRoute(permissions.includes('routing.manage'));
       setDevices(items);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el inventario.');
@@ -109,13 +122,13 @@ export function InventoryDevicesPage({
 
   async function deleteDevice(device: InventoryDeviceListItemDto) {
     if (!canManage || busyId !== null) return;
-    if (!window.confirm('¿Eliminar ' + device.id + '? Se retirará del inventario, pero su código y auditoría se conservarán. Los equipos con ventas, repuestos, tasaciones o movimientos asociados no se pueden eliminar.')) return;
 
     setBusyId(device.inventoryId);
     setNotice(null);
     setActionError(null);
     try {
       await gateway.deleteDevice(device.inventoryId);
+      setDeletingDevice(null);
       await loadDevices();
       setActiveAction(null);
       setNotice('El dispositivo ' + device.id + ' se retiró del inventario sin perder su código ni auditoría.');
@@ -175,18 +188,15 @@ export function InventoryDevicesPage({
     {
       id: 'destination',
       header: view.columns.destination,
-      cell: (device) => <StatusBadge label={device.initialDestination ? optionLabel(view.filters.destinationOptions, device.initialDestination) : 'Sin registro histórico'} tone={device.initialDestination ? device.destinationTone : 'neutral'} />,
+      cell: (device) => <StatusBadge label={optionLabel(view.filters.destinationOptions, device.destination)} tone={device.destinationTone} />,
       sortable: true,
-      sortValue: (device) => device.initialDestination ?? '',
-      searchValue: (device) => device.initialDestination ?? 'Sin registro histórico',
+      sortValue: (device) => device.destination,
+      searchValue: (device) => device.destination,
     },
     {
-      id: 'operational',
-      header: 'Estado actual',
-      cell: (device) => <span className="text-xs font-semibold text-slate-700">{lifecycleLabel(device.operationalStatus)}</span>,
-      sortable: true,
-      sortValue: (device) => device.operationalStatus,
-      searchValue: (device) => lifecycleLabel(device.operationalStatus),
+      id: 'operational', header: 'Estado actual',
+      cell: (device) => <span className="text-xs font-semibold">{lifecycleLabel(device.operationalStatus)}</span>,
+      sortable: true, sortValue: (device) => device.operationalStatus,
     },
     {
       id: 'dismantling',
@@ -201,7 +211,9 @@ export function InventoryDevicesPage({
     {
       id: 'visibility',
       header: 'Publicación',
-      cell: (device) => device.publicListingStatus === 'published' && device.publicValuationId
+      cell: (device) => device.phoneListingStatus === 'published'
+        ? <Link title="Abrir teléfono en tienda" className="text-xs font-semibold text-emerald-700 underline" to={'/store/products/' + device.inventoryId} target="_blank" rel="noopener noreferrer">En tienda ↗</Link>
+        : device.publicListingStatus === 'published' && device.publicValuationId
         ? <Link title="Abrir ficha pública" className="text-xs font-semibold text-emerald-700 underline" to={'/store/for-parts/' + device.publicValuationId} target="_blank" rel="noopener noreferrer">Publicada ↗</Link>
         : <span className="text-xs text-slate-500">Sin publicar</span>,
       searchValue: (device) => device.publicListingStatus,
@@ -224,14 +236,27 @@ export function InventoryDevicesPage({
           title={'Consultar evaluación técnica de ' + device.id}
           to={'/apps/inventory/devices/' + encodeURIComponent(device.inventoryId) + '/evaluation'}
         ><AppIcon className="size-3.5" name="check-circle" /></Link>
-        <button
-          aria-label={'Estado e historial de ' + device.id}
+        <button aria-label={'Estado e historial de ' + device.id} title={'Estado e historial de ' + device.id}
+          className="grid size-7 shrink-0 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"
+          onClick={() => setLifecycleDevice(device)} type="button"><AppIcon className="size-3.5" name="layers" /></button>
+        {canRoute ? <button
+          aria-label={'Cambiar estado o destino de ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
           disabled={busyId !== null}
-          onClick={() => setLifecycleDevice(device)}
-          title={'Consultar y cambiar estado de ' + device.id}
+          onClick={() => { setActionError(null); setRoutingDevice(device); }}
+          title={'Cambiar estado o destino de ' + device.id}
           type="button"
-        ><AppIcon className="size-3.5" name="layers" /></button>
+        ><AppIcon className="size-3.5" name="map" /></button> : null}
+        {canManage && device.destination === 'Direct Sale' ? <button
+          aria-label={'Publicar teléfono ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"
+          onClick={() => setPublishingPhone(device)} title={'Publicar en tienda ' + device.id} type="button"
+        ><AppIcon className="size-3.5" name="store" /></button> : null}
+        {canAdjust ? <button
+          aria-label={'Reparaciones e inversiones de ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"
+          onClick={() => setRepairDevice(device)} title={'Reparaciones e inversiones de ' + device.id} type="button"
+        ><AppIcon className="size-3.5" name="chart" /></button> : null}
         {canManage ? <button
           aria-label={'Editar ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
@@ -244,10 +269,11 @@ export function InventoryDevicesPage({
           aria-label={'Eliminar ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-red-600 transition hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-red-600 disabled:opacity-40"
           disabled={busyId !== null}
-          onClick={() => void deleteDevice(device)}
+          onClick={() => { setActionError(null); setDeletingDevice(device); }}
           title={'Eliminar ' + device.id + ' (conservar auditoría)'}
           type="button"
         ><AppIcon className="size-3.5" name="trash" /></button> : null}
+        {device.isDonor && canDismantle && canAdjust ? <button aria-label={'Extraer componentes de ' + device.id} title={'Extraer componentes de ' + device.id} type="button" className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100" onClick={() => setExtractingDevice(device)}><AppIcon name="package" className="size-3.5" /></button> : null}
         {device.isDonor && canDismantle && transitions[device.dismantlingStatus].length > 1 ? <button
           aria-label={'Actualizar despiece de ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
@@ -272,7 +298,7 @@ export function InventoryDevicesPage({
       label: view.filters.destinationLabel,
       allLabel: view.filters.allDestinationsLabel,
       options: view.filters.destinationOptions,
-      value: (device) => device.initialDestination ?? 'unrecorded',
+      value: (device) => device.destination,
     },
     {
       id: 'condition',
@@ -300,8 +326,8 @@ export function InventoryDevicesPage({
         </div>
       ) : null}
 
-      {notice ? <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">{notice}</p> : null}
-      {actionError ? <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">{actionError}</p> : null}
+      <SuccessToast message={notice} />
+      {actionError && !deletingDevice ? <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">{actionError}</p> : null}
 
       {error ? (
         <div className="mt-5 space-y-3">
@@ -348,10 +374,9 @@ export function InventoryDevicesPage({
           ['Bloqueo de cuenta', activeAction.device.accountLock],
           ['Origen', activeAction.device.acquisitionSource],
           ['Costo', activeAction.device.acquisitionCost],
-          ['Destino inicial', activeAction.device.initialDestination ? optionLabel(view.filters.destinationOptions, activeAction.device.initialDestination) : 'Sin registro histórico'],
-          ['Estado actual', lifecycleLabel(activeAction.device.operationalStatus)],
+          ['Destino', optionLabel(view.filters.destinationOptions, activeAction.device.destination)],
           ['Despiece', activeAction.device.isDonor ? dismantlingNames[activeAction.device.dismantlingStatus] : 'No aplica'],
-          ['Publicación', activeAction.device.publicListingStatus === 'published' ? 'Publicada' : 'Sin publicar'],
+          ['Publicación', activeAction.device.phoneListingStatus === 'published' ? 'En tienda' : activeAction.device.publicListingStatus === 'published' ? 'Para repuestos' : 'Sin publicar'],
         ] as const).map(([label, value]) => <div className="min-w-0" key={label}>
           <dt className="font-semibold text-slate-500">{label}</dt>
           <dd className="mt-1 break-words font-medium text-slate-800">{value || '—'}</dd>
@@ -371,18 +396,43 @@ export function InventoryDevicesPage({
         </div>
       </div>}
     </ModalShell> : null}
-    {lifecycleDevice ? <DeviceLifecycleModal
-      key={lifecycleDevice.inventoryId}
-      device={lifecycleDevice}
+    {deletingDevice ? <ModalShell title="Eliminar dispositivo" density="compact" hideCloseButton disabled={busyId !== null} onClose={() => { if (busyId === null) { setDeletingDevice(null); setActionError(null); } }}>
+      <div className="grid gap-3 p-3" data-device-delete-confirmation>
+        <div className="flex items-start gap-2">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-red-50 text-red-600"><AppIcon name="trash" className="size-4" /></span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-slate-900">¿Eliminar {deletingDevice.id}?</p>
+            <p className="mt-0.5 break-words text-xs text-slate-600">{deletingDevice.manufacturer} {deletingDevice.model}</p>
+          </div>
+        </div>
+        <p className="text-xs leading-5 text-slate-600">Se retirará del inventario. Su código y auditoría se conservarán. Los equipos con ventas, repuestos, tasaciones o movimientos asociados no se pueden eliminar.</p>
+        {actionError ? <p role="alert" className="rounded-md bg-red-50 p-2 text-xs text-red-700">{actionError}</p> : null}
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
+          <button data-modal-initial-focus className="h-7 rounded-md border border-slate-200 px-3 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-50" disabled={busyId !== null} onClick={() => { setDeletingDevice(null); setActionError(null); }} type="button">Cancelar</button>
+          <button className="h-7 rounded-md bg-red-600 px-3 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50" disabled={busyId !== null} aria-busy={busyId !== null} onClick={() => void deleteDevice(deletingDevice)} type="button">{busyId !== null ? 'Eliminando…' : 'Eliminar'}</button>
+        </div>
+      </div>
+    </ModalShell> : null}
+    {extractingDevice ? <DeviceComponentsModal key={extractingDevice.inventoryId} device={extractingDevice} canPublish={canManage} onClose={() => setExtractingDevice(null)} onSaved={message => { setExtractingDevice(null); setNotice(message); void loadDevices(); }} /> : null}
+    {repairDevice ? <DeviceRepairCostsModal key={repairDevice.inventoryId} id={repairDevice.inventoryId} code={repairDevice.id} onClose={() => setRepairDevice(null)} onSaved={() => { setNotice('Instalación registrada y existencias actualizadas.'); void loadDevices(); }} /> : null}
+    {publishingPhone ? <PhonePublicationModal key={publishingPhone.inventoryId} id={publishingPhone.inventoryId} onClose={() => setPublishingPhone(null)} onSaved={message => { setPublishingPhone(null); setNotice(message); void loadDevices(); }} /> : null}
+    {routingDevice ? <DeviceDestinationModal
+      key={routingDevice.inventoryId}
+      inventoryId={routingDevice.inventoryId}
+      code={routingDevice.id}
+      current={routingDevice.destination}
       gateway={gateway}
-      canManage={canChangeState}
-      onClose={() => setLifecycleDevice(null)}
-      onSaved={(message) => {
-        setLifecycleDevice(null);
-        setNotice(message);
+      onClose={() => setRoutingDevice(null)}
+      onSaved={next => {
+        setRoutingDevice(null);
+        setNotice('Destino del equipo actualizado a ' + optionLabel(view.filters.destinationOptions, next) + '.');
         void loadDevices();
       }}
     /> : null}
+    {lifecycleDevice ? <DeviceLifecycleModal device={lifecycleDevice} gateway={gateway} canManage={canAdjust}
+      onClose={() => setLifecycleDevice(null)} onSaved={message => {
+        setLifecycleDevice(null); setNotice(message); void loadDevices();
+      }} /> : null}
     {editingDevice ? <InventoryDeviceIntakeModal
       key={editingDevice.inventoryId}
       editDevice={editingDevice}

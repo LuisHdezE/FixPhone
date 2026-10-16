@@ -40,6 +40,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 default => $status >= 500 ? 'Error interno del servidor' : 'Solicitud no válida',
             };
             $extensions = $exception instanceof ValidationException ? ['errors' => $exception->errors()] : [];
-            return ProblemDetails::response($request, $status, $title, $title, "https://fixphone.uy/problems/http-$status", "http_$status", $extensions);
+            // Preserve explicit business-rule explanations for safe client errors.
+            // Never expose internal exception messages or stack details for HTTP 500.
+            $detail = $title;
+            if ($status >= 400 && $status < 500 && $exception instanceof HttpExceptionInterface) {
+                $message = trim($exception->getMessage());
+                if ($message !== '') {
+                    $detail = $message;
+                }
+            }
+            return ProblemDetails::response($request, $status, $title, $detail, "https://fixphone.uy/problems/http-$status", "http_$status", $extensions);
         });
     })->create();

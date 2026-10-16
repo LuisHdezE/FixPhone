@@ -29,7 +29,7 @@ final class DeviceCodeAllocator
             $code = sprintf('FXP-%04d', $next);
             $next++;
             // Maintain compatibility if an older or external import already used a code.
-        } while (InventoryItem::query()->where('sku', $code)->exists());
+        } while (DB::table('inventory_items')->where('sku', $code)->exists());
 
         DB::table('inventory_device_sequences')
             ->where('id', 1)

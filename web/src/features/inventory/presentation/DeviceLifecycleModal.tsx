@@ -44,7 +44,7 @@ export function DeviceLifecycleModal({ device, gateway, canManage, onClose, onSa
     event.preventDefault();
     if (!canManage || !choice || reason.trim().length < 10 || busy) return;
     const label = lifecycleLabel(choice);
-    if (!window.confirm('¿Confirmás cambiar ' + device.id + ' a «' + label + '»? El destino inicial permanecerá intacto.')) return;
+    if (!window.confirm('¿Confirmás cambiar ' + device.id + ' a «' + label + '»? El destino y la titularidad permanecerán intactos.')) return;
     setBusy(true);
     setError(null);
     try {
@@ -65,21 +65,21 @@ export function DeviceLifecycleModal({ device, gateway, canManage, onClose, onSa
     }
   }
 
-  return <ModalShell title={'Estado e historial · ' + device.id} onClose={onClose} disabled={busy}>
+  return <ModalShell title={'Estado e historial · ' + device.id} onClose={onClose} disabled={busy} density="compact">
     <div className="grid gap-3 p-4 text-sm">
       {loading ? <p className="text-xs text-slate-500">Consultando estados permitidos e historial…</p> : null}
       {snapshot ? <>
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="rounded-md bg-slate-50 p-3">
-            <p className="text-xs font-semibold text-slate-500">Destino inicial (inmutable)</p>
-            <p className="mt-1 font-semibold text-slate-900">{snapshot.initial_destination ?? 'Sin destino histórico registrado'}</p>
+            <p className="text-xs font-semibold text-slate-500">Destino actual</p>
+            <p className="mt-1 font-semibold text-slate-900">{snapshot.current_destination ?? 'Sin destino registrado'}</p>
           </div>
           <div className="rounded-md bg-slate-50 p-3">
             <p className="text-xs font-semibold text-slate-500">Estado operativo actual</p>
             <p className="mt-1 font-semibold text-slate-900">{lifecycleLabel(snapshot.operational_status)}</p>
           </div>
         </div>
-        <p className="text-xs text-slate-600">La ruta operativa puede cambiar con trazabilidad. Esta acción nunca habilita ventas, publica productos ni altera existencias.</p>
+        <p className="text-xs text-slate-600">El progreso de taller queda registrado con trazabilidad. Para cambiar el destino usá la acción de enrutamiento. Esta acción nunca habilita ventas, publica productos ni altera existencias.</p>
         {canManage && snapshot.allowed_statuses.length > 0 ? <form className="grid gap-3" onSubmit={event => void save(event)}>
           <label className="grid gap-1 text-xs font-semibold text-slate-700">
             Nuevo estado
@@ -92,7 +92,7 @@ export function DeviceLifecycleModal({ device, gateway, canManage, onClose, onSa
           <label className="grid gap-1 text-xs font-semibold text-slate-700">
             Motivo del cambio (obligatorio)
             <textarea className="rounded-md border border-slate-300 px-2.5 py-2 text-sm" rows={2} maxLength={500} minLength={10}
-              placeholder="Explicá por qué cambia la ruta de este equipo…" required value={reason}
+              placeholder="Explicá por qué cambia el estado de este equipo…" required value={reason}
               onChange={event => setReason(event.target.value)}/>
           </label>
           <div className="flex justify-end">

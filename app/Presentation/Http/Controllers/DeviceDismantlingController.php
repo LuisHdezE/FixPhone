@@ -16,7 +16,7 @@ final class DeviceDismantlingController extends Controller
 {
     /**
      * Records the observed dismantling state, not extracted-piece inventory.
-     * Actual extraction and stock movements belong to the subsequent ledger phase.
+     * Component extraction and stock movements use the separate extraction ledger.
      */
     public function update(Request $request, string $id): JsonResponse
     {
@@ -28,7 +28,7 @@ final class DeviceDismantlingController extends Controller
             $item = InventoryItem::query()->whereKey($id)->lockForUpdate()->firstOrFail();
 
             if (!in_array($item->item_type, ['device', 'used_phone'], true)
-                || $item->inventory_purpose !== 'parts_donor') {
+                || (($item->metadata['destination'] ?? null) !== 'Donor' && $item->inventory_purpose !== 'parts_donor')) {
                 throw ValidationException::withMessages([
                     'dismantling_status' => 'Solo los teléfonos destinados a repuestos admiten un estado de despiece.',
                 ]);

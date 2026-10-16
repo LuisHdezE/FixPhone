@@ -91,3 +91,10 @@ summary::-webkit-details-marker {
 ::-webkit-scrollbar-thumb:hover {
   background: #bcc2c9;
 }
+
+/* Device intake: size fields by content while keeping all sections visible on desktop. */
+.device-intake-form label { min-width: 0; align-content: start; }
+.device-intake-form input, .device-intake-form select { width: 100%; min-width: 0; font-size: 12px; }
+.device-intake-form #device-identity { max-width: 24ch; font-variant-numeric: tabular-nums; }
+.device-intake-form #device-cost { max-width: 23ch; }
+.device-intake-form textarea { min-height: 2.75rem; height: 2.75rem; font-size: 12px; resize: vertical; }

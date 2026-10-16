@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { AppIcon } from '@/components/AppIcon';
@@ -6,6 +8,7 @@ import { StatusBadge, type StatusBadgeTone } from '@/components/data-display/Sta
 import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SearchField } from '@/components/forms/SearchField';
 import { SelectField, type SelectFieldOption } from '@/components/forms/SelectField';
+import { SparePartPublicationModal } from './SparePartPublicationModal';
 import { apiInventoryRepository } from './apiInventoryRepository';
 import type {
   InventoryDataState, InventoryEdit, InventoryFilter, InventoryHealth,
@@ -28,13 +31,22 @@ const options: readonly SelectFieldOption<InventoryHealthFilter>[] = [
   { value: 'reorder', label: 'Reponer pronto' },
   { value: 'out-of-stock', label: 'Agotado' },
 ];
-const initialFilter: InventoryFilter = { search: '', health: 'all' };
+const initialFilter: InventoryFilter = { search: '', health: 'all', category: 'all', publication: 'all' };
+const categoryOptions = [
+  { value: 'all', label: 'Todas las categorías' },
+  { value: 'device', label: 'Dispositivos' },
+  { value: 'used_phone', label: 'Teléfonos' },
+  { value: 'spare_part', label: 'Repuestos' },
+  { value: 'accessory', label: 'Accesorios' },
+  { value: 'service_part', label: 'Insumos' },
+] as const;
 type Action = 'detail' | 'edit' | 'adjust' | 'history';
+type CatalogItem = { id: string; name: string; active: boolean; brandId?: string };
 type Selection = { item: InventoryItem; action: Action };
 const adjustableTypes = new Set(['spare_part', 'accessory', 'service_part']);
 
 function IconAction({ icon, label, disabled = false, onClick }: {
-  icon: 'search' | 'edit' | 'package' | 'document';
+  icon: 'search' | 'edit' | 'package' | 'document' | 'store';
   label: string;
   disabled?: boolean;
   onClick: () => void;
@@ -50,12 +62,18 @@ function IconAction({ icon, label, disabled = false, onClick }: {
 }
 
 export function InventoryView({ repository = apiInventoryRepository }: { repository?: InventoryRepository }) {
+  const [publishingId, setPublishingId] = useState<string | null>(null);
   const [filter, setFilter] = useState(initialFilter);
   const [state, setState] = useState<InventoryDataState>({ status: 'loading' });
   const [refreshToken, setRefreshToken] = useState(0);
   const [permissions, setPermissions] = useState<readonly string[]>([]);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [edit, setEdit] = useState<InventoryEdit>({ title: '', description: '', brand: '', model: '' });
+  const [catalog, setCatalog] = useState<{ brands: CatalogItem[]; deviceModels: CatalogItem[] }>({ brands: [], deviceModels: [] });
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newSpare, setNewSpare] = useState({ name: '', brandId: '', modelId: '', description: '', stock: '0' });
+  const [createError, setCreateError] = useState<string | null>(null);
+  const createDialogRef = useRef<HTMLDialogElement>(null);
   const [delta, setDelta] = useState('');
   const [reason, setReason] = useState('');
   const [requestId, setRequestId] = useState('');
@@ -63,6 +81,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
   const [busy, setBusy] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const canEdit = permissions.includes('catalog.manage');
   const canAdjust = permissions.includes('inventory.adjust');
@@ -76,6 +95,18 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
       })
       .then((payload) => { if (active) setPermissions(Array.isArray(payload.data?.permissions) ? payload.data.permissions : []); })
       .catch(() => { if (active) setPermissions([]); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void adminFetch('/api/v1/admin/master-data', { cache: 'no-store' })
+      .then(async r => {
+        if (!r.ok) throw new Error('No se pudieron cargar marcas y modelos.');
+        return r.json() as Promise<{ data: { brands: CatalogItem[]; deviceModels: CatalogItem[] } }>;
+      })
+      .then(payload => { if (active) setCatalog({ brands: payload.data.brands.filter(x => x.active), deviceModels: payload.data.deviceModels.filter(x => x.active) }); })
+      .catch(() => { if (active) setCatalogError('No se pudieron cargar los codificadores de marca y modelo.'); });
     return () => { active = false; };
   }, []);
 
@@ -97,7 +128,9 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
 
   function open(item: InventoryItem, action: Action) {
     setSelection({ item, action });
-    setEdit({ title: item.productName, description: item.description, brand: item.brand, model: item.model });
+    setEdit({ title: item.productName, description: item.description, brand: item.brand, model: item.model,
+      brand_id: item.brandId ?? catalog.brands.find(x => x.name === item.brand)?.id ?? '',
+      device_model_id: item.modelId ?? catalog.deviceModels.find(x => x.name === item.model && x.brandId === (item.brandId ?? catalog.brands.find(b => b.name === item.brand)?.id))?.id ?? '' });
     setDelta('');
     setReason('');
     setRequestId(crypto.randomUUID());
@@ -125,7 +158,17 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
     try {
       if (selection.action === 'edit') {
         if (!canEdit) return;
-        await repository.update(item.id, edit);
+        const brand = catalog.brands.find(x => x.id === edit.brand_id);
+        const model = catalog.deviceModels.find(x => x.id === edit.device_model_id && x.brandId === brand?.id);
+        const selectedCatalog = Boolean(edit.brand_id || edit.device_model_id);
+        if (item.itemType === 'spare_part' && selectedCatalog && (!brand || !model)) {
+          throw new Error('Seleccioná marca y modelo válidos del catálogo.');
+        }
+        await repository.update(item.id, {
+          title: edit.title, description: edit.description,
+          ...(item.itemType === 'spare_part' && brand && model
+            ? { brand: brand.name, model: model.name, brand_id: brand.id, device_model_id: model.id } : {}),
+        });
         setMessage(item.sku + ': datos del catálogo actualizados.');
       } else if (selection.action === 'adjust') {
         if (!canAdjust || !adjustableTypes.has(item.itemType)) return;
@@ -152,6 +195,24 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
     }
   }
 
+  async function saveSpare(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true); setCreateError(null);
+    try {
+      const initialStock = Number(newSpare.stock);
+      if (!Number.isSafeInteger(initialStock) || initialStock < 0) throw new Error('La existencia inicial debe ser un entero no negativo.');
+      await repository.createSpare({ name: newSpare.name.trim(), brand_id: newSpare.brandId,
+        device_model_id: newSpare.modelId, description: newSpare.description.trim(), initial_stock: initialStock });
+      setCreateOpen(false); createDialogRef.current?.close();
+      setMessage('Repuesto registrado correctamente.');
+      setRefreshToken(x => x + 1);
+      setNewSpare({ name: '', brandId: '', modelId: '', description: '', stock: '0' });
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : 'No se pudo registrar el repuesto.');
+    } finally { setBusy(false); }
+  }
+
   const columns: readonly DataTableColumn<InventoryItem>[] = [
     { id: 'product', header: 'Producto', className: 'min-w-48',
       cell: (item) => <div><p className="font-semibold text-slate-900">{item.productName}</p><p className="font-mono text-[10px] text-slate-500">{item.sku}</p></div> },
@@ -161,6 +222,9 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
         {item.reorderPoint !== null ? <p className="text-[10px] text-slate-500">Mínimo {item.reorderPoint}</p> : null}</div> },
     { id: 'health', header: 'Salud',
       cell: (item) => <StatusBadge label={labels[item.health]} tone={tones[item.health]} /> },
+    { id: 'store', header: 'Tienda', cell: (item) => item.storeVisible && item.storeUrl
+      ? <Link className="text-xs font-semibold text-emerald-700 underline" to={item.storeUrl} target="_blank" rel="noopener noreferrer">Publicado ↗</Link>
+      : <span className="text-xs text-slate-500">Sin publicar</span> },
     { id: 'updated', header: 'Actualizado',
       cell: (item) => <span className="text-[11px] text-slate-500">{item.updatedAtLabel}</span> },
     { id: 'actions', header: 'Acciones', align: 'right',
@@ -171,13 +235,15 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
           ? <IconAction icon="package" label={'Ajustar existencias de ' + item.sku} onClick={() => open(item, 'adjust')} />
           : null}
         <IconAction icon="document" label={'Historial de ajustes de ' + item.sku} onClick={() => open(item, 'history')} />
+        {canEdit && item.itemType === 'spare_part' ? <IconAction icon="store" label={'Publicación de ' + item.sku} onClick={() => setPublishingId(item.id)} /> : null}
       </div> },
   ];
 
-  const hasFilters = filter.search.trim().length > 0 || filter.health !== 'all';
+  const hasFilters = filter.search.trim().length > 0 || filter.health !== 'all' || filter.category !== 'all' || filter.publication !== 'all';
   const item = selection?.item;
 
   return <div className="grid gap-3">
+    {publishingId ? <SparePartPublicationModal id={publishingId} onClose={() => setPublishingId(null)} onSaved={() => { setPublishingId(null); setMessage('Publicación del repuesto actualizada.'); setRefreshToken(value => value + 1); }} /> : null}
     <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -185,26 +251,57 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
           <h3 className="text-base font-semibold text-slate-900">Inventario operativo</h3>
           <p className="text-xs text-slate-500">Artículos guardados en MySQL. Ajustes con motivo y auditoría, sin cambios de stock ocultos.</p>
         </div>
-        {state.status === 'success' ? <span className="text-xs font-semibold text-slate-600">{state.total} artículos</span> : null}
+        <div className="flex items-center gap-2">
+          {state.status === 'success' ? <span className="text-xs font-semibold text-slate-600">{state.total} artículos</span> : null}
+          {canEdit && <button className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white" onClick={() => { setCreateOpen(true); setCreateError(null); createDialogRef.current?.showModal(); }} type="button">+ Agregar repuesto</button>}
+        </div>
       </div>
-      <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
-        <SearchField id="inventory-search" label="Buscar inventario" onChange={(search) => setFilter((v) => ({ ...v, search }))} placeholder="Producto, SKU o categoría" value={filter.search} />
+      <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_150px_150px_150px_auto] md:items-end">
+        <SearchField id="inventory-search" label="Buscar inventario" onChange={(search) => setFilter((v) => ({ ...v, search }))} placeholder="Producto, SKU, marca o modelo" value={filter.search} />
+        <SelectField id="inventory-category-filter" label="Categoría" onChange={(category) => setFilter((v) => ({ ...v, category }))} options={categoryOptions.map((option) => ({ ...option }))} value={filter.category} />
+        <SelectField id="inventory-publication-filter" label="Tienda" onChange={(publication) => setFilter((v) => ({ ...v, publication: publication as InventoryFilter['publication'] }))} options={[{ value: 'all', label: 'Todos' }, { value: 'published', label: 'Publicados' }, { value: 'unpublished', label: 'Sin publicar' }]} value={filter.publication} />
         <SelectField id="inventory-health-filter" label="Salud" onChange={(health) => setFilter((v) => ({ ...v, health }))} options={options} value={filter.health} />
         <button className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold disabled:opacity-40" disabled={!hasFilters} onClick={() => setFilter(initialFilter)} type="button">Limpiar</button>
       </div>
     </section>
-    {message ? <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">{message}</p> : null}
+    <SuccessToast message={message} />
+    {catalogError ? <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">{catalogError}</p> : null}
     {state.status === 'loading' || state.status === 'idle' ? <InlineFeedback title="Cargando inventario" message="Consultando los artículos reales." tone="info" /> : null}
     {state.status === 'error' ? <div className="grid gap-2"><InlineFeedback title="Error de inventario" message={state.message} tone="error" /><button className="w-fit text-xs underline" type="button" onClick={() => setRefreshToken((v) => v + 1)}>Reintentar</button></div> : null}
     {state.status === 'empty' ? <InlineFeedback title="Sin coincidencias" message={state.message} /> : null}
     {state.status === 'success' ? <DataTable caption="Inventario operativo real" columns={columns} getRowId={(row) => row.id} rows={state.items} initialPageSize={10} pageSizeOptions={[10, 25, 50]} /> : null}
 
+    <dialog ref={createDialogRef} aria-label="Agregar repuesto" className="fixed inset-0 m-auto w-[min(92vw,440px)] max-h-[88dvh] overflow-y-auto rounded-lg border border-slate-200 p-0 shadow-xl backdrop:bg-slate-950/50" onClose={() => { if (!busy) setCreateOpen(false); }}>
+      {createOpen && <form onSubmit={event => void saveSpare(event)} className="grid gap-2 p-3">
+        <h3 className="border-b border-slate-100 pb-2 text-sm font-semibold">Agregar repuesto</h3>
+        <label className="grid gap-1 text-xs font-semibold">Nombre del repuesto
+          <input required maxLength={180} className="rounded-md border border-slate-300 px-2 py-1.5 text-xs" value={newSpare.name} onChange={event => setNewSpare(v => ({ ...v, name: event.target.value }))} />
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <SelectField id="new-spare-brand" label="Marca" value={newSpare.brandId} onChange={brandId => setNewSpare(v => ({ ...v, brandId, modelId: '' }))} options={[{ value: '', label: 'Seleccionar marca' }, ...catalog.brands.map(x => ({ value: x.id, label: x.name }))]} />
+          <SelectField id="new-spare-model" label="Modelo" value={newSpare.modelId} onChange={modelId => setNewSpare(v => ({ ...v, modelId }))} options={[{ value: '', label: 'Seleccionar modelo' }, ...catalog.deviceModels.filter(x => x.brandId === newSpare.brandId).map(x => ({ value: x.id, label: x.name }))]} />
+        </div>
+        <label className="grid gap-1 text-xs font-semibold">Existencia inicial
+          <input type="number" min="0" step="1" required className="rounded-md border border-slate-300 px-2 py-1.5 text-xs" value={newSpare.stock} onChange={event => setNewSpare(v => ({ ...v, stock: event.target.value }))} />
+        </label>
+        <label className="grid gap-1 text-xs font-semibold">Descripción
+          <textarea rows={2} maxLength={4000} className="rounded-md border border-slate-300 px-2 py-1.5 text-xs" value={newSpare.description} onChange={event => setNewSpare(v => ({ ...v, description: event.target.value }))} />
+        </label>
+        <p className="text-[11px] text-slate-500">El SKU se asignará automáticamente. El alta y la existencia inicial quedarán auditadas.</p>
+        {createError && <p role="alert" className="rounded-md bg-red-50 p-2 text-xs text-red-700">{createError}</p>}
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
+          <button type="button" disabled={busy} onClick={() => { createDialogRef.current?.close(); setCreateOpen(false); }} className="rounded-md border border-slate-200 px-3 py-1.5 text-xs">Cancelar</button>
+          <button type="submit" disabled={busy || !newSpare.name.trim() || !newSpare.brandId || !newSpare.modelId} className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{busy ? 'Guardando...' : 'Registrar repuesto'}</button>
+        </div>
+      </form>}
+    </dialog>
+
     <dialog aria-label={item ? selection?.action === 'adjust' ? 'Ajustar ' + item.sku : 'Inventario ' + item.sku : 'Detalle del inventario'}
-      className="w-[min(94vw,600px)] rounded-lg border border-slate-200 p-0 shadow-xl backdrop:bg-slate-950/50"
+      className="fixed inset-0 m-auto w-[min(92vw,480px)] max-h-[88dvh] overflow-y-auto rounded-lg border border-slate-200 p-0 shadow-xl backdrop:bg-slate-950/50"
       onClose={() => { if (!busy) setSelection(null); }}
       onClick={(event) => { if (event.target === event.currentTarget) close(); }}
       ref={dialogRef}>
-      {item && selection ? <div className="p-4">
+      {item && selection ? <div className="p-3">
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-2">
           <div><h3 className="text-sm font-bold text-slate-900">{item.productName}</h3><p className="font-mono text-[11px] text-slate-500">{item.sku}</p></div>
           <button className="text-xs font-semibold text-slate-600" disabled={busy} onClick={close} type="button" aria-label="Cerrar ventana">Cerrar ✕</button>
@@ -219,12 +316,12 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
           <div className="col-span-2"><p className="font-semibold text-slate-500">Descripción</p><p className="whitespace-pre-wrap text-slate-800">{item.description || 'Sin descripción'}</p></div>
         </div> : null}
 
-        {selection.action === 'edit' ? <form className="mt-3 grid gap-3" onSubmit={(event) => void save(event)}>
-          <label className="grid gap-1 text-xs font-semibold">Nombre del artículo<input autoFocus className="rounded-md border border-slate-300 p-2 text-sm" maxLength={255} onChange={(e) => setEdit((v) => ({ ...v, title: e.target.value }))} required value={edit.title} /></label>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="grid gap-1 text-xs font-semibold">Marca<input className="rounded-md border border-slate-300 p-2 text-sm" maxLength={150} onChange={(e) => setEdit((v) => ({ ...v, brand: e.target.value }))} value={edit.brand ?? ''} /></label>
-            <label className="grid gap-1 text-xs font-semibold">Modelo<input className="rounded-md border border-slate-300 p-2 text-sm" maxLength={150} onChange={(e) => setEdit((v) => ({ ...v, model: e.target.value }))} value={edit.model ?? ''} /></label>
-          </div>
+        {selection.action === 'edit' ? <form className="mt-2 grid gap-2" onSubmit={(event) => void save(event)}>
+          <label className="grid gap-1 text-xs font-semibold">Nombre del artículo<input autoFocus className="rounded-md border border-slate-300 px-2 py-1.5 text-xs" maxLength={255} onChange={(e) => setEdit((v) => ({ ...v, title: e.target.value }))} required value={edit.title} /></label>
+          {item.itemType === 'spare_part' && <div className="grid grid-cols-2 gap-2">
+            <SelectField id="inventory-edit-brand" label="Marca" value={edit.brand_id ?? ''} onChange={brandId => setEdit(v => ({ ...v, brand_id: brandId, device_model_id: '' }))} options={[{ value: '', label: 'Seleccionar marca' }, ...catalog.brands.map(x => ({ value: x.id, label: x.name }))]} />
+            <SelectField id="inventory-edit-model" label="Modelo" value={edit.device_model_id ?? ''} onChange={modelId => setEdit(v => ({ ...v, device_model_id: modelId }))} options={[{ value: '', label: 'Seleccionar modelo' }, ...catalog.deviceModels.filter(x => x.brandId === edit.brand_id).map(x => ({ value: x.id, label: x.name }))]} />
+          </div>}
           <label className="grid gap-1 text-xs font-semibold">Descripción<textarea className="rounded-md border border-slate-300 p-2 text-sm" maxLength={4000} onChange={(e) => setEdit((v) => ({ ...v, description: e.target.value }))} rows={3} value={edit.description ?? ''} /></label>
           <p className="text-[11px] text-slate-500">Esta edición no modifica SKU, costos, publicación ni cantidad.</p>
           <button className="rounded-md bg-brand-600 p-2 text-xs font-bold text-white disabled:opacity-40" disabled={busy || !edit.title.trim()} type="submit">Guardar cambios</button>

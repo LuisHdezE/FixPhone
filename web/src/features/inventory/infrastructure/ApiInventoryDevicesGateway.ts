@@ -2,9 +2,9 @@ import { adminFetch } from '@/auth/adminApiSession';
 import type { InventoryDevicesGateway } from '../application/inventory.contracts';
 import type {
   DeviceDestination,
-  DismantlingStatus,
-  DeviceLifecycleStatus,
   DeviceLifecycleSnapshot,
+  DeviceLifecycleStatus,
+  DismantlingStatus,
   DevicePhysicalCondition,
   DevicePowerState,
   InventoryDeviceListItemDto,
@@ -23,7 +23,9 @@ type ApiInventoryItem = {
   inventory_purpose: string;
   dismantling_status?: string | null;
   public_listing_status?: 'draft' | 'published';
+  phone_listing_status?: 'draft' | 'published';
   public_valuation_id?: string | null;
+  consignor_id?: string | null;
   cost_amount_minor?: number | null;
   currency_code?: string | null;
   metadata?: Record<string, unknown> | null;
@@ -37,6 +39,7 @@ const destinationTones = {
   'Pending Evaluation': 'warning',
   Donor: 'info',
   Refurbish: 'success',
+  'Direct Sale': 'success',
   Hold: 'neutral',
   Discard: 'neutral',
 } as const;
@@ -63,7 +66,7 @@ function powerState(metadata: Record<string, unknown> | null | undefined): Devic
 
 function destination(item: ApiInventoryItem): DeviceDestination {
   const explicit = stringMeta(item.metadata, 'destination');
-  if (explicit === 'Pending Evaluation' || explicit === 'Donor' || explicit === 'Refurbish' || explicit === 'Hold' || explicit === 'Discard') {
+  if (explicit === 'Pending Evaluation' || explicit === 'Donor' || explicit === 'Refurbish' || explicit === 'Direct Sale' || explicit === 'Hold' || explicit === 'Discard') {
     return explicit;
   }
 
@@ -72,8 +75,9 @@ function destination(item: ApiInventoryItem): DeviceDestination {
     case 'sell_as_spare_part':
       return 'Donor';
     case 'repair_then_sell':
-    case 'sell_as_used_phone':
       return 'Refurbish';
+    case 'sell_as_used_phone':
+      return 'Direct Sale';
     case 'discard':
       return 'Discard';
     case 'internal_use':
@@ -105,11 +109,6 @@ function isDismantlingStatus(value: unknown): value is DismantlingStatus {
 
 function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
   const mappedDestination = destination(item);
-  const recordedDestination = stringMeta(item.metadata, 'destination');
-  const initialDestination: DeviceDestination | null =
-    recordedDestination === 'Pending Evaluation' || recordedDestination === 'Donor'
-    || recordedDestination === 'Refurbish' || recordedDestination === 'Hold'
-    || recordedDestination === 'Discard' ? recordedDestination : null;
   const accountLock = stringMeta(item.metadata, 'account_lock');
 
   return {
@@ -124,12 +123,14 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
     currencyCode: item.currency_code === 'USD' ? 'USD' : 'UYU',
     id: item.sku?.trim() || item.id,
     inventoryId: item.id,
-    isDonor: item.inventory_purpose === 'parts_donor',
+    isDonor: mappedDestination === 'Donor',
     operationalStatus: item.operational_status,
-    inventoryPurpose: item.inventory_purpose,
     dismantlingStatus: isDismantlingStatus(item.dismantling_status) ? item.dismantling_status : 'unknown',
     publicListingStatus: item.public_listing_status === 'published' ? 'published' : 'draft',
+    phoneListingStatus: item.phone_listing_status === 'published' ? 'published' : 'draft',
     publicValuationId: item.public_valuation_id ?? null,
+    ownershipType: item.consignor_id || ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'].includes(item.inventory_purpose) ? 'consignment' : 'owned',
+    consignorId: item.consignor_id ?? null,
     manufacturer: item.brand?.trim() || 'Sin marca',
     model: item.model?.trim() || item.title,
     serialOrImei: stringMeta(item.metadata, 'serial_or_imei', 'imei', 'serial') || '—',
@@ -141,16 +142,15 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
     acquisitionSource: stringMeta(item.metadata, 'acquisition_source', 'source') || '—',
     acquisitionCost: money(item.cost_amount_minor, item.currency_code),
     destination: mappedDestination,
-    initialDestination,
     destinationTone: destinationTones[mappedDestination],
   };
 }
 
 async function readApiError(response: Response, fallback: string): Promise<string> {
   const payload = await response.json().catch(() => null) as
-    | { message?: string; errors?: Record<string, string[]> } | null;
+    | { message?: string; detail?: string; errors?: Record<string, string[]> } | null;
   const details = payload?.errors ? Object.values(payload.errors).flat().join(' ') : '';
-  return details || payload?.message || fallback + ' (' + response.status + ').';
+  return details || payload?.detail || payload?.message || fallback + ' (' + response.status + ').';
 }
 
 export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
@@ -170,6 +170,37 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
     if (!response.ok) throw new Error(await readApiError(response, 'No se pudo actualizar el estado operativo'));
   }
 
+
+  async updateDestination(inventoryId: string, destination: DeviceDestination, reason: string): Promise<void> {
+    const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId) + '/routing', {
+      method: 'PATCH',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ destination, reason: reason.trim() }),
+    });
+    if (!response.ok) {
+      throw new Error(await readApiError(response, 'No se pudo cambiar el destino del equipo'));
+    }
+
+    // HTTP 200 alone does not prove persistence. Validate the response and then
+    // read from the inventory endpoint again without any browser HTTP cache.
+    const result = await response.json().catch(() => null) as
+      | { data?: { id?: string; destination?: string } } | null;
+    if (result?.data?.id !== inventoryId || result.data.destination !== destination) {
+      throw new Error('El servidor respondió, pero no confirmó el destino solicitado. No se puede dar por guardado.');
+    }
+
+    let devices: readonly InventoryDeviceListItemDto[];
+    try {
+      devices = await this.listDevices();
+    } catch {
+      throw new Error('Se recibió confirmación del guardado, pero falló su verificación. Recargá la lista antes de repetir el cambio.');
+    }
+    const saved = devices.find(item => item.inventoryId === inventoryId);
+    if (!saved || saved.destination !== destination) {
+      throw new Error('El destino no coincide con la nueva lectura de la base de datos. No se mostrará como guardado.');
+    }
+  }
+
   async updateDevice(inventoryId: string, fields: InventoryDeviceEditDto): Promise<void> {
     const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId), {
       method: 'PATCH',
@@ -187,9 +218,34 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
         acquisition_source: fields.acquisitionSource || null,
         cost_amount_minor: fields.acquisitionCostMinor,
         currency_code: fields.currencyCode,
+        ownership_type: fields.ownershipType,
+        consignor_id: fields.consignorId,
+        ownership_correction_reason: fields.ownershipCorrectionReason,
       }),
     });
     if (!response.ok) throw new Error(await readApiError(response, 'No se pudo editar el equipo'));
+
+    const confirmation = await response.json().catch(() => null) as { data?: { id?: string } } | null;
+    if (confirmation?.data?.id !== inventoryId) {
+      throw new Error('El servidor no confirmó la identidad del equipo actualizado.');
+    }
+    let saved: InventoryDeviceListItemDto | undefined;
+    try {
+      saved = (await this.listDevices()).find(item => item.inventoryId === inventoryId);
+    } catch {
+      throw new Error('El cambio pudo guardarse, pero falló la comprobación. Recargá antes de volver a intentarlo.');
+    }
+    if (!saved || saved.brandId !== fields.brandId || saved.deviceModelId !== fields.deviceModelId ||
+        (fields.storageCapacityId !== null && saved.storageCapacityId !== fields.storageCapacityId) ||
+        (fields.colorId !== null && saved.colorId !== fields.colorId) ||
+        (fields.conditionId !== null && saved.conditionId !== fields.conditionId) || saved.serialOrImei !== (fields.serialOrImei || '—') ||
+        saved.powersOn !== fields.powersOn || saved.accountLock !== fields.accountLock ||
+        saved.acquisitionSource !== (fields.acquisitionSource || '—') ||
+        saved.acquisitionCostMinor !== fields.acquisitionCostMinor || saved.currencyCode !== fields.currencyCode ||
+        saved.description !== fields.description || saved.ownershipType !== fields.ownershipType ||
+        saved.consignorId !== fields.consignorId) {
+      throw new Error('La ficha no coincide con los cambios solicitados tras consultar nuevamente el inventario.');
+    }
   }
 
   async deleteDevice(inventoryId: string): Promise<void> {
@@ -216,7 +272,8 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
 
   async listDevices(): Promise<readonly InventoryDeviceListItemDto[]> {
     const response = await adminFetch('/api/v1/admin/inventory', {
-      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      headers: { Accept: 'application/json', 'Cache-Control': 'no-cache' },
     });
 
     if (!response.ok) {

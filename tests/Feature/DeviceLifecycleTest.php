@@ -88,7 +88,7 @@ final class DeviceLifecycleTest extends TestCase
         $this->assertDatabaseCount('device_sale_records', 0);
 
         $this->getJson('/api/v1/admin/inventory/'.$device->id.'/lifecycle')->assertOk()
-            ->assertJsonPath('data.initial_destination', 'Refurbish')
+            ->assertJsonPath('data.current_destination', 'Refurbish')
             ->assertJsonPath('data.operational_status', 'listo_para_venta')
             ->assertJsonPath('data.history.0.from_status', 'reparado')
             ->assertJsonPath('data.history.0.to_status', 'listo_para_venta')
@@ -99,16 +99,19 @@ final class DeviceLifecycleTest extends TestCase
         ]);
     }
 
-    public function test_reroute_to_donor_preserves_original_destination_and_can_reverse_before_dismantling(): void
+    public function test_destination_changes_use_existing_routing_instead_of_a_second_state_machine(): void
     {
         $this->signIn();
         $device = $this->device();
-
-        $this->transition($device, 'para_deshuesar')->assertOk()->assertJsonPath('data.inventory_purpose', 'parts_donor');
-        $this->assertSame('Refurbish', $device->fresh()->metadata['destination']);
-        $this->transition($device, 'para_reparar')->assertOk()->assertJsonPath('data.inventory_purpose', 'repair_then_sell');
-        $this->assertSame('Refurbish', $device->fresh()->metadata['destination']);
-        $this->assertDatabaseCount('audit_events', 2);
+        $this->transition($device, 'para_deshuesar')->assertStatus(409);
+        $this->assertSame('repair_then_sell', $device->fresh()->inventory_purpose);
+        $this->patchJson('/api/v1/admin/inventory/'.$device->id.'/routing', [
+            'destination' => 'Donor', 'reason' => 'Se confirma como donante de piezas',
+        ])->assertOk();
+        $this->assertSame('parts_donor', $device->fresh()->inventory_purpose);
+        $this->assertSame('Donor', $device->fresh()->metadata['destination']);
+        $this->getJson('/api/v1/admin/inventory/'.$device->id.'/lifecycle')->assertOk()
+            ->assertJsonPath('data.current_destination', 'Donor')->assertJsonPath('data.allowed_statuses', []);
     }
 
     public function test_dismantling_partial_prevents_reclassification(): void

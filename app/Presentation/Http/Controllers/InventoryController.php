@@ -9,6 +9,8 @@ use App\Infrastructure\Inventory\DeviceCodeAllocator;
 use App\Infrastructure\Valuation\PublishedPartsDonor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class InventoryController extends Controller
 {
@@ -30,10 +32,11 @@ class InventoryController extends Controller
             $publication = $visible->get($item->id);
             return [
                 ...$item->toArray(),
-                'public_listing_status' => $publication ? 'published' : 'draft',
+                'public_listing_status' => ($publication || ($item->publication_status === 'publicado' && $item->inventory_purpose === 'sell_as_used_phone')) ? 'published' : 'draft',
+                'phone_listing_status' => ($item->publication_status === 'publicado' && ($item->metadata['destination'] ?? null) === 'Direct Sale') ? 'published' : 'draft',
                 'public_valuation_id' => $publication?->id,
             ];
-        })]);
+        })])->header('Cache-Control', 'private, no-store, no-cache, must-revalidate');
     }
 
     public function create(Request $request)
@@ -57,7 +60,26 @@ class InventoryController extends Controller
             'social_publish_status' => 'nullable|string',
             'auto_publish_to_social' => 'boolean',
             'metadata' => 'nullable|array',
+            'ownership_type' => ['sometimes', 'required', 'in:owned,consignment'],
+            'consignor_id' => ['nullable', 'string', Rule::exists('consignors', 'id')],
         ]);
+
+        $consignedPurposes = ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'];
+        $ownership = $validated['ownership_type'] ?? (in_array($validated['inventory_purpose'], $consignedPurposes, true) ? 'consignment' : 'owned');
+        if ($ownership === 'consignment' && empty($validated['consignor_id'])) {
+            throw ValidationException::withMessages(['consignor_id' => 'Seleccioná el consignante registrado.']);
+        }
+        if ($ownership === 'owned' && (!empty($validated['consignor_id']) || in_array($validated['inventory_purpose'], $consignedPurposes, true))) {
+            throw ValidationException::withMessages(['ownership_type' => 'Un equipo propio no puede tener consignante ni destino de consignación.']);
+        }
+        if ($ownership === 'consignment') {
+            if (!in_array($validated['item_type'], ['device', 'used_phone'], true)) {
+                throw ValidationException::withMessages(['ownership_type' => 'La consignación está limitada al alta de dispositivos.']);
+            }
+            $validated['inventory_purpose'] = 'consignation';
+        }
+        $validated['consignor_id'] = $ownership === 'consignment' ? $validated['consignor_id'] : null;
+        unset($validated['ownership_type']);
 
         $item = DB::transaction(function () use ($validated, $request) {
             // New physical devices receive an immutable human-readable reference.
@@ -94,13 +116,23 @@ class InventoryController extends Controller
     public function showroomList()
     {
         $items = InventoryItem::where('publication_status', 'publicado')
-            ->where('is_sellable', true)
-            ->where('stock_quantity', '>', 0)
-            ->whereNotNull('sale_price_amount_minor')
-            ->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
-            ->whereIn('operational_status', ['reparado', 'en_stock'])
-            ->get();
-
-        return response()->json($items);
+            ->where('is_sellable', true)->where('stock_quantity', '>', 0)
+            ->where('sale_price_amount_minor', '>', 0)
+            ->where(function ($query): void {
+                $query->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
+                    ->orWhere('metadata->destination', 'Direct Sale');
+            })
+            ->whereIn('operational_status', ['reparado', 'en_stock', 'disponible'])
+            ->where(function ($query): void {
+                $query->whereNull('metadata->origin')->orWhere('metadata->origin', '!=', 'recovered')->orWhere('metadata->part_condition', 'functional');
+            })->get();
+        return response()->json($items->map(fn ($item) => [
+            'id' => $item->id, 'title' => $item->title, 'description' => $item->description,
+            'item_type' => $item->item_type, 'brand' => $item->brand, 'model' => $item->model,
+            'operational_status' => $item->operational_status, 'stock_quantity' => $item->stock_quantity,
+            'sale_price_amount_minor' => $item->sale_price_amount_minor, 'currency_code' => $item->currency_code,
+            'main_image_url' => $item->main_image_url,
+            'metadata' => ['origin' => $item->metadata['origin'] ?? null, 'part_condition' => $item->metadata['part_condition'] ?? null],
+        ]));
     }
 }

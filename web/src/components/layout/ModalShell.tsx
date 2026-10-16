@@ -5,11 +5,17 @@ export function ModalShell({
   title,
   onClose,
   disabled = false,
+  density = 'regular',
+  hideCloseButton = false,
+  width = 'default',
 }: {
   children: ReactNode;
   title: string;
   onClose: () => void;
   disabled?: boolean;
+  density?: 'regular' | 'compact';
+  hideCloseButton?: boolean;
+  width?: 'default' | 'medium';
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -18,7 +24,8 @@ export function ModalShell({
     previousFocusRef.current = document.activeElement as HTMLElement;
     
     if (modalRef.current) {
-      modalRef.current.focus();
+      const initial = modalRef.current.querySelector<HTMLElement>('[data-modal-initial-focus]');
+      (initial ?? modalRef.current).focus();
     }
 
     return () => {
@@ -30,6 +37,22 @@ export function ModalShell({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && modalRef.current) {
+        const elements = Array.from(modalRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]'))
+          .filter(element => element.getClientRects().length > 0);
+        const first = elements[0];
+        const last = elements[elements.length - 1];
+        if (!first || !last) {
+          e.preventDefault();
+          modalRef.current.focus();
+        } else if (e.shiftKey && (document.activeElement === first || document.activeElement === modalRef.current)) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && (document.activeElement === last || document.activeElement === modalRef.current)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
       if (e.key === 'Escape' && !disabled) {
         onClose();
       }
@@ -42,22 +65,22 @@ export function ModalShell({
   }, [onClose, disabled]);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-3" role="dialog" aria-modal="true" aria-label={title}>
+    <div className={density === 'compact' ? 'fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-2' : 'fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-3'} role="dialog" aria-modal="true" aria-label={title}>
       <div 
         ref={modalRef} 
         tabIndex={-1} 
-        className="w-full max-w-4xl rounded-md border border-slate-200 bg-white shadow-2xl overflow-y-auto max-h-[90vh] outline-none"
+        className={density === 'compact' ? `w-full ${width === 'medium' ? 'max-w-3xl' : 'max-w-lg'} overflow-y-auto max-h-[calc(100dvh-1rem)] rounded-md border border-slate-200 bg-white shadow-2xl outline-none` : `w-full ${width === 'medium' ? 'max-w-3xl' : 'max-w-4xl'} overflow-y-auto max-h-[90vh] rounded-md border border-slate-200 bg-white shadow-2xl outline-none`}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sticky top-0 bg-white z-10">
+        <div className={density === 'compact' ? 'sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-3 py-2' : 'sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3'}>
           <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
-          <button 
+          {!hideCloseButton && <button
             className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed" 
             onClick={onClose} 
             disabled={disabled}
             type="button"
           >
             Cerrar
-          </button>
+          </button>}
         </div>
         {children}
       </div>

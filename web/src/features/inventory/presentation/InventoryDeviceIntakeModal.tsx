@@ -1,11 +1,10 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 
 import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SelectField } from '@/components/forms/SelectField';
 import { TextAreaField } from '@/components/forms/TextAreaField';
 import { TextField } from '@/components/forms/TextField';
-import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import { ModalShell } from '@/components/layout/ModalShell';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
@@ -25,6 +24,9 @@ type IntakeFormState = {
   acquisitionCost: string;
   destination: DeviceDestination;
   notes: string;
+  ownershipType: 'owned' | 'consignment';
+  consignorId: string;
+  ownershipCorrectionReason: string;
 };
 
 function mapCondition(grade: string | undefined): DevicePhysicalCondition {
@@ -135,6 +137,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         acquisitionCost: '',
         destination: view.defaults.destination,
         notes: '',
+        ownershipType: 'owned',
+        consignorId: '',
+        ownershipCorrectionReason: '',
       };
     }
     const brandId = catalogId(editDevice.brandId, editDevice.manufacturer, brands, (brand) => brand.name);
@@ -158,6 +163,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         ? '' : (editDevice.currencyCode === 'USD' ? 'USD ' : '') + (editDevice.acquisitionCostMinor / 100).toFixed(2),
       destination: editDevice.destination,
       notes: editDevice.description,
+      ownershipType: editDevice.ownershipType,
+      consignorId: editDevice.consignorId ?? '',
+      ownershipCorrectionReason: '',
     };
   };
 
@@ -166,6 +174,25 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [consignorsLoading, setConsignorsLoading] = useState(false);
+  const [consignorsError, setConsignorsError] = useState<string | null>(null);
+  const [consignors, setConsignors] = useState<{ id: string; full_name: string }[]>([]);
+
+  useEffect(() => {
+    if (!editDevice && form.ownershipType !== 'consignment') return;
+    let alive = true;
+    setConsignorsLoading(true);
+    setConsignorsError(null);
+    adminFetch('/api/v1/admin/consignors', { headers: { Accept: 'application/json' } })
+      .then(async response => {
+        if (!response.ok) throw new Error('No se pudo cargar el catálogo de consignantes.');
+        return response.json() as Promise<{ data: { id: string; full_name: string }[] }>;
+      })
+      .then(payload => { if (alive) setConsignors(payload.data); })
+      .catch(() => { if (alive) setConsignorsError('No se pudo cargar el catálogo de consignantes. Volvé a seleccionar En consignación para reintentar.'); })
+      .finally(() => { if (alive) setConsignorsLoading(false); });
+    return () => { alive = false; };
+  }, [editDevice, form.ownershipType]);
 
   const brandOptions = useMemo(() => [
     { value: '', label: view.placeholders.brandId },
@@ -214,7 +241,8 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const selectedCondition = conditions.find((condition) => condition.id === form.conditionId);
 
   const canSubmit = Boolean(
-    selectedBrand && selectedModel && selectedModel.brandId === form.brandId && Boolean(form.destination) && !saving,
+    selectedBrand && selectedModel && selectedModel.brandId === form.brandId && Boolean(form.destination) && !saving
+      && (form.ownershipType === 'owned' || (!consignorsLoading && !consignorsError && consignors.some(item => item.id === form.consignorId))),
   );
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -243,6 +271,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
           acquisitionSource: form.acquisitionSource.trim(),
           acquisitionCostMinor: amountMinor,
           currencyCode: currencyCode as 'UYU' | 'USD',
+          ownershipType: form.ownershipType,
+          consignorId: form.ownershipType === 'consignment' ? form.consignorId || null : null,
+          ownershipCorrectionReason: form.ownershipCorrectionReason.trim(),
           description: form.notes.trim(),
         });
         onSaved('Equipo ' + editDevice.id + ' actualizado correctamente.');
@@ -256,7 +287,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         description: form.notes.trim() || null,
         operational_status: operationalStatus(form.destination),
         publication_status: 'no_publicable',
-        inventory_purpose: inventoryPurpose(form.destination),
+        inventory_purpose: form.ownershipType === 'consignment' ? 'consignation' : inventoryPurpose(form.destination),
+        ownership_type: form.ownershipType,
+        consignor_id: form.ownershipType === 'consignment' ? form.consignorId : null,
         is_sellable: false,
         stock_quantity: 1,
         cost_amount_minor: amountMinor,
@@ -292,8 +325,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       });
 
       if (!response.ok) {
-        const body = await response.text();
-        throw new Error(body || `No se pudo registrar el dispositivo (${response.status}).`);
+        const body = await response.json().catch(() => null) as { message?: string; errors?: Record<string, string[]> } | null;
+        const message = body?.errors ? Object.values(body.errors).flat().join(' ') : body?.message;
+        throw new Error(message || `No se pudo registrar el dispositivo (${response.status}).`);
       }
 
       const created = await response.json() as { id?: string; sku?: string | null };
@@ -308,82 +342,58 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     }
   }
 
-  return <ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving}>
-    <div className="p-4" data-device-intake data-device-mode={editDevice ? "edit" : "create"}>
-      <form className="grid gap-4" onSubmit={submit}>
-        <SurfaceCard>
-          <h2 className="text-base font-semibold text-slate-950">{editDevice ? 'Actualizar ficha de dispositivo' : 'Ingreso rápido de dispositivo'}</h2>
-          <p className="mt-1 text-xs text-slate-600">{editDevice
-            ? 'Usá el mismo catálogo del alta. El modelo depende de la marca seleccionada. El código FXP permanece igual.'
-            : 'Marca, modelo y destino son suficientes para registrar el equipo. FixPhone le asignará un código FXP único. No necesitás IMEI.'}</p>
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
-            <SelectField id="device-brand" label={view.fields.brandId} onChange={setBrand} options={brandOptions} value={form.brandId} />
-            <SelectField id="device-model" label={view.fields.deviceModelId} onChange={(value) => setField('deviceModelId', value)} options={filteredModelOptions} value={form.deviceModelId} />
-            <SelectField id="device-destination" label={view.fields.destination} disabled={Boolean(editDevice)} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
-          </div>
-          <p className="mt-2 text-[11px] text-slate-500">{editDevice
-            ? 'El destino, el stock, el código FXP y la publicación son operaciones independientes y no se cambian desde la edición de ficha.'
-            : 'El dispositivo ingresa con stock inicial 1, sin habilitar venta ni publicación. Podrás completar identificación y diagnóstico después.'}</p>
-          {editDevice && (!form.brandId || !form.deviceModelId) ? <p role="alert" className="mt-2 text-xs font-semibold text-amber-700">
-            Este equipo no tiene una marca o modelo reconocido en el catálogo. Seleccioná ambos antes de guardar. No se modificarán datos hasta confirmarlo.
-          </p> : null}
-        </SurfaceCard>
-
-        <details open={Boolean(editDevice)} className="rounded-lg border border-slate-200 bg-white" data-device-optional-details>
-          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Completar datos opcionales: IMEI, características, condición y costo</summary>
-          <div className="grid gap-3 p-3 pt-0">
-          <SurfaceCard>
-            <h2 className="text-base font-semibold text-slate-950">{view.identitySectionTitle}</h2>
-            <div className="mt-3 grid gap-3 md:grid-cols-3">
-              <TextField id="device-identity" label={view.fields.serialOrImei} onChange={(value) => setField('serialOrImei', value)} placeholder={view.placeholders.serialOrImei} value={form.serialOrImei} />
-              <SelectField id="device-storage" label={view.fields.storageCapacityId} onChange={(value) => setField('storageCapacityId', value)} options={storageOptions} value={form.storageCapacityId} />
-              <SelectField id="device-color" label={view.fields.colorId} onChange={(value) => setField('colorId', value)} options={colorOptions} value={form.colorId} />
-            </div>
-          </SurfaceCard>
-          <SurfaceCard>
-          <h2 className="text-base font-semibold text-slate-950">{view.conditionSectionTitle}</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <SelectField id="device-powers-on" label={view.fields.powersOn} onChange={(value) => setField('powersOn', value as DevicePowerState)} options={view.options.powersOn} value={form.powersOn} />
-            <SelectField id="device-condition" label={view.fields.conditionId} onChange={(value) => setField('conditionId', value)} options={conditionOptions} value={form.conditionId} />
-            <SelectField id="device-lock" label={view.fields.accountLock} onChange={(value) => setField('accountLock', value as DeviceAccountLock)} options={view.options.accountLock} value={form.accountLock} />
-          </div>
-          {selectedCondition ? <p className="mt-3 text-xs text-slate-500" data-device-condition-hint>Condición canónica: {selectedCondition.name} · {selectedCondition.grade}</p> : null}
-        </SurfaceCard>
-
-        <SurfaceCard>
-          <h2 className="text-base font-semibold text-slate-950">{view.acquisitionSectionTitle}</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <TextField id="device-source" label={view.fields.acquisitionSource} onChange={(value) => setField('acquisitionSource', value)} placeholder={view.placeholders.acquisitionSource} value={form.acquisitionSource} />
-            <TextField id="device-cost" label={view.fields.acquisitionCost} onChange={(value) => setField('acquisitionCost', value)} placeholder={view.placeholders.acquisitionCost} value={form.acquisitionCost} />
-          </div>
-        </SurfaceCard>
-
-        <SurfaceCard>
-          <h2 className="text-base font-semibold text-slate-950">{view.routingSectionTitle}</h2>
-          <div className="mt-4 grid gap-4">
-            <TextAreaField id="device-notes" label={view.fields.notes} onChange={(value) => setField('notes', value)} placeholder={view.placeholders.notes} value={form.notes} />
-          </div>
-        </SurfaceCard>
-          </div>
-        </details>
-
-        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 pt-3">
-          <button className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50" onClick={onClose} disabled={saving} type="button">
-            {view.cancelLabel}
-          </button>
-          <button className="rounded-md bg-[var(--theme-primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50" disabled={!canSubmit} type="submit">
-            {saving ? 'Guardando...' : editDevice ? 'Guardar cambios' : 'Registrar dispositivo'}
-          </button>
+  return <ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving} hideCloseButton density="compact" width="medium">
+    <form className="device-intake-form grid gap-2 p-3" data-device-intake data-device-mode={editDevice ? 'edit' : 'create'} onSubmit={submit}>
+      <p className="text-[11px] leading-4 text-slate-500">{editDevice
+        ? 'El código FXP se conserva. El destino se modifica desde Cambiar estado.'
+        : 'Marca, modelo y destino son obligatorios. Código FXP automático; IMEI opcional.'}</p>
+      <fieldset className="min-w-0 border-0 p-0">
+        <legend className="mb-1 text-[11px] font-semibold text-slate-900">Equipo</legend>
+        <div className="grid gap-2 sm:grid-cols-[1fr_1.4fr_1.2fr]">
+          <SelectField id="device-brand" label={view.fields.brandId} onChange={setBrand} options={brandOptions} value={form.brandId} />
+          <SelectField id="device-model" label={view.fields.deviceModelId} onChange={(value) => setField('deviceModelId', value)} options={filteredModelOptions} value={form.deviceModelId} />
+          <SelectField id="device-destination" label={view.fields.destination} disabled={Boolean(editDevice)} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
         </div>
-      </form>
-      
-      {error ? <div className="mt-4"><InlineFeedback title={editDevice ? "No se pudo editar el dispositivo" : "No se pudo registrar el dispositivo"} message={error} tone="error" /></div> : null}
-      
-      {!editDevice && createdId ? (
-        <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-          Dispositivo registrado: {createdCode ?? createdId}. Puedes buscarlo en el listado.
+        {editDevice && (!form.brandId || !form.deviceModelId) ? <p role="alert" className="mt-1 text-[11px] text-amber-700">Seleccioná una marca y un modelo válidos del catálogo antes de guardar.</p> : null}
+      </fieldset>
+      <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">
+        <legend className="text-[11px] font-semibold text-slate-900">Identificación</legend>
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,1fr)]">
+          <TextField id="device-identity" label={view.fields.serialOrImei} onChange={(value) => setField('serialOrImei', value)} placeholder="IMEI o número de serie" value={form.serialOrImei} />
+          <SelectField id="device-storage" label={view.fields.storageCapacityId} onChange={(value) => setField('storageCapacityId', value)} options={storageOptions} value={form.storageCapacityId} />
+          <SelectField id="device-color" label={view.fields.colorId} onChange={(value) => setField('colorId', value)} options={colorOptions} value={form.colorId} />
         </div>
-      ) : null}
-    </div>
+      </fieldset>
+      <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">
+        <legend className="text-[11px] font-semibold text-slate-900">Estado</legend>
+        <div className="grid gap-2 sm:grid-cols-[1fr_1.4fr_1.2fr]">
+          <SelectField id="device-powers-on" label={view.fields.powersOn} onChange={(value) => setField('powersOn', value as DevicePowerState)} options={view.options.powersOn} value={form.powersOn} />
+          <SelectField id="device-condition" label={view.fields.conditionId} onChange={(value) => setField('conditionId', value)} options={conditionOptions} value={form.conditionId} />
+          <SelectField id="device-lock" label={view.fields.accountLock} onChange={(value) => setField('accountLock', value as DeviceAccountLock)} options={view.options.accountLock} value={form.accountLock} />
+        </div>
+      </fieldset>
+      <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">
+        <legend className="text-[11px] font-semibold text-slate-900">Adquisición</legend>
+        <div className="grid gap-2 sm:grid-cols-[1fr_1.5fr_1fr]">
+          <SelectField id="device-ownership" label="Propiedad" value={form.ownershipType} onChange={value => { setField('ownershipType', value as 'owned' | 'consignment'); setField('consignorId', ''); }} options={[{ value: 'owned', label: 'Propio' }, { value: 'consignment', label: 'En consignación' }]} />
+          <TextField id="device-source" label={view.fields.acquisitionSource} onChange={(value) => setField('acquisitionSource', value)} placeholder={view.placeholders.acquisitionSource} value={form.acquisitionSource} />
+          <TextField id="device-cost" label={view.fields.acquisitionCost} onChange={(value) => setField('acquisitionCost', value)} placeholder="UYU 4500 / USD 120" value={form.acquisitionCost} />
+        </div>
+        <div className={form.ownershipType === 'consignment' || (editDevice && form.ownershipType !== editDevice.ownershipType) ? 'mt-2 grid gap-2 sm:grid-cols-2' : 'contents'}>
+          {form.ownershipType === 'consignment' && <SelectField id="device-consignor" label="Consignante (obligatorio)" disabled={consignorsLoading} value={form.consignorId} onChange={value => setField('consignorId', value)} options={[{ value: '', label: 'Seleccionar consignante' }, ...consignors.map(item => ({ value: item.id, label: item.full_name }))]} />}
+          {editDevice && (form.ownershipType !== editDevice.ownershipType || (form.ownershipType === 'consignment' && form.consignorId !== (editDevice.consignorId ?? ''))) && <div className="sm:col-span-2"><TextAreaField id="device-ownership-reason" rows={2} label="Motivo de corrección de titularidad" value={form.ownershipCorrectionReason} onChange={value => setField('ownershipCorrectionReason', value)} placeholder="Ej.: se registró como propio por error" /></div>}
+          {form.ownershipType === 'consignment' && consignorsLoading ? <p role="status" className="text-[11px] text-slate-500">Cargando consignantes…</p> : null}
+          {form.ownershipType === 'consignment' && consignorsError ? <p role="alert" className="text-[11px] text-red-700">{consignorsError}</p> : null}
+          {form.ownershipType === 'consignment' && !consignorsLoading && !consignorsError && consignors.length === 0 ? <p className="text-[11px] text-amber-700">Registrá primero al propietario en Consignantes.</p> : null}
+        </div>
+      </fieldset>
+      <TextAreaField id="device-notes" rows={2} label={view.fields.notes} onChange={(value) => setField('notes', value)} placeholder={view.placeholders.notes} value={form.notes} />
+      {error ? <InlineFeedback title={editDevice ? 'No se pudo editar el dispositivo' : 'No se pudo registrar el dispositivo'} message={error} tone="error" /> : null}
+      {!editDevice && createdId ? <p role="status" className="text-xs text-emerald-800">Dispositivo registrado: {createdCode ?? createdId}.</p> : null}
+      <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
+        <button className="h-7 rounded-md border border-slate-200 px-3 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-50" onClick={onClose} disabled={saving} type="button">Cancelar</button>
+        <button className="h-7 rounded-md bg-[var(--theme-primary)] px-3 text-xs font-medium text-white hover:brightness-95 disabled:opacity-50" disabled={!canSubmit} aria-busy={saving} type="submit">Guardar</button>
+      </div>
+    </form>
   </ModalShell>;
 }

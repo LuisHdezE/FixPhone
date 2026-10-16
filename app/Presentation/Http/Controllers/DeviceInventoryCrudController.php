@@ -4,6 +4,7 @@ namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Inventory\InventoryItem;
 use App\Infrastructure\MasterData\MasterDataEntry;
+use App\Infrastructure\Valuation\DeviceValuation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -21,6 +22,7 @@ final class DeviceInventoryCrudController extends Controller
         'brand_id', 'device_model_id', 'storage_capacity_id', 'color_id', 'condition_id',
         'description', 'serial_or_imei', 'powers_on', 'account_lock',
         'acquisition_source', 'cost_amount_minor', 'currency_code',
+        'ownership_type', 'consignor_id', 'ownership_correction_reason',
     ];
 
     /** Uses the same master catalog IDs as the device intake flow, never free-text brand/model. */
@@ -41,14 +43,32 @@ final class DeviceInventoryCrudController extends Controller
             'acquisition_source' => ['nullable', 'string', 'max:200'],
             'cost_amount_minor' => ['nullable', 'integer', 'min:0', 'max:2147483647'],
             'currency_code' => ['required', 'in:UYU,USD'],
+            'ownership_type' => ['sometimes', 'in:owned,consignment'],
+            'consignor_id' => ['nullable', 'string', \Illuminate\Validation\Rule::exists('consignors', 'id')],
+            'ownership_correction_reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         $item = DB::transaction(function () use ($request, $id, $values): InventoryItem {
             $item = InventoryItem::query()->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->assertDevice($item);
-            $this->assertNoFinancialHistory($item, 'editar');
-            if ($item->publication_status === 'publicado' || $item->is_sellable) {
-                abort(409, 'Primero despublicá o deshabilitá la venta del equipo para modificar su ficha.');
+            $this->assertNoFinancialHistory($item, 'editar', false);
+
+            $ownershipRequested = array_key_exists('ownership_type', $values);
+            $currentlyConsigned = $item->consignor_id !== null || in_array($item->inventory_purpose, ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'], true);
+            $ownershipChanges = $ownershipRequested && ($currentlyConsigned !== ($values['ownership_type'] === 'consignment')
+                || ($values['ownership_type'] === 'consignment' && $item->consignor_id !== ($values['consignor_id'] ?? null)));
+            if ($ownershipChanges) {
+                if (mb_strlen(trim($values['ownership_correction_reason'] ?? '')) < 10) {
+                    throw ValidationException::withMessages(['ownership_correction_reason' => 'Explicá la corrección de titularidad (mínimo 10 caracteres).']);
+                }
+                if ($values['ownership_type'] === 'consignment' && empty($values['consignor_id'])) {
+                    throw ValidationException::withMessages(['consignor_id' => 'Seleccioná el consignante registrado.']);
+                }
+                if (DB::table('device_sale_records')->where('inventory_item_id', $id)->exists()
+                    || DB::table('order_items')->join('orders', 'orders.id', '=', 'order_items.order_id')
+                        ->where('order_items.inventory_item_id', $id)->exists()) {
+                    abort(409, 'No se puede corregir titularidad con historial de ventas o pedidos.');
+                }
             }
 
             $brand = $this->masterItem('brands', $values['brand_id'], 'brand_id');
@@ -62,7 +82,7 @@ final class DeviceInventoryCrudController extends Controller
             $color = $this->optionalMasterItem('colors', $values['color_id'] ?? null, 'color_id');
             $condition = $this->optionalMasterItem('conditions', $values['condition_id'] ?? null, 'condition_id');
 
-            $before = $item->only(['title', 'brand', 'model', 'description', 'cost_amount_minor', 'currency_code', 'metadata']);
+            $before = $item->only(['title', 'brand', 'model', 'description', 'cost_amount_minor', 'currency_code', 'inventory_purpose', 'consignor_id', 'metadata']);
             $metadata = is_array($item->metadata) ? $item->metadata : [];
             $metadata['brand_id'] = $values['brand_id'];
             $metadata['device_model_id'] = $values['device_model_id'];
@@ -96,6 +116,15 @@ final class DeviceInventoryCrudController extends Controller
             $metadata['acquisition_source'] = $values['acquisition_source'] ?? null;
             $metadata['source'] = null;
             $metadata['notes'] = $values['description'] ?? null;
+            if ($ownershipChanges) {
+                $item->consignor_id = $values['ownership_type'] === 'consignment' ? $values['consignor_id'] : null;
+                $item->inventory_purpose = $values['ownership_type'] === 'consignment'
+                    ? 'consignation'
+                    : match ($metadata['destination'] ?? 'Pending Evaluation') {
+                        'Donor' => 'parts_donor', 'Refurbish' => 'repair_then_sell',
+                        'Discard' => 'discard', default => 'internal_use',
+                    };
+            }
             $item->fill([
                 'title' => implode(' ', array_filter([$brand['name'], $model['name'], $metadata['storage'] ?? null])),
                 'brand' => $brand['name'],
@@ -107,9 +136,16 @@ final class DeviceInventoryCrudController extends Controller
             ]);
             if ($item->isDirty()) {
                 $item->save();
+                // Keep the separately stored public-facing model in sync with identity edits.
+                // Never change price, public description, photos or publication eligibility.
+                $newModelName = trim($brand['name'].' '.$model['name']);
+                DeviceValuation::query()->where('inventory_item_id', $item->id)
+                    ->where('model_name', '!=', $newModelName)
+                    ->update(['model_name' => $newModelName]);
                 $this->audit($request, $item, 'inventory.device_updated', 'update', [
                     'before' => $before,
                     'after' => $item->only(array_keys($before)),
+                    'ownership_correction_reason' => $ownershipChanges ? trim($values['ownership_correction_reason']) : null,
                 ]);
             }
             return $item;
@@ -175,8 +211,14 @@ final class DeviceInventoryCrudController extends Controller
         }
     }
 
-    private function assertNoFinancialHistory(InventoryItem $item, string $verb): void
+    private function assertNoFinancialHistory(InventoryItem $item, string $verb, bool $blockTechnicalEvaluations = true): void
     {
+        if (DB::table('device_part_extractions')->where('donor_item_id', $item->id)->exists()) {
+            abort(409, 'Un equipo con piezas extraídas conserva su identidad y titularidad.');
+        }
+        if ($blockTechnicalEvaluations && DB::table('device_technical_evaluations')->where('inventory_item_id', $item->id)->exists()) {
+            abort(409, 'No se puede '.$verb.' un equipo con evaluaciones técnicas registradas. Conservá su identidad e historial.');
+        }
         if (DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.inventory_item_id', $item->id)
@@ -187,7 +229,7 @@ final class DeviceInventoryCrudController extends Controller
 
         if (DB::table('device_sale_records')->where('inventory_item_id', $item->id)->exists()
             || DB::table('device_installed_parts')->where('inventory_item_id', $item->id)->exists()
-            || DB::table('device_valuations')->where('inventory_item_id', $item->id)->exists()
+            || ($blockTechnicalEvaluations && DB::table('device_valuations')->where('inventory_item_id', $item->id)->exists())
             || DB::table('inventory_stock_adjustments')->where('inventory_item_id', $item->id)->exists()
             || in_array($item->operational_status, ['vendido', 'sold'], true)
         ) {

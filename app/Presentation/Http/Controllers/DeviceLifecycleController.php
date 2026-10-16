@@ -44,7 +44,7 @@ final class DeviceLifecycleController extends Controller
         return response()->json(['data' => [
             'id' => $item->id,
             'sku' => $item->sku,
-            'initial_destination' => $item->metadata['destination'] ?? null,
+            'current_destination' => $item->metadata['destination'] ?? null,
             'operational_status' => $item->operational_status,
             'inventory_purpose' => $item->inventory_purpose,
             'allowed_statuses' => $this->available($item),
@@ -84,7 +84,7 @@ final class DeviceLifecycleController extends Controller
 
             $previousStatus = $item->operational_status;
             $previousPurpose = $item->inventory_purpose;
-            $nextPurpose = $this->purposeFor($item, $next);
+            $nextPurpose = $previousPurpose;
             $item->operational_status = $next;
             $item->inventory_purpose = $nextPurpose;
             // Never touch metadata.destination, SKU, stock or commercial flags.
@@ -138,9 +138,14 @@ final class DeviceLifecycleController extends Controller
 
         if (in_array($item->dismantling_status, ['partial', 'exhausted'], true)) return [];
 
+        // This endpoint only changes workshop progress. Routing, discard and
+        // donor conversion remain exclusively in the existing routing workflow.
+        $next = array_values(array_diff($next, ['para_deshuesar', 'descartado']));
+        if ($item->inventory_purpose === 'parts_donor' || $item->inventory_purpose === 'discard') return [];
+
         // The consignor's ownership cannot be converted into donor/discard
         // stock through a simple lifecycle action.
-        if (in_array($item->inventory_purpose, self::CONSIGNMENT_PURPOSES, true)) {
+        if ($item->consignor_id !== null || in_array($item->inventory_purpose, self::CONSIGNMENT_PURPOSES, true)) {
             $next = array_values(array_diff($next, ['para_deshuesar', 'descartado']));
         }
 
@@ -151,20 +156,6 @@ final class DeviceLifecycleController extends Controller
         }
 
         return $next;
-    }
-
-    private function purposeFor(InventoryItem $item, string $status): string
-    {
-        if (in_array($item->inventory_purpose, self::CONSIGNMENT_PURPOSES, true)) {
-            return $item->inventory_purpose;
-        }
-        if ($status === 'para_deshuesar') return 'parts_donor';
-        if ($status === 'descartado') return 'discard';
-        if (in_array($status, ['para_reparar', 'en_reparacion', 'reparado', 'listo_para_venta'], true)) {
-            return $item->inventory_purpose === 'sell_as_used_phone' ? 'sell_as_used_phone' : 'repair_then_sell';
-        }
-        if ($status === 'en_stock') return 'sell_as_used_phone';
-        return 'internal_use';
     }
 
     private function device(string $id): InventoryItem

@@ -1,6 +1,6 @@
 import type { StatusBadgeTone } from '@/components/data-display/StatusBadge';
 
-export type DeviceDestination = 'Pending Evaluation' | 'Donor' | 'Refurbish' | 'Hold' | 'Discard';
+export type DeviceDestination = 'Pending Evaluation' | 'Donor' | 'Refurbish' | 'Direct Sale' | 'Hold' | 'Discard';
 export type DevicePhysicalCondition = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Damaged' | 'Unknown';
 export type DevicePowerState = 'Yes' | 'No' | 'Unknown';
 export type DeviceAccountLock = 'Clear' | 'Locked' | 'Unknown';
@@ -25,7 +25,7 @@ export type DeviceLifecycleHistory = {
 export type DeviceLifecycleSnapshot = {
   id: string;
   sku: string;
-  initial_destination: DeviceDestination | null;
+  current_destination: DeviceDestination | null;
   operational_status: string;
   inventory_purpose: string;
   allowed_statuses: readonly DeviceLifecycleStatus[];
@@ -65,6 +65,9 @@ export interface InventoryDeviceEditDto {
   acquisitionSource: string;
   acquisitionCostMinor: number | null;
   currencyCode: 'UYU' | 'USD';
+  ownershipType: 'owned' | 'consignment';
+  consignorId: string | null;
+  ownershipCorrectionReason: string;
 }
 
 export interface InventoryDeviceListItemDto {
@@ -81,10 +84,12 @@ export interface InventoryDeviceListItemDto {
   inventoryId: string;
   isDonor: boolean;
   operationalStatus: string;
-  inventoryPurpose: string;
   dismantlingStatus: DismantlingStatus;
   publicListingStatus: 'draft' | 'published';
+  phoneListingStatus: 'draft' | 'published';
   publicValuationId: string | null;
+  ownershipType: 'owned' | 'consignment';
+  consignorId: string | null;
   manufacturer: string;
   model: string;
   serialOrImei: string;
@@ -96,13 +101,12 @@ export interface InventoryDeviceListItemDto {
   acquisitionSource: string;
   acquisitionCost: string;
   destination: DeviceDestination;
-  initialDestination: DeviceDestination | null;
   destinationTone: StatusBadgeTone;
 }
 
 // Static presentation reference data is not a persisted inventory record.
 export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
-  'inventoryId' | 'isDonor' | 'operationalStatus' | 'inventoryPurpose' | 'initialDestination' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId'>;
+  'operationalStatus' | 'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'phoneListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
 
 export interface InventoryFilterOptionDto {
   value: string;

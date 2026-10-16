@@ -12,9 +12,13 @@ type InventoryRecord = {
   item_type: string;
   brand: string | null;
   model: string | null;
+  brand_id?: string | null;
+  device_model_id?: string | null;
   inventory_purpose: string;
   operational_status: string;
   publication_status: string;
+  store_visible: boolean;
+  store_url: string | null;
   stock_quantity: number;
   reorder_point: number | null;
   updated_at: string | null;
@@ -43,10 +47,14 @@ function mapRecord(record: InventoryRecord): InventoryItem {
     itemType: record.item_type,
     brand: record.brand,
     model: record.model,
+    brandId: record.brand_id ?? null,
+    modelId: record.device_model_id ?? null,
     description: record.description,
     inventoryPurpose: record.inventory_purpose,
     operationalStatus: record.operational_status,
     publicationStatus: record.publication_status,
+    storeVisible: record.store_visible === true,
+    storeUrl: record.store_url ?? null,
     stockQuantity: record.stock_quantity,
     reorderPoint: record.reorder_point,
     health: health(record.stock_quantity, record.reorder_point),
@@ -75,6 +83,9 @@ export const apiInventoryRepository: InventoryRepository = {
     const search = filter.search.trim().toLocaleLowerCase('es');
     const items = payload.data.map(mapRecord).filter((item) => {
       if (filter.health !== 'all' && item.health !== filter.health) return false;
+      if (filter.category !== 'all' && item.itemType !== filter.category) return false;
+      if (filter.publication === 'published' && !item.storeVisible) return false;
+      if (filter.publication === 'unpublished' && item.storeVisible) return false;
       return !search || [item.productName, item.sku, item.category, item.brand ?? '', item.model ?? '']
         .some((value) => value.toLocaleLowerCase('es').includes(search));
     });
@@ -88,6 +99,13 @@ export const apiInventoryRepository: InventoryRepository = {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(edit),
+    }));
+  },
+
+  async createSpare(data): Promise<void> {
+    await readPayload(await adminFetch('/api/v1/admin/inventory/spare-parts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(data),
     }));
   },
 

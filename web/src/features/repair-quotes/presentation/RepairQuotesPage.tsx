@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { adminToken } from '@/auth/adminApiSession';
@@ -163,7 +164,7 @@ export function RepairQuotesPage() {
   return <PageShell breadcrumbs={[{ label: 'Operación' }, { label: 'Presupuestos' }]} title="Presupuestos de reparación" description="Tarifas por gama, repuestos y presupuestos guardados en FixPhone.">
     <div className="grid gap-3" data-repair-quotes>
       {error ? <p role="alert" className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">{error}</p> : null}
-      {notice ? <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">{notice}</p> : null}
+      <SuccessToast message={notice} />
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_290px]">
         <SurfaceCard>
           <form className="grid gap-3" onSubmit={save}>
