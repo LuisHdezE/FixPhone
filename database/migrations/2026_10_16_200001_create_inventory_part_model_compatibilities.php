@@ -16,6 +16,7 @@ return new class extends Migration
             $table->timestamps();
             $table->unique(['inventory_item_id', 'device_model_id'], 'part_model_compat_unique');
             $table->index('device_model_id', 'part_model_compat_model_idx');
+            $table->foreign('device_model_id', 'part_model_compat_model_fk')->references('id')->on('master_data_entries')->restrictOnDelete();
             $table->foreign('inventory_item_id')->references('id')->on('inventory_items')->cascadeOnDelete();
         });
     }

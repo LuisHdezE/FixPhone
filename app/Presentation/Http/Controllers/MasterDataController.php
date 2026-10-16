@@ -174,6 +174,10 @@ final class MasterDataController extends Controller
      */
     private function assertDeletable(string $kind, string $id): void
     {
+        if ($kind === 'deviceModels' && \Illuminate\Support\Facades\DB::table('inventory_part_model_compatibilities')->where('device_model_id', $id)->exists()) {
+            abort(409, 'El modelo tiene repuestos compatibles y no puede eliminarse.');
+        }
+
         if ($kind === 'brands' && $this->hasDependents('deviceModels', 'brandId', $id)) {
             throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json(['message' => 'Brand has associated device models and cannot be deleted.'], 409));
         }

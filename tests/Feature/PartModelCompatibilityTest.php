@@ -24,6 +24,12 @@ final class PartModelCompatibilityTest extends TestCase
         ]);
         DB::table('user_roles')->insert(['user_id' => $user->id, 'role_slug' => 'owner']);
         Sanctum::actingAs($user);
+        foreach (['model-a22-5g', 'model-a22-lte'] as $modelId) {
+            \App\Infrastructure\MasterData\MasterDataEntry::query()->create([
+                'id' => $modelId, 'kind' => 'deviceModels',
+                'payload' => ['id' => $modelId, 'name' => $modelId, 'brandId' => 'brand-samsung', 'active' => true],
+            ]);
+        }
         $device = InventoryItem::query()->create([
             'sku' => 'FXP-COMPAT-1', 'title' => 'Samsung Galaxy A22 5G',
             'brand' => 'Samsung', 'model' => 'Galaxy A22 5G',
@@ -59,5 +65,7 @@ final class PartModelCompatibilityTest extends TestCase
             'cost_amount_minor' => 0, 'spare_part_item_id' => $spare->id,
         ])->assertCreated();
         $this->assertSame(1, $spare->fresh()->stock_quantity);
+        $this->deleteJson('/api/v1/admin/master-data/deviceModels/model-a22-5g')->assertStatus(409);
+
     }
 }

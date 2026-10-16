@@ -77,6 +77,14 @@ final class SparePartsInventoryTest extends TestCase
             'entity_id' => $created->json('data.id'),
             'event_type' => 'inventory.spare_part_created',
         ]);
+        $this->assertDatabaseHas('inventory_part_model_compatibilities', [
+            'inventory_item_id' => $created->json('data.id'), 'device_model_id' => 'model-iphone',
+        ]);
+        DB::table('inventory_part_model_compatibilities')->insert([
+            'id' => (string) Str::ulid(), 'inventory_item_id' => $created->json('data.id'),
+            'device_model_id' => 'model-iphone-11', 'source' => 'reviewed',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
         $updatePath = '/api/v1/admin/inventory/items/'.$created->json('data.id');
         $this->patchJson($updatePath, [
             'title' => 'Pantalla inválida', 'brand_id' => 'brand-samsung',
@@ -88,6 +96,18 @@ final class SparePartsInventoryTest extends TestCase
         ])->assertOk()->assertJsonPath('data.brand', 'Samsung')
             ->assertJsonPath('data.model', 'Galaxy S21')
             ->assertJsonPath('data.stock_quantity', 4);
+        $this->assertDatabaseMissing('inventory_part_model_compatibilities', [
+            'inventory_item_id' => $created->json('data.id'), 'device_model_id' => 'model-iphone',
+        ]);
+        $this->assertDatabaseHas('inventory_part_model_compatibilities', [
+            'inventory_item_id' => $created->json('data.id'), 'device_model_id' => 'model-galaxy',
+        ]);
+        $this->assertDatabaseHas('inventory_part_model_compatibilities', [
+            'inventory_item_id' => $created->json('data.id'), 'device_model_id' => 'model-iphone-11', 'source' => 'reviewed',
+        ]);
+        $relations = DB::table('inventory_part_model_compatibilities')->where('inventory_item_id', $created->json('data.id'))->get()->toJson();
+        $this->patchJson($updatePath, ['title' => 'Solo descripción', 'description' => 'Probada'])->assertOk();
+        $this->assertSame($relations, DB::table('inventory_part_model_compatibilities')->where('inventory_item_id', $created->json('data.id'))->get()->toJson());
         $this->assertDatabaseHas('inventory_items', [
             'id' => $created->json('data.id'), 'stock_quantity' => 4,
         ]);
