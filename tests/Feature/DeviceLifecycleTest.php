@@ -111,7 +111,8 @@ final class DeviceLifecycleTest extends TestCase
         $this->assertSame('parts_donor', $device->fresh()->inventory_purpose);
         $this->assertSame('Donor', $device->fresh()->metadata['destination']);
         $this->getJson('/api/v1/admin/inventory/'.$device->id.'/lifecycle')->assertOk()
-            ->assertJsonPath('data.current_destination', 'Donor')->assertJsonPath('data.allowed_statuses', []);
+            ->assertJsonPath('data.current_destination', 'Donor')->assertJsonPath('data.allowed_statuses', [])
+            ->assertJsonPath('data.history.0.to_status', 'para_deshuesar');
     }
 
     public function test_dismantling_partial_prevents_reclassification(): void

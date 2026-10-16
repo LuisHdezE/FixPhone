@@ -37,7 +37,7 @@ final class DeviceLifecycleController extends Controller
         $events = DB::table('audit_events')
             ->where('entity_type', 'InventoryItem')
             ->where('entity_id', $item->id)
-            ->where('event_type', 'inventory.device_status_changed')
+            ->whereIn('event_type', ['inventory.device_status_changed', 'inventory.device_destination_changed'])
             ->orderByDesc('occurred_at')->orderByDesc('id')
             ->limit(100)->get(['id', 'actor_id', 'occurred_at', 'metadata']);
 
@@ -54,11 +54,11 @@ final class DeviceLifecycleController extends Controller
                     'id' => $event->id,
                     'occurred_at' => $event->occurred_at,
                     'actor_id' => $event->actor_id,
-                    'from_status' => $meta['from_status'] ?? null,
-                    'to_status' => $meta['to_status'] ?? null,
+                    'from_status' => $meta['from_status'] ?? $meta['before']['operational_status'] ?? null,
+                    'to_status' => $meta['to_status'] ?? $meta['after']['operational_status'] ?? null,
                     'reason' => $meta['reason'] ?? null,
-                    'from_purpose' => $meta['from_purpose'] ?? null,
-                    'to_purpose' => $meta['to_purpose'] ?? null,
+                    'from_purpose' => $meta['from_purpose'] ?? $meta['before']['inventory_purpose'] ?? null,
+                    'to_purpose' => $meta['to_purpose'] ?? $meta['after']['inventory_purpose'] ?? null,
                 ];
             })->values()->all(),
         ]]);
