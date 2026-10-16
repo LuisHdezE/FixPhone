@@ -164,9 +164,14 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
         if (item.itemType === 'spare_part' && selectedCatalog && (!brand || !model)) {
           throw new Error('Seleccioná marca y modelo válidos del catálogo.');
         }
+        // Recovered parts have an immutable technical identity. The edit form
+        // displays the current catalog values, but must not resubmit them when
+        // only the title or description has changed.
+        const changedCatalog = item.itemType === 'spare_part' && brand && model
+          && (brand.id !== item.brandId || model.id !== item.modelId);
         await repository.update(item.id, {
           title: edit.title, description: edit.description,
-          ...(item.itemType === 'spare_part' && brand && model
+          ...(changedCatalog
             ? { brand: brand.name, model: model.name, brand_id: brand.id, device_model_id: model.id } : {}),
         });
         setMessage(item.sku + ': datos del catálogo actualizados.');
