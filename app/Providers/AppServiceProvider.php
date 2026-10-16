@@ -21,6 +21,7 @@ final class AppServiceProvider extends ServiceProvider
 {
  public function register(): void
  {
+  $this->app->bind(\App\Application\CommercialDecision\CommercialInputSnapshot::class, \App\Infrastructure\CommercialDecision\DatabaseCommercialInputSnapshot::class);
   $this->app->bind(AuditTrail::class,DatabaseAuditTrail::class);
   $this->app->bind(IdempotencyStore::class,DatabaseIdempotencyStore::class);
   $this->app->bind(AuthenticationGateway::class,SanctumAuthenticationGateway::class);
