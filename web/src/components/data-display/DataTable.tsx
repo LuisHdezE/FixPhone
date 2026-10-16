@@ -131,7 +131,7 @@ export function DataTable<Row>({
   const hasControls = searchable || filters.length > 0 || selectable || pageSizeOptions.length > 1;
 
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200 bg-white" data-data-table>
+    <div className="min-w-0 w-full max-w-full overflow-hidden rounded-md border border-slate-200 bg-white" data-data-table>
       {hasControls ? <div className="border-b border-slate-200 bg-slate-50/60 p-2.5">
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_repeat(2,minmax(150px,220px))_auto]">
           {searchable ? <SearchField id="data-table-search" label={searchLabel} onChange={(value) => { setQuery(value); resetPage(); }} placeholder={searchPlaceholder} value={query} /> : null}
@@ -158,7 +158,7 @@ export function DataTable<Row>({
         </div>
       </div> : null}
 
-      <div className="overflow-x-auto">
+      <div className="max-w-full overflow-x-auto" role="region" aria-label="Tabla desplazable horizontalmente" tabIndex={0}>
         <table className="min-w-[720px] w-full border-collapse text-left text-xs">
           {caption ? <caption className="sr-only">{caption}</caption> : null}
           <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.07em] text-slate-500">
@@ -167,7 +167,7 @@ export function DataTable<Row>({
                 <input aria-label="Seleccionar filas visibles" checked={allVisibleSelected} onChange={toggleVisible} type="checkbox" />
               </th> : null}
               {columns.map((column) => (
-                <th className={`${density === 'compact' ? 'px-2 py-1.5' : 'px-2.5 py-2'} ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id} scope="col">
+                <th className={`${density === 'compact' ? 'px-2 py-1.5' : 'px-2.5 py-2'} ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.id === 'actions' ? 'sticky right-0 z-10 min-w-12 border-l border-slate-200 bg-slate-50 shadow-[-5px_0_8px_-7px_#64748b]' : ''} ${column.className ?? ''}`} key={column.id} scope="col">
                   {column.sortable && column.sortValue ? <button className="inline-flex items-center gap-1 font-semibold uppercase tracking-[0.07em] hover:text-slate-800" onClick={() => toggleSort(column)} type="button">
                     {column.header}<span aria-hidden="true">{sort?.id === column.id ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}</span>
                   </button> : column.header}
@@ -180,7 +180,7 @@ export function DataTable<Row>({
               const id = getRowId(row);
               return <tr className="transition hover:bg-slate-50/80" key={id}>
                 {selectable ? <td className={density === 'compact' ? 'px-2 py-1' : 'px-2.5 py-2'}><input aria-label={`Seleccionar ${id}`} checked={selectedIds.has(id)} onChange={() => toggleRow(id)} type="checkbox" /></td> : null}
-                {columns.map((column) => <td className={`${density === 'compact' ? 'px-2 py-1' : 'px-2.5 py-2'} align-middle text-slate-600 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.className ?? ''}`} key={column.id}>{column.cell(row)}</td>)}
+                {columns.map((column) => <td className={`${density === 'compact' ? 'px-2 py-1' : 'px-2.5 py-2'} align-middle text-slate-600 ${column.align === 'right' ? 'text-right' : 'text-left'} ${column.id === 'actions' ? 'sticky right-0 z-10 border-l border-slate-200 bg-white shadow-[-5px_0_8px_-7px_#64748b]' : ''} ${column.className ?? ''}`} key={column.id}>{column.cell(row)}</td>)}
               </tr>;
             }) : <tr><td className="px-2.5 py-8 text-center text-xs text-slate-500" colSpan={columns.length + (selectable ? 1 : 0)}>{emptyMessage}</td></tr>}
           </tbody>
