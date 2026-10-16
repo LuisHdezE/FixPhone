@@ -131,7 +131,7 @@ export function DataTable<Row>({
   const hasControls = searchable || filters.length > 0 || selectable || pageSizeOptions.length > 1;
 
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200 bg-white" data-data-table>
+    <div className="min-w-0 w-full max-w-full overflow-hidden rounded-md border border-slate-200 bg-white" data-data-table>
       {hasControls ? <div className="border-b border-slate-200 bg-slate-50/60 p-2.5">
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_repeat(2,minmax(150px,220px))_auto]">
           {searchable ? <SearchField id="data-table-search" label={searchLabel} onChange={(value) => { setQuery(value); resetPage(); }} placeholder={searchPlaceholder} value={query} /> : null}
