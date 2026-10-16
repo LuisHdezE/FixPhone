@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useEffect, useRef, useState } from 'react';
 import { PageShell } from '@/shell/PageShell';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
@@ -95,7 +96,7 @@ export function ReferencePriceImportPage() {
     breadcrumbs={[{ label: 'Administración' }, { label: 'Precios de referencia' }]}>
     <div className="grid gap-3" data-reference-prices-import>
       {error ? <p className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1.5 text-xs text-rose-800" role="alert">{error}</p> : null}
-      {notice ? <p className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-800" role="status">{notice}</p> : null}
+      <SuccessToast message={notice} />
       <SurfaceCard>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
