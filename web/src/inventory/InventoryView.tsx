@@ -30,7 +30,15 @@ const options: readonly SelectFieldOption<InventoryHealthFilter>[] = [
   { value: 'reorder', label: 'Reponer pronto' },
   { value: 'out-of-stock', label: 'Agotado' },
 ];
-const initialFilter: InventoryFilter = { search: '', health: 'all' };
+const initialFilter: InventoryFilter = { search: '', health: 'all', category: 'all' };
+const categoryOptions = [
+  { value: 'all', label: 'Todas las categorías' },
+  { value: 'device', label: 'Dispositivos' },
+  { value: 'used_phone', label: 'Teléfonos' },
+  { value: 'spare_part', label: 'Repuestos' },
+  { value: 'accessory', label: 'Accesorios' },
+  { value: 'service_part', label: 'Insumos' },
+] as const;
 type Action = 'detail' | 'edit' | 'adjust' | 'history';
 type CatalogItem = { id: string; name: string; active: boolean; brandId?: string };
 type Selection = { item: InventoryItem; action: Action };
@@ -227,7 +235,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
       </div> },
   ];
 
-  const hasFilters = filter.search.trim().length > 0 || filter.health !== 'all';
+  const hasFilters = filter.search.trim().length > 0 || filter.health !== 'all' || filter.category !== 'all';
   const item = selection?.item;
 
   return <div className="grid gap-3">
@@ -244,8 +252,9 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
           {canEdit && <button className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white" onClick={() => { setCreateOpen(true); setCreateError(null); createDialogRef.current?.showModal(); }} type="button">+ Agregar repuesto</button>}
         </div>
       </div>
-      <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
-        <SearchField id="inventory-search" label="Buscar inventario" onChange={(search) => setFilter((v) => ({ ...v, search }))} placeholder="Producto, SKU o categoría" value={filter.search} />
+      <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_170px_170px_auto] md:items-end">
+        <SearchField id="inventory-search" label="Buscar inventario" onChange={(search) => setFilter((v) => ({ ...v, search }))} placeholder="Producto, SKU, marca o modelo" value={filter.search} />
+        <SelectField id="inventory-category-filter" label="Categoría" onChange={(category) => setFilter((v) => ({ ...v, category }))} options={categoryOptions.map((option) => ({ ...option }))} value={filter.category} />
         <SelectField id="inventory-health-filter" label="Salud" onChange={(health) => setFilter((v) => ({ ...v, health }))} options={options} value={filter.health} />
         <button className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold disabled:opacity-40" disabled={!hasFilters} onClick={() => setFilter(initialFilter)} type="button">Limpiar</button>
       </div>
