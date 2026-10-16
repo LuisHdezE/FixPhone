@@ -36,6 +36,7 @@ const destinationTones = {
   'Pending Evaluation': 'warning',
   Donor: 'info',
   Refurbish: 'success',
+  'Direct Sale': 'success',
   Hold: 'neutral',
   Discard: 'neutral',
 } as const;
@@ -62,7 +63,7 @@ function powerState(metadata: Record<string, unknown> | null | undefined): Devic
 
 function destination(item: ApiInventoryItem): DeviceDestination {
   const explicit = stringMeta(item.metadata, 'destination');
-  if (explicit === 'Pending Evaluation' || explicit === 'Donor' || explicit === 'Refurbish' || explicit === 'Hold' || explicit === 'Discard') {
+  if (explicit === 'Pending Evaluation' || explicit === 'Donor' || explicit === 'Refurbish' || explicit === 'Direct Sale' || explicit === 'Hold' || explicit === 'Discard') {
     return explicit;
   }
 
@@ -71,8 +72,9 @@ function destination(item: ApiInventoryItem): DeviceDestination {
     case 'sell_as_spare_part':
       return 'Donor';
     case 'repair_then_sell':
-    case 'sell_as_used_phone':
       return 'Refurbish';
+    case 'sell_as_used_phone':
+      return 'Direct Sale';
     case 'discard':
       return 'Discard';
     case 'internal_use':

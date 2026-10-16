@@ -22,6 +22,7 @@ final class DeviceRoutingController extends Controller
         'Pending Evaluation' => ['purpose' => 'internal_use', 'status' => 'ingresado'],
         'Donor' => ['purpose' => 'parts_donor', 'status' => 'para_deshuesar'],
         'Refurbish' => ['purpose' => 'repair_then_sell', 'status' => 'para_reparar'],
+        'Direct Sale' => ['purpose' => 'sell_as_used_phone', 'status' => 'disponible'],
         'Hold' => ['purpose' => 'internal_use', 'status' => 'ingresado'],
         'Discard' => ['purpose' => 'discard', 'status' => 'descartado'],
     ];
@@ -91,9 +92,9 @@ final class DeviceRoutingController extends Controller
                 $device->inventory_purpose = $route['purpose'];
             }
             $device->operational_status = $route['status'];
-            // Rerouting is not a sale. Disable sale eligibility until the
-            // corresponding commercial workflow explicitly re-enables it.
-            $device->is_sellable = false;
+            // A direct sale can be eligible without repair. Routing never publishes
+            // the listing, records a sale, or changes the device condition.
+            $device->is_sellable = $next === 'Direct Sale';
             $device->metadata = $metadata;
             $device->save();
 
@@ -149,7 +150,8 @@ final class DeviceRoutingController extends Controller
         }
         return match ($purpose) {
             'parts_donor', 'sell_as_spare_part' => 'Donor',
-            'repair_then_sell', 'sell_as_used_phone' => 'Refurbish',
+            'repair_then_sell' => 'Refurbish',
+            'sell_as_used_phone' => 'Direct Sale',
             'discard' => 'Discard',
             'internal_use', 'repair_for_customer' => 'Hold',
             default => 'Pending Evaluation',

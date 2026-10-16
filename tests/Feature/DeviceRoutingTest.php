@@ -62,6 +62,51 @@ final class DeviceRoutingTest extends TestCase
         ];
     }
 
+    public function test_direct_sale_allows_unrepaired_device_without_publishing_or_recording_sale(): void
+    {
+        $this->signIn();
+        $device = $this->device([
+            'operational_status' => 'ingresado',
+            'publication_status' => 'no_publicable',
+            'is_sellable' => false,
+        ]);
+        $this->patchJson($this->path($device), [
+            'destination' => 'Direct Sale',
+            'reason' => 'Vender tal cual con falla de pantalla informada al cliente.',
+        ])->assertOk()->assertJsonPath('data.destination', 'Direct Sale')
+            ->assertJsonPath('data.inventory_purpose', 'sell_as_used_phone')
+            ->assertJsonPath('data.operational_status', 'disponible');
+
+        $saved = $device->fresh();
+        $this->assertTrue($saved->is_sellable);
+        $this->assertSame('no_publicable', $saved->publication_status);
+        $this->assertSame(1, $saved->stock_quantity);
+        $this->assertSame(210000, $saved->cost_amount_minor);
+        $this->assertDatabaseCount('device_sale_records', 0);
+        $this->assertDatabaseHas('audit_events', [
+            'entity_id' => $device->id,
+            'event_type' => 'inventory.device_destination_changed',
+        ]);
+    }
+
+    public function test_direct_sale_keeps_consignment_ownership_and_existing_guards(): void
+    {
+        $this->signIn();
+        $consigned = $this->device([
+            'inventory_purpose' => 'consignation',
+        ]);
+        $this->patchJson($this->path($consigned), $this->payload('Direct Sale'))
+            ->assertOk()->assertJsonPath('data.inventory_purpose', 'consignation');
+        $this->assertTrue($consigned->fresh()->is_sellable);
+
+        $dismantled = $this->device([
+            'inventory_purpose' => 'parts_donor',
+            'dismantling_status' => 'partial',
+            'metadata' => ['destination' => 'Donor'],
+        ]);
+        $this->patchJson($this->path($dismantled), $this->payload('Direct Sale'))->assertStatus(409);
+    }
+
     public function test_route_is_authenticated_and_requires_specific_permission(): void
     {
         $device = $this->device();

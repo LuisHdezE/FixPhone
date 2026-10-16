@@ -7,6 +7,7 @@ const destinations: readonly { value: DeviceDestination; label: string }[] = [
   { value: 'Pending Evaluation', label: 'Pendiente de evaluación' },
   { value: 'Donor', label: 'Para repuestos' },
   { value: 'Refurbish', label: 'Reacondicionar' },
+  { value: 'Direct Sale', label: 'Venta directa (tal cual)' },
   { value: 'Hold', label: 'En espera' },
   { value: 'Discard', label: 'Descartar' },
 ];
@@ -68,6 +69,7 @@ export function DeviceDestinationModal({ inventoryId, code, current, gateway, on
           </select>
         </label>
       </div>
+      {destination === 'Direct Sale' ? <p className="text-[11px] text-amber-700">Venta del equipo completo en su estado actual. No equivale a una reparación ni lo publica automáticamente. Informá los defectos al comprador.</p> : null}
       <label className={labelClass}>Motivo del cambio
         <textarea className="min-h-14 w-full resize-y rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
           placeholder="Ej.: pantalla defectuosa, pasa a repuestos"
