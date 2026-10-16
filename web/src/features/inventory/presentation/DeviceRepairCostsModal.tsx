@@ -10,6 +10,7 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
   const [parts, setParts] = useState<Part[]>([]);
   const [origin, setOrigin] = useState<'stock' | 'external'>('stock');
   const [partId, setPartId] = useState('');
+  const [partSearch, setPartSearch] = useState('');
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
@@ -19,16 +20,17 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
   const load = async () => {
     const [installed, inventory] = await Promise.all([
       adminFetch('/api/v1/admin/devices/' + encodeURIComponent(id) + '/installed-parts', { cache: 'no-store' }),
-      adminFetch('/api/v1/admin/inventory/items', { cache: 'no-store' }),
+      adminFetch('/api/v1/admin/devices/' + encodeURIComponent(id) + '/compatible-parts', { cache: 'no-store' }),
     ]);
     if (!installed.ok || !inventory.ok) throw new Error('No se pudieron cargar los repuestos.');
     const a = await installed.json() as { data: RepairRecord };
     const b = await inventory.json() as { data: Part[] };
     setRecord(a.data);
-    setParts(b.data.filter(p => p.item_type === 'spare_part' && p.stock_quantity > 0));
+    setParts(b.data);
   };
   useEffect(() => { let alive = true; void load().catch(e => { if (alive) setError(e instanceof Error ? e.message : 'Error al cargar.'); }); return () => { alive = false; }; }, [id]);
   const selected = parts.find(p => p.id === partId);
+  const matchingParts = parts.filter(p => (p.title + ' ' + (p.sku || '')).toLocaleLowerCase('es').includes(partSearch.trim().toLocaleLowerCase('es')));
   async function submit(event: FormEvent) {
     event.preventDefault(); if (busy || !record) return;
     const amount = origin === 'stock' ? 0 : Math.round(Number(price.replace(',', '.')) * 100);
@@ -43,7 +45,7 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
       });
       const result = await response.json().catch(() => null) as { message?: string; errors?: Record<string,string[]> } | null;
       if (!response.ok) throw new Error(result?.errors ? Object.values(result.errors).flat().join(' ') : result?.message || 'No se pudo registrar la instalación.');
-      setPartId(''); setName(''); setPrice(''); setNotes(''); setRequestId(crypto.randomUUID());
+      setPartId(''); setPartSearch(''); setName(''); setPrice(''); setNotes(''); setRequestId(crypto.randomUUID());
       await load(); onSaved();
     } catch (e) { setError(e instanceof Error ? e.message : 'No se pudo guardar.'); }
     finally { setBusy(false); }
@@ -61,13 +63,19 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
           <label><input type="radio" checked={origin === 'stock'} onChange={() => setOrigin('stock')} /> Desde inventario</label>
           <label><input type="radio" checked={origin === 'external'} onChange={() => setOrigin('external')} /> Compra externa</label>
         </div>
-        {origin === 'stock' ? <label className="grid min-w-0 gap-1">Repuesto disponible
-          <select required className="h-8 w-full min-w-0 max-w-full rounded border px-2" value={partId} onChange={e => setPartId(e.target.value)}>
+        {origin === 'stock' ? <div className="grid min-w-0 gap-1">
+          <label htmlFor="repair-part-search">Buscar repuesto compatible</label>
+          <input id="repair-part-search" className="h-8 w-full min-w-0 rounded border px-2" value={partSearch}
+            onChange={e => { setPartSearch(e.target.value); setPartId(''); }} placeholder="Nombre, tipo o código…" />
+          <label htmlFor="repair-part-choice">Repuesto disponible para este modelo</label>
+          <select id="repair-part-choice" required className="h-8 w-full min-w-0 max-w-full rounded border px-2" value={partId} onChange={e => setPartId(e.target.value)}>
             <option value="">Seleccioná un repuesto…</option>
-            {parts.map(p => <option key={p.id} value={p.id}>{p.sku} · {p.title} · {p.stock_quantity} disponibles</option>)}
+            {matchingParts.map(p => <option key={p.id} value={p.id}>{p.sku} · {p.title} · {p.stock_quantity} libres</option>)}
           </select>
+          {!parts.length ? <span className="text-amber-700">No hay repuestos compatibles y disponibles. Revisá marca/modelo de los repuestos y existencias.</span>
+            : !matchingParts.length ? <span className="text-slate-500">No hay coincidencias con la búsqueda.</span> : null}
           <span className="text-slate-500">Descuenta una unidad. Costo adicional imputado: 0 {currency}.</span>
-        </label> : <><label className="grid min-w-0 gap-1">Componente adquirido
+        </div> : <><label className="grid min-w-0 gap-1">Componente adquirido
           <input required minLength={2} maxLength={255} className="h-8 w-full min-w-0 rounded border px-2" value={name} onChange={e => setName(e.target.value)} />
         </label><label className="grid min-w-0 gap-1">Costo de compra ({currency})
           <input required inputMode="decimal" className="h-8 w-full min-w-0 rounded border px-2" value={price} onChange={e => setPrice(e.target.value)} />
