@@ -10,6 +10,7 @@ import { SearchField } from '@/components/forms/SearchField';
 import { SelectField, type SelectFieldOption } from '@/components/forms/SelectField';
 import { SparePartPublicationModal } from './SparePartPublicationModal';
 import { apiInventoryRepository } from './apiInventoryRepository';
+import { buildInventoryEdit, initialCatalogSelection, type CatalogItem } from './inventoryEdit';
 import type {
   InventoryDataState, InventoryEdit, InventoryFilter, InventoryHealth,
   InventoryHealthFilter, InventoryItem, InventoryRepository, StockAdjustment,
@@ -41,7 +42,6 @@ const categoryOptions = [
   { value: 'service_part', label: 'Insumos' },
 ] as const;
 type Action = 'detail' | 'edit' | 'adjust' | 'history';
-type CatalogItem = { id: string; name: string; active: boolean; brandId?: string };
 type Selection = { item: InventoryItem; action: Action };
 const adjustableTypes = new Set(['spare_part', 'accessory', 'service_part']);
 
@@ -129,8 +129,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
   function open(item: InventoryItem, action: Action) {
     setSelection({ item, action });
     setEdit({ title: item.productName, description: item.description, brand: item.brand, model: item.model,
-      brand_id: item.brandId ?? catalog.brands.find(x => x.name === item.brand)?.id ?? '',
-      device_model_id: item.modelId ?? catalog.deviceModels.find(x => x.name === item.model && x.brandId === (item.brandId ?? catalog.brands.find(b => b.name === item.brand)?.id))?.id ?? '' });
+      ...initialCatalogSelection(item, catalog) });
     setDelta('');
     setReason('');
     setRequestId(crypto.randomUUID());
@@ -158,22 +157,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
     try {
       if (selection.action === 'edit') {
         if (!canEdit) return;
-        const brand = catalog.brands.find(x => x.id === edit.brand_id);
-        const model = catalog.deviceModels.find(x => x.id === edit.device_model_id && x.brandId === brand?.id);
-        const selectedCatalog = Boolean(edit.brand_id || edit.device_model_id);
-        if (item.itemType === 'spare_part' && selectedCatalog && (!brand || !model)) {
-          throw new Error('Seleccioná marca y modelo válidos del catálogo.');
-        }
-        // Recovered parts have an immutable technical identity. The edit form
-        // displays the current catalog values, but must not resubmit them when
-        // only the title or description has changed.
-        const changedCatalog = item.itemType === 'spare_part' && brand && model
-          && (brand.id !== item.brandId || model.id !== item.modelId);
-        await repository.update(item.id, {
-          title: edit.title, description: edit.description,
-          ...(changedCatalog
-            ? { brand: brand.name, model: model.name, brand_id: brand.id, device_model_id: model.id } : {}),
-        });
+        await repository.update(item.id, buildInventoryEdit(item, edit, catalog));
         setMessage(item.sku + ': datos del catálogo actualizados.');
       } else if (selection.action === 'adjust') {
         if (!canAdjust || !adjustableTypes.has(item.itemType)) return;
