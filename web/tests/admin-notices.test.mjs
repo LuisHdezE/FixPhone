@@ -47,3 +47,10 @@ test('other admin screens use temporary success feedback', () => {
   assert.match(toast, /setTimeout\(\(\) => setVisible\(false\), 4000\)/);
   assert.match(toast, /clearTimeout\(timer\)/);
 });
+
+test('inventory catalog errors remain visible instead of becoming success toasts', () => {
+  const inventory = read('../src/inventory/InventoryView.tsx');
+  assert.match(inventory, /setCatalogError\('No se pudieron cargar los codificadores/);
+  assert.match(inventory, /catalogError \? <p role="alert"/);
+  assert.match(inventory, /<SuccessToast message=\{message\} \/>/);
+});
