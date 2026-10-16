@@ -5,6 +5,7 @@ namespace App\Presentation\Http\Controllers;
 use App\Infrastructure\MasterData\DeviceModelReferenceGuard;
 use App\Infrastructure\MasterData\DeviceModelSpec;
 use App\Infrastructure\MasterData\DeviceModelVariant;
+use App\Infrastructure\MasterData\MasterDataEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -37,16 +38,23 @@ final class DeviceModelSpecificationsController extends Controller
         app(DeviceModelReferenceGuard::class)->assertKind($modelId, 'deviceModels', 'device_model_id');
 
         $saved = DB::transaction(function () use ($request, $modelId, $data): DeviceModelSpec {
+            // Lock the parent row even on first insert, when no specification row exists yet.
+            MasterDataEntry::query()->whereKey($modelId)->lockForUpdate()->firstOrFail();
             $spec = DeviceModelSpec::query()->where('device_model_id', $modelId)->lockForUpdate()->first();
             if (!$spec) {
                 $spec = new DeviceModelSpec(['device_model_id' => $modelId]);
             }
+            $before = $spec->exists ? $spec->only(['specs_json', 'source_type', 'source_url', 'source_reference', 'status']) : null;
             $spec->fill($data);
             $spec->status = 'draft';
             $spec->reviewed_at = null;
             $spec->reviewed_by = null;
             $spec->save();
-            $this->audit($request, 'device_model.specifications_saved', $modelId, ['spec_id' => $spec->id]);
+            $this->audit($request, 'device_model.specifications_saved', $modelId, [
+                'spec_id' => $spec->id,
+                'before' => $before,
+                'after' => $spec->only(['specs_json', 'source_type', 'source_url', 'source_reference', 'status']),
+            ]);
             return $spec;
         });
         return response()->json(['data' => $saved], 200);
@@ -71,8 +79,13 @@ final class DeviceModelSpecificationsController extends Controller
         app(DeviceModelReferenceGuard::class)->assertKind($modelId, 'deviceModels', 'device_model_id');
         $variant = DB::transaction(function () use ($request, $modelId, $variantId, $data): DeviceModelVariant {
             $variant = DeviceModelVariant::query()->where('device_model_id', $modelId)->whereKey($variantId)->lockForUpdate()->firstOrFail();
+            $before = $variant->only(array_keys($data));
             $variant->fill($data)->save();
-            $this->audit($request, 'device_model.variant_updated', $modelId, ['variant_id' => $variantId]);
+            $this->audit($request, 'device_model.variant_updated', $modelId, [
+                'variant_id' => $variantId,
+                'before' => $before,
+                'after' => $variant->only(array_keys($data)),
+            ]);
             return $variant;
         });
         return response()->json(['data' => $variant]);

@@ -71,6 +71,37 @@ final class DeviceModelSpecificationsApiTest extends TestCase
         $this->assertDatabaseCount('device_model_specs', 0);
     }
 
+    public function test_specification_update_records_before_and_after_and_does_not_duplicate(): void
+    {
+        $this->signIn();
+        $url = '/api/v1/admin/device-models/model-iphone-11/technical';
+
+        $this->putJson($url, [
+            'specs_json' => ['wifi' => '802.11ac'],
+            'source_type' => 'manual',
+        ])->assertOk();
+
+        $this->putJson($url, [
+            'specs_json' => ['wifi' => '802.11ax'],
+            'source_type' => 'manual',
+        ])->assertOk();
+
+        $this->assertDatabaseCount('device_model_specs', 1);
+        $lastEvent = DB::table('audit_events')
+            ->where('event_type', 'device_model.specifications_saved')
+            ->orderByDesc('occurred_at')
+            ->orderByDesc('id')
+            ->first();
+        $this->assertNotNull($lastEvent);
+        $events = DB::table('audit_events')
+            ->where('event_type', 'device_model.specifications_saved')
+            ->get()
+            ->map(fn ($event) => json_decode($event->metadata, true))
+            ->all();
+        $this->assertCount(2, $events);
+        $this->assertContains(['wifi' => '802.11ac'], array_column(array_column($events, 'before'), 'specs_json'));
+    }
+
     public function test_wrong_variant_owner_returns_not_found(): void
     {
         $this->signIn();
