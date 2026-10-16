@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { adminToken } from '@/auth/adminApiSession';
@@ -140,7 +141,7 @@ export function MediaStorageSettingsPage() {
       <Link className="mt-2 inline-block rounded-md bg-[var(--theme-primary)] px-3 py-2 text-xs font-semibold text-white" to="/authentication/sign-in" state={{ from: '/admin/settings/media-storage' }}>Iniciar sesión</Link>
     </SurfaceCard> : <div className="grid gap-3">
       {error ? <p role="alert" className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">{error}</p> : null}
-      {notice ? <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">{notice}</p> : null}
+      <SuccessToast message={notice} />
       <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-950">
         La conexión S3 puede probarse sin subir archivos. <strong>La prueba de conexión no sustituye a una subida real desde ValuPhone</strong>, que necesita además que CORS permita el origen de tu página. Las fotografías existentes no cambian de ubicación automáticamente.
       </div>

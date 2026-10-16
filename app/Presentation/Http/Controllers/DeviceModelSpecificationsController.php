@@ -36,6 +36,7 @@ final class DeviceModelSpecificationsController extends Controller
             'source_url' => ['nullable', 'url', 'max:2048'],
             'source_reference' => ['nullable', 'string', 'max:255'],
         ]);
+        $data['specs_json'] = $request->input('specs_json', []);
         if (strlen(json_encode($data['specs_json'], JSON_THROW_ON_ERROR)) > 65536
             || ($data['specs_json'] !== [] && array_is_list($data['specs_json']))) {
             throw ValidationException::withMessages(['specs_json' => 'La ficha debe ser un objeto de hasta 64 KB.']);

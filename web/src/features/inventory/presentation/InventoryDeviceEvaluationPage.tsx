@@ -31,6 +31,7 @@ const destinationLabels: Record<InventoryDeviceListItemDto['destination'], strin
   'Pending Evaluation': 'Pendiente de evaluación',
   Donor: 'Para repuestos',
   Refurbish: 'Reacondicionar',
+  'Direct Sale': 'Venta directa (tal cual)',
   Hold: 'En espera',
   Discard: 'Descartar',
 };
