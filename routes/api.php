@@ -176,6 +176,7 @@ Route::prefix('v1')->group(function (): void {
   Route::get('/admin/devices/{id}/technical-evaluations', [DeviceTechnicalEvaluationController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.devices.technical-evaluations.index');
   Route::post('/admin/devices/{id}/technical-evaluations', [DeviceTechnicalEvaluationController::class, 'store'])->middleware('permission:diagnosis.manage')->name('api.v1.admin.devices.technical-evaluations.store');
 
+  Route::get('/admin/devices/{id}/compatible-parts', [DeviceInstalledPartsController::class, 'compatibleParts'])->middleware('permission:inventory.view');
   Route::get('/admin/devices/{id}/installed-parts', [DeviceInstalledPartsController::class, 'index'])->middleware('permission:inventory.view')->name('api.v1.admin.devices.installed-parts.index');
   Route::post('/admin/devices/{id}/installed-parts', [DeviceInstalledPartsController::class, 'store'])->middleware('permission:inventory.adjust')->name('api.v1.admin.devices.installed-parts.store');
   Route::post('/admin/devices/{id}/installed-parts/{partId}/void', [DeviceInstalledPartsController::class, 'void'])->middleware('permission:inventory.adjust')->name('api.v1.admin.devices.installed-parts.void');
