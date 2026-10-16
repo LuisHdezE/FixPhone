@@ -164,6 +164,13 @@ final class ExtractDeviceComponents
                     $spare->is_sellable = true;
                 }
                 $spare->save();
+                DB::table('inventory_part_model_compatibilities')->insertOrIgnore([
+                    'id' => (string) Str::ulid(),
+                    'inventory_item_id' => $spare->id,
+                    'device_model_id' => $model['id'],
+                    'source' => 'extraction',
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
                 $extractionId = (string) Str::ulid();
                 DB::table('device_part_extractions')->insert([
                     'id' => $extractionId, 'batch_id' => $batchId, 'donor_item_id' => $id, 'spare_item_id' => $spare->id,
