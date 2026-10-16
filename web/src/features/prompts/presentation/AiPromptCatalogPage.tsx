@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AppIcon, type AppIconName } from '@/components/AppIcon';
 import { PageShell } from '@/shell/PageShell';
@@ -161,7 +162,7 @@ export function AiPromptCatalogPage() {
     description="Catálogo de instrucciones reutilizables, con copia rápida, edición y versiones."
     breadcrumbs={[{ label: 'Administración' }, { label: 'Prompts de IA' }]}>
     <div className="grid gap-2" data-ai-prompts>
-      {notice ? <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">{notice}</p> : null}
+      <SuccessToast message={notice} />
       {error && !modal ? <p role="alert" className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-800">{error}</p> : null}
       <SurfaceCard>
         <div className="flex flex-wrap items-center gap-2">
@@ -233,7 +234,7 @@ export function AiPromptCatalogPage() {
           </button>
         </div>
         {error ? <p role="alert" className="mb-2 rounded border border-rose-200 bg-rose-50 p-2 text-xs text-rose-800">{error}</p> : null}
-        {notice ? <p role="status" className="mb-2 rounded border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">{notice}</p> : null}
+        <SuccessToast message={notice} />
         {formOpen ? <form onSubmit={(e) => void save(e)} className="grid gap-2">
           <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
             <label className="grid gap-0.5 text-[11px] font-semibold">Código

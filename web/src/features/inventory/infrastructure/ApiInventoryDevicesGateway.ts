@@ -21,6 +21,7 @@ type ApiInventoryItem = {
   inventory_purpose: string;
   dismantling_status?: string | null;
   public_listing_status?: 'draft' | 'published';
+  phone_listing_status?: 'draft' | 'published';
   public_valuation_id?: string | null;
   consignor_id?: string | null;
   cost_amount_minor?: number | null;
@@ -36,6 +37,7 @@ const destinationTones = {
   'Pending Evaluation': 'warning',
   Donor: 'info',
   Refurbish: 'success',
+  'Direct Sale': 'success',
   Hold: 'neutral',
   Discard: 'neutral',
 } as const;
@@ -62,7 +64,7 @@ function powerState(metadata: Record<string, unknown> | null | undefined): Devic
 
 function destination(item: ApiInventoryItem): DeviceDestination {
   const explicit = stringMeta(item.metadata, 'destination');
-  if (explicit === 'Pending Evaluation' || explicit === 'Donor' || explicit === 'Refurbish' || explicit === 'Hold' || explicit === 'Discard') {
+  if (explicit === 'Pending Evaluation' || explicit === 'Donor' || explicit === 'Refurbish' || explicit === 'Direct Sale' || explicit === 'Hold' || explicit === 'Discard') {
     return explicit;
   }
 
@@ -71,8 +73,9 @@ function destination(item: ApiInventoryItem): DeviceDestination {
     case 'sell_as_spare_part':
       return 'Donor';
     case 'repair_then_sell':
-    case 'sell_as_used_phone':
       return 'Refurbish';
+    case 'sell_as_used_phone':
+      return 'Direct Sale';
     case 'discard':
       return 'Discard';
     case 'internal_use':
@@ -121,6 +124,7 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
     isDonor: mappedDestination === 'Donor',
     dismantlingStatus: isDismantlingStatus(item.dismantling_status) ? item.dismantling_status : 'unknown',
     publicListingStatus: item.public_listing_status === 'published' ? 'published' : 'draft',
+    phoneListingStatus: item.phone_listing_status === 'published' ? 'published' : 'draft',
     publicValuationId: item.public_valuation_id ?? null,
     ownershipType: item.consignor_id || ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'].includes(item.inventory_purpose) ? 'consignment' : 'owned',
     consignorId: item.consignor_id ?? null,

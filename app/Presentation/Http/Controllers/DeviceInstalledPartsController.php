@@ -13,6 +13,62 @@ use Illuminate\Validation\ValidationException;
 
 final class DeviceInstalledPartsController extends Controller
 {
+    private function compatible(InventoryItem $device, InventoryItem $part): bool
+    {
+        if ($part->item_type !== 'spare_part') return false;
+        $deviceMeta = $device->metadata ?? [];
+        $partMeta = $part->metadata ?? [];
+        $deviceModelId = $deviceMeta['device_model_id'] ?? null;
+        $partModelId = $partMeta['device_model_id'] ?? null;
+        $deviceBrandId = $deviceMeta['brand_id'] ?? null;
+        $partBrandId = $partMeta['brand_id'] ?? null;
+
+        // Fully identified catalog models must agree; names cannot override
+        // a documented mismatch (e.g. A22 LTE vs A22 5G).
+        if ($deviceModelId && $partModelId) {
+            return $deviceModelId === $partModelId
+                && (!$deviceBrandId || !$partBrandId || $deviceBrandId === $partBrandId);
+        }
+        if ($deviceBrandId && $partBrandId && $deviceBrandId !== $partBrandId) return false;
+
+        // Legacy/quick intake may omit model IDs even though extracted parts
+        // have them. Require an exact brand and model name match in that case.
+        // Removing a repeated brand prefix allows "Galaxy A22 5G" and
+        // "Samsung Galaxy A22 5G", but never guesses similar model numbers.
+        $normalize = static fn (?string $value): string =>
+            mb_strtolower(trim(preg_replace('/\\s+/u', ' ', $value ?? '')));
+        $deviceBrand = $normalize($device->brand);
+        $partBrand = $normalize($part->brand);
+        if ($deviceBrand === '' || $deviceBrand !== $partBrand) return false;
+        $normalizeModel = static function (?string $value) use ($normalize, $deviceBrand): string {
+            $model = $normalize($value);
+            if (str_starts_with($model, $deviceBrand.' ')) {
+                $model = trim(mb_substr($model, mb_strlen($deviceBrand) + 1));
+            }
+            return $model;
+        };
+        $deviceModel = $normalizeModel($device->model);
+        return $deviceModel !== '' && $deviceModel === $normalizeModel($part->model);
+    }
+
+    public function compatibleParts(string $id): JsonResponse
+    {
+        $device = InventoryItem::query()->whereKey($id)->whereIn('item_type', ['device', 'used_phone'])->firstOrFail();
+        $parts = InventoryItem::query()->where('item_type', 'spare_part')->where('stock_quantity', '>', 0)
+            ->orderBy('title')->get()->filter(fn (InventoryItem $part) => $this->compatible($device, $part)
+                && ($part->consignor_id === null || $part->consignor_id === $device->consignor_id));
+        $ids = $parts->pluck('id')->all();
+        $held = DB::table('order_items')->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereIn('order_items.inventory_item_id', $ids)
+            ->whereIn('orders.status', ['pending', 'processing', 'ready'])
+            ->select('order_items.inventory_item_id', DB::raw('SUM(order_items.quantity) as quantity'))
+            ->groupBy('order_items.inventory_item_id')->pluck('quantity', 'inventory_item_id');
+        return response()->json(['data' => $parts->filter(fn (InventoryItem $part) => $part->stock_quantity > (int) ($held[$part->id] ?? 0))
+            ->map(fn (InventoryItem $part) => ['id' => $part->id, 'sku' => $part->sku, 'title' => $part->title,
+                'stock_quantity' => (int) $part->stock_quantity - (int) ($held[$part->id] ?? 0)])
+            ->values()->all()])->header('Cache-Control', 'private, no-store');
+    }
+
     public function index(string $id): JsonResponse
     {
         $device = InventoryItem::query()
@@ -99,6 +155,13 @@ final class DeviceInstalledPartsController extends Controller
 
             $sparePartItem = null;
             if (!empty($validated['spare_part_item_id'])) {
+                // A part already acquired into inventory has zero incremental purchase
+                // cost for this device; its historical inventory cost remains separate.
+                if ((int) $validated['cost_amount_minor'] !== 0) {
+                    throw ValidationException::withMessages([
+                        'cost_amount_minor' => 'Al instalar un repuesto existente del inventario, el costo adicional del equipo debe ser cero.',
+                    ]);
+                }
                 $sparePartItem = InventoryItem::query()
                     ->whereKey($validated['spare_part_item_id'])
                     ->lockForUpdate()
@@ -110,9 +173,29 @@ final class DeviceInstalledPartsController extends Controller
                     ]);
                 }
 
-                if ((int) $sparePartItem->stock_quantity < 1) {
+                if ($sparePartItem->item_type !== 'spare_part') {
                     throw ValidationException::withMessages([
-                        'spare_part_item_id' => 'El repuesto seleccionado no tiene existencias disponibles en inventario.',
+                        'spare_part_item_id' => 'Seleccioná un artículo de tipo repuesto.',
+                    ]);
+                }
+                if (!$this->compatible($device, $sparePartItem)) {
+                    throw ValidationException::withMessages([
+                        'spare_part_item_id' => 'Este repuesto no es compatible con la marca y modelo del dispositivo.',
+                    ]);
+                }
+                if ($sparePartItem->consignor_id !== null && $sparePartItem->consignor_id !== $device->consignor_id) {
+                    throw ValidationException::withMessages([
+                        'spare_part_item_id' => 'El repuesto pertenece a un consignante diferente. Revisá la autorización de uso.',
+                    ]);
+                }
+                $held = (int) DB::table('order_items')
+                    ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                    ->where('order_items.inventory_item_id', $sparePartItem->id)
+                    ->whereIn('orders.status', ['pending', 'processing', 'ready'])
+                    ->sum('order_items.quantity');
+                if ((int) $sparePartItem->stock_quantity - $held < 1) {
+                    throw ValidationException::withMessages([
+                        'spare_part_item_id' => 'El repuesto no tiene existencias libres: pueden estar reservadas para pedidos.',
                     ]);
                 }
 

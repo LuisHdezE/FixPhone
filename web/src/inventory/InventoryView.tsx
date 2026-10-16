@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { AppIcon } from '@/components/AppIcon';
@@ -29,7 +31,15 @@ const options: readonly SelectFieldOption<InventoryHealthFilter>[] = [
   { value: 'reorder', label: 'Reponer pronto' },
   { value: 'out-of-stock', label: 'Agotado' },
 ];
-const initialFilter: InventoryFilter = { search: '', health: 'all' };
+const initialFilter: InventoryFilter = { search: '', health: 'all', category: 'all', publication: 'all' };
+const categoryOptions = [
+  { value: 'all', label: 'Todas las categorías' },
+  { value: 'device', label: 'Dispositivos' },
+  { value: 'used_phone', label: 'Teléfonos' },
+  { value: 'spare_part', label: 'Repuestos' },
+  { value: 'accessory', label: 'Accesorios' },
+  { value: 'service_part', label: 'Insumos' },
+] as const;
 type Action = 'detail' | 'edit' | 'adjust' | 'history';
 type CatalogItem = { id: string; name: string; active: boolean; brandId?: string };
 type Selection = { item: InventoryItem; action: Action };
@@ -71,6 +81,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
   const [busy, setBusy] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const canEdit = permissions.includes('catalog.manage');
   const canAdjust = permissions.includes('inventory.adjust');
@@ -95,7 +106,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
         return r.json() as Promise<{ data: { brands: CatalogItem[]; deviceModels: CatalogItem[] } }>;
       })
       .then(payload => { if (active) setCatalog({ brands: payload.data.brands.filter(x => x.active), deviceModels: payload.data.deviceModels.filter(x => x.active) }); })
-      .catch(() => { if (active) setMessage('No se pudieron cargar los codificadores de marca y modelo.'); });
+      .catch(() => { if (active) setCatalogError('No se pudieron cargar los codificadores de marca y modelo.'); });
     return () => { active = false; };
   }, []);
 
@@ -211,6 +222,9 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
         {item.reorderPoint !== null ? <p className="text-[10px] text-slate-500">Mínimo {item.reorderPoint}</p> : null}</div> },
     { id: 'health', header: 'Salud',
       cell: (item) => <StatusBadge label={labels[item.health]} tone={tones[item.health]} /> },
+    { id: 'store', header: 'Tienda', cell: (item) => item.storeVisible && item.storeUrl
+      ? <Link className="text-xs font-semibold text-emerald-700 underline" to={item.storeUrl} target="_blank" rel="noopener noreferrer">Publicado ↗</Link>
+      : <span className="text-xs text-slate-500">Sin publicar</span> },
     { id: 'updated', header: 'Actualizado',
       cell: (item) => <span className="text-[11px] text-slate-500">{item.updatedAtLabel}</span> },
     { id: 'actions', header: 'Acciones', align: 'right',
@@ -225,7 +239,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
       </div> },
   ];
 
-  const hasFilters = filter.search.trim().length > 0 || filter.health !== 'all';
+  const hasFilters = filter.search.trim().length > 0 || filter.health !== 'all' || filter.category !== 'all' || filter.publication !== 'all';
   const item = selection?.item;
 
   return <div className="grid gap-3">
@@ -242,13 +256,16 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
           {canEdit && <button className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white" onClick={() => { setCreateOpen(true); setCreateError(null); createDialogRef.current?.showModal(); }} type="button">+ Agregar repuesto</button>}
         </div>
       </div>
-      <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
-        <SearchField id="inventory-search" label="Buscar inventario" onChange={(search) => setFilter((v) => ({ ...v, search }))} placeholder="Producto, SKU o categoría" value={filter.search} />
+      <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_150px_150px_150px_auto] md:items-end">
+        <SearchField id="inventory-search" label="Buscar inventario" onChange={(search) => setFilter((v) => ({ ...v, search }))} placeholder="Producto, SKU, marca o modelo" value={filter.search} />
+        <SelectField id="inventory-category-filter" label="Categoría" onChange={(category) => setFilter((v) => ({ ...v, category }))} options={categoryOptions.map((option) => ({ ...option }))} value={filter.category} />
+        <SelectField id="inventory-publication-filter" label="Tienda" onChange={(publication) => setFilter((v) => ({ ...v, publication: publication as InventoryFilter['publication'] }))} options={[{ value: 'all', label: 'Todos' }, { value: 'published', label: 'Publicados' }, { value: 'unpublished', label: 'Sin publicar' }]} value={filter.publication} />
         <SelectField id="inventory-health-filter" label="Salud" onChange={(health) => setFilter((v) => ({ ...v, health }))} options={options} value={filter.health} />
         <button className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold disabled:opacity-40" disabled={!hasFilters} onClick={() => setFilter(initialFilter)} type="button">Limpiar</button>
       </div>
     </section>
-    {message ? <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">{message}</p> : null}
+    <SuccessToast message={message} />
+    {catalogError ? <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">{catalogError}</p> : null}
     {state.status === 'loading' || state.status === 'idle' ? <InlineFeedback title="Cargando inventario" message="Consultando los artículos reales." tone="info" /> : null}
     {state.status === 'error' ? <div className="grid gap-2"><InlineFeedback title="Error de inventario" message={state.message} tone="error" /><button className="w-fit text-xs underline" type="button" onClick={() => setRefreshToken((v) => v + 1)}>Reintentar</button></div> : null}
     {state.status === 'empty' ? <InlineFeedback title="Sin coincidencias" message={state.message} /> : null}
