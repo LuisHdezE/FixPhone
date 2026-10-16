@@ -79,6 +79,7 @@ export const apiInventoryRepository: InventoryRepository = {
     const search = filter.search.trim().toLocaleLowerCase('es');
     const items = payload.data.map(mapRecord).filter((item) => {
       if (filter.health !== 'all' && item.health !== filter.health) return false;
+      if (filter.category !== 'all' && item.itemType !== filter.category) return false;
       return !search || [item.productName, item.sku, item.category, item.brand ?? '', item.model ?? '']
         .some((value) => value.toLocaleLowerCase('es').includes(search));
     });
