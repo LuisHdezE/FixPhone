@@ -118,7 +118,7 @@ class InventoryController extends Controller
             ->where('is_sellable', true)->where('stock_quantity', '>', 0)
             ->where('sale_price_amount_minor', '>', 0)
             ->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
-            ->whereIn('operational_status', ['reparado', 'en_stock'])
+            ->whereIn('operational_status', ['reparado', 'en_stock', 'disponible'])
             ->where(function ($query): void {
                 $query->whereNull('metadata->origin')->orWhere('metadata->origin', '!=', 'recovered')->orWhere('metadata->part_condition', 'functional');
             })->get();
