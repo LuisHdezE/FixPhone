@@ -201,7 +201,9 @@ export function InventoryDevicesPage({
     {
       id: 'visibility',
       header: 'Publicación',
-      cell: (device) => device.publicListingStatus === 'published' && device.publicValuationId
+      cell: (device) => device.phoneListingStatus === 'published'
+        ? <Link title="Abrir teléfono en tienda" className="text-xs font-semibold text-emerald-700 underline" to={'/store/products/' + device.inventoryId} target="_blank" rel="noopener noreferrer">En tienda ↗</Link>
+        : device.publicListingStatus === 'published' && device.publicValuationId
         ? <Link title="Abrir ficha pública" className="text-xs font-semibold text-emerald-700 underline" to={'/store/for-parts/' + device.publicValuationId} target="_blank" rel="noopener noreferrer">Publicada ↗</Link>
         : <span className="text-xs text-slate-500">Sin publicar</span>,
       searchValue: (device) => device.publicListingStatus,
@@ -356,7 +358,7 @@ export function InventoryDevicesPage({
           ['Costo', activeAction.device.acquisitionCost],
           ['Destino', optionLabel(view.filters.destinationOptions, activeAction.device.destination)],
           ['Despiece', activeAction.device.isDonor ? dismantlingNames[activeAction.device.dismantlingStatus] : 'No aplica'],
-          ['Publicación', activeAction.device.publicListingStatus === 'published' ? 'Publicada' : 'Sin publicar'],
+          ['Publicación', activeAction.device.phoneListingStatus === 'published' ? 'En tienda' : activeAction.device.publicListingStatus === 'published' ? 'Para repuestos' : 'Sin publicar'],
         ] as const).map(([label, value]) => <div className="min-w-0" key={label}>
           <dt className="font-semibold text-slate-500">{label}</dt>
           <dd className="mt-1 break-words font-medium text-slate-800">{value || '—'}</dd>
