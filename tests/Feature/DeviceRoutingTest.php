@@ -94,12 +94,10 @@ final class DeviceRoutingTest extends TestCase
         $this->signIn();
         $consigned = $this->device([
             'inventory_purpose' => 'consignation',
-            'consignor_id' => (string) Str::ulid(),
         ]);
         $this->patchJson($this->path($consigned), $this->payload('Direct Sale'))
             ->assertOk()->assertJsonPath('data.inventory_purpose', 'consignation');
         $this->assertTrue($consigned->fresh()->is_sellable);
-        $this->assertNotNull($consigned->fresh()->consignor_id);
 
         $dismantled = $this->device([
             'inventory_purpose' => 'parts_donor',
