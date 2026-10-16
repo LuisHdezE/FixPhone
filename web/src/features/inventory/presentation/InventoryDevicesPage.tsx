@@ -14,6 +14,7 @@ import type { MasterDataProvider } from '@/features/master-data/application/mast
 import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
 import { DeviceComponentsModal } from './DeviceComponentsModal';
 import { DeviceDestinationModal } from './DeviceDestinationModal';
+import { DeviceRepairCostsModal } from './DeviceRepairCostsModal';
 import { PhonePublicationModal } from './PhonePublicationModal';
 import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
 
@@ -59,6 +60,7 @@ export function InventoryDevicesPage({
   const [canRoute, setCanRoute] = useState(false);
   const [routingDevice, setRoutingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [publishingPhone, setPublishingPhone] = useState<InventoryDeviceListItemDto | null>(null);
+  const [repairDevice, setRepairDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [deletingDevice, setDeletingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [editingDevice, setEditingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -239,6 +241,11 @@ export function InventoryDevicesPage({
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"
           onClick={() => setPublishingPhone(device)} title={'Publicar en tienda ' + device.id} type="button"
         ><AppIcon className="size-3.5" name="store" /></button> : null}
+        {canAdjust ? <button
+          aria-label={'Reparaciones e inversiones de ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"
+          onClick={() => setRepairDevice(device)} title={'Agregar repuesto a ' + device.id} type="button"
+        ><AppIcon className="size-3.5" name="wrench" /></button> : null}
         {canManage ? <button
           aria-label={'Editar ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
@@ -396,6 +403,7 @@ export function InventoryDevicesPage({
       </div>
     </ModalShell> : null}
     {extractingDevice ? <DeviceComponentsModal key={extractingDevice.inventoryId} device={extractingDevice} canPublish={canManage} onClose={() => setExtractingDevice(null)} onSaved={message => { setExtractingDevice(null); setNotice(message); void loadDevices(); }} /> : null}
+    {repairDevice ? <DeviceRepairCostsModal key={repairDevice.inventoryId} id={repairDevice.inventoryId} code={repairDevice.id} onClose={() => setRepairDevice(null)} onSaved={() => { setNotice('Instalación registrada y existencias actualizadas.'); void loadDevices(); }} /> : null}
     {publishingPhone ? <PhonePublicationModal key={publishingPhone.inventoryId} id={publishingPhone.inventoryId} onClose={() => setPublishingPhone(null)} onSaved={message => { setPublishingPhone(null); setNotice(message); void loadDevices(); }} /> : null}
     {routingDevice ? <DeviceDestinationModal
       key={routingDevice.inventoryId}
