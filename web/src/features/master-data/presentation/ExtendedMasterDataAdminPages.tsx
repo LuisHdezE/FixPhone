@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { AppIcon, type AppIconName } from '@/components/AppIcon';
 import { DataTable, type DataTableColumn } from '@/components/data-display/DataTable';
 import { StatusBadge } from '@/components/data-display/StatusBadge';
@@ -11,7 +11,7 @@ import { FormModal } from '@/components/forms/FormModal';
 import type { MasterDataGateway, MasterDataKind, MasterDataProvider } from '../application/master-data.contracts';
 
 type ExtendedMasterDataKind = Extract<MasterDataKind, 'colors' | 'storageCapacities' | 'ramCapacities' | 'conditions' | 'sparePartTypes'>;
-type Notice = { tone: 'success' | 'warning'; message: string } | null;
+import { AdminNotice, type Notice } from './AdminNotice';
 type ConfirmAction = {
   title: string;
   message: string;
@@ -73,11 +73,6 @@ function textSearch(values: readonly (string | number | null | undefined)[]) {
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'No se pudo guardar el cambio.';
-}
-
-function AdminNotice({ notice }: { notice: Notice }) {
-  if (!notice) return null;
-  return <div className={`rounded-md border px-3 py-2 text-xs ${notice.tone === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`} role="status">{notice.message}</div>;
 }
 
 
@@ -149,6 +144,7 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
   const [form, setForm] = useState<SimpleFormState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
+  const dismissNotice = useCallback(() => setNotice(null), []);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const itemsById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
   const parentOptions = useMemo(() => [{ value: '', label: 'Sin padre' }, ...items.map((item) => ({ value: item.id, label: item.name }))], [items]);
@@ -254,7 +250,7 @@ function SimpleMasterDataPage({ config, gateway, onChanged }: { config: SimpleMa
 
   return <PageShell actions={<button className="rounded-md bg-[var(--theme-primary)] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:brightness-95" data-extended-master-data-create onClick={newItem} type="button">{config.createLabel}</button>} breadcrumbs={[{ label: 'Admin' }, { label: 'Datos Maestros' }, { label: config.title }]} description={config.description} title={config.title}>
     <div className="grid gap-3" data-extended-master-data={config.kind} data-testid={config.dataAttribute}>
-      <AdminNotice notice={notice} />
+      <AdminNotice notice={notice} onDismiss={dismissNotice} />
       <DataTable caption={config.title} columns={columns} emptyMessage="No hay datos para mostrar." getRowId={(item) => item.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={items} searchable searchLabel={`Buscar ${config.title.toLocaleLowerCase()}`} searchPlaceholder="Buscar por nombre, slug, valor o estadoâ€¦" />
       {form ? <FormModal dataAttribute="data-extended-master-data-form" error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveItem(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? `Editar ${config.singularLabel.toLocaleLowerCase()}` : config.createLabel}>
         {config.supportsParent ? <SelectField id={`${config.kind}-parent`} label={config.parentLabel ?? 'Padre'} onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={parentOptions.filter((option) => option.value !== form.id)} value={form.parentId ?? ''} /> : null}
