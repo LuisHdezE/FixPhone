@@ -11,6 +11,7 @@ use App\Presentation\Http\Controllers\OperationalDashboardController;
 use App\Presentation\Http\Controllers\DeviceDismantlingController;
 use App\Presentation\Http\Controllers\DeviceRoutingController;
 use App\Presentation\Http\Controllers\MasterDataController;
+use App\Presentation\Http\Controllers\DeviceModelSpecificationsController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
 use App\Presentation\Http\Controllers\RepairQuoteController;
 use App\Presentation\Http\Controllers\DeviceInstalledPartsController;
@@ -142,6 +143,10 @@ Route::prefix('v1')->group(function (): void {
  Route::delete('/admin/master-data/{kind}/{id}',[MasterDataController::class, 'destroy'])->name('api.v1.admin.master-data.destroy');
 
  Route::middleware('auth:sanctum')->group(function (): void {
+  Route::get('/admin/device-models/{modelId}/technical', [DeviceModelSpecificationsController::class, 'show'])->middleware('permission:catalog.manage');
+  Route::put('/admin/device-models/{modelId}/technical', [DeviceModelSpecificationsController::class, 'saveSpecs'])->middleware('permission:catalog.manage');
+  Route::post('/admin/device-models/{modelId}/variants', [DeviceModelSpecificationsController::class, 'storeVariant'])->middleware('permission:catalog.manage');
+  Route::put('/admin/device-models/{modelId}/variants/{variantId}', [DeviceModelSpecificationsController::class, 'updateVariant'])->middleware('permission:catalog.manage');
   Route::get('/admin/dashboard/operational',[OperationalDashboardController::class, 'show'])->middleware('permission:inventory.view')->name('api.v1.admin.dashboard.operational.show');
   Route::get('/admin/inventory',[InventoryController::class, 'devicesList'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.index');
   Route::apiResource('admin/consignors', ConsignorsController::class)->except(['destroy'])->middleware('permission:catalog.manage');
