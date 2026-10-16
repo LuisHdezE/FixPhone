@@ -83,4 +83,35 @@ final class CompareCommercialScenariosTest extends TestCase
         self::assertContains('consignment_terms_must_be_reviewed', $result['warnings']);
         self::assertContains('whole_device_sale_not_eligible', $result['warnings']);
     }
+    public function test_historical_parts_count_once_and_new_outlay_is_separate(): void
+    {
+        $result = $this->service()->compare($this->snapshot(), $this->proposal());
+        self::assertSame(80000, $result['scenarios'][0]['economic_profit_minor']);
+        self::assertSame(170000, $result['scenarios'][1]['economic_profit_minor']);
+        self::assertSame(430000, $result['scenarios'][1]['cash_after_additional_outlay_minor']);
+    }
+
+    public function test_missing_historical_parts_cost_fails_closed(): void
+    {
+        $snapshot = $this->snapshot();
+        unset($snapshot['installed_parts_cost_minor']);
+        self::assertSame('insufficient_data', $this->service()->compare($snapshot, $this->proposal())['status']);
+    }
+
+    public function test_invalid_monetary_type_is_rejected(): void
+    {
+        $proposal = $this->proposal();
+        $proposal['scenarios'][1]['economic_extra_cost_minor'] = '100000';
+        $this->expectException(InvalidArgumentException::class);
+        $this->service()->compare($this->snapshot(), $proposal);
+    }
+
+    public function test_cash_outlay_exceeding_prospective_cost_is_rejected(): void
+    {
+        $proposal = $this->proposal();
+        $proposal['scenarios'][1]['incremental_cash_outlay_minor'] = 150000;
+        $this->expectException(InvalidArgumentException::class);
+        $this->service()->compare($this->snapshot(), $proposal);
+    }
+
 }
