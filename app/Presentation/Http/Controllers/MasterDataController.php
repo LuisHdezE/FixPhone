@@ -6,6 +6,7 @@ use App\Infrastructure\MasterData\MasterDataEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -174,8 +175,23 @@ final class MasterDataController extends Controller
      */
     private function assertDeletable(string $kind, string $id): void
     {
-        if ($kind === 'deviceModels' && \Illuminate\Support\Facades\DB::table('inventory_part_model_compatibilities')->where('device_model_id', $id)->exists()) {
-            abort(409, 'El modelo tiene repuestos compatibles y no puede eliminarse.');
+        if ($kind === 'deviceModels') {
+            $usedByInventory = DB::table('inventory_items')
+                ->where(function ($query) use ($id): void {
+                    $query->where('device_model_id', $id)
+                        ->orWhere('metadata->device_model_id', $id);
+                })
+                ->exists();
+
+            if ($usedByInventory
+                || DB::table('inventory_part_model_compatibilities')->where('device_model_id', $id)->exists()
+                || DB::table('device_model_specs')->where('device_model_id', $id)->exists()
+                || DB::table('device_model_variants')->where('device_model_id', $id)->exists()
+                || DB::table('device_model_media')->where('device_model_id', $id)->exists()) {
+                throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                    response()->json(['message' => 'No se puede eliminar un modelo con dispositivos, variantes, ficha técnica o imágenes asociados.'], 409)
+                );
+            }
         }
 
         if ($kind === 'brands' && $this->hasDependents('deviceModels', 'brandId', $id)) {

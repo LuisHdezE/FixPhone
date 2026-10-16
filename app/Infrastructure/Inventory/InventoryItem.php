@@ -5,6 +5,8 @@ namespace App\Infrastructure\Inventory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Infrastructure\MasterData\DeviceModelReferenceGuard;
+use Illuminate\Validation\ValidationException;
 
 class InventoryItem extends Model
 {
@@ -19,6 +21,8 @@ class InventoryItem extends Model
         'item_type',
         'brand',
         'model',
+        'device_model_id',
+        'device_model_variant_id',
         'operational_status',
         'publication_status',
         'inventory_purpose',
@@ -34,6 +38,29 @@ class InventoryItem extends Model
         'auto_publish_to_social',
         'metadata',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $item): void {
+            if (!$item->isDirty(['device_model_id', 'device_model_variant_id'])) {
+                return;
+            }
+
+            if ($item->device_model_id === null && $item->device_model_variant_id === null) {
+                return;
+            }
+
+            if (!in_array($item->item_type, ['device', 'used_phone'], true)) {
+                throw ValidationException::withMessages([
+                    'device_model_id' => 'Las referencias a modelos comerciales solo corresponden a teléfonos físicos.',
+                ]);
+            }
+
+            $guard = app(DeviceModelReferenceGuard::class);
+            $guard->assertKind($item->device_model_id, 'deviceModels', 'device_model_id');
+            $guard->assertVariantBelongsToModel($item->device_model_variant_id, $item->device_model_id);
+        });
+    }
 
     protected $casts = [
         'is_sellable' => 'boolean',
