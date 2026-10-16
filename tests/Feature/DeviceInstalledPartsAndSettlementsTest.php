@@ -73,14 +73,14 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
         $response = $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts", [
             'request_id' => $requestId,
             'part_name' => 'Batería iPhone 11',
-            'cost_amount_minor' => 100000,
+            'cost_amount_minor' => 0,
             'spare_part_item_id' => $sparePart->id,
             'notes' => 'Batería nueva 100% condición',
         ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.part_name', 'Batería iPhone 11')
-            ->assertJsonPath('data.cost_amount_minor', 100000)
+            ->assertJsonPath('data.cost_amount_minor', 0)
             ->assertJsonPath('replayed', false);
 
         // Verify spare part stock was decremented from 5 to 4
@@ -90,21 +90,47 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
         $replayResponse = $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts", [
             'request_id' => $requestId,
             'part_name' => 'Batería iPhone 11',
-            'cost_amount_minor' => 100000,
+            'cost_amount_minor' => 0,
             'spare_part_item_id' => $sparePart->id,
         ]);
 
         $replayResponse->assertStatus(200)->assertJsonPath('replayed', true);
         $this->assertEquals(4, $sparePart->fresh()->stock_quantity);
 
-        // 3. Change spare part catalog price in inventory later -> verify historical cost in installed parts remains 100.000
+        // 3. Change spare part catalog price in inventory later -> verify historical incremental cost in installed parts remains zero
         $sparePart->update(['cost_amount_minor' => 120000]);
 
         $listResponse = $this->getJson("/api/v1/admin/devices/{$device->id}/installed-parts");
 
         $listResponse->assertStatus(200)
-            ->assertJsonPath('data.total_installed_parts_cost_minor', 100000)
-            ->assertJsonPath('data.installed_parts.0.cost_amount_minor', 100000);
+            ->assertJsonPath('data.total_installed_parts_cost_minor', 0)
+            ->assertJsonPath('data.installed_parts.0.cost_amount_minor', 0);
+    }
+
+    public function test_existing_inventory_part_cannot_be_charged_again_to_the_phone(): void
+    {
+        Sanctum::actingAs($this->admin);
+        $device = InventoryItem::create([
+            'sku' => 'FXP-COST-01', 'title' => 'Samsung A325', 'item_type' => 'used_phone',
+            'operational_status' => 'en_reparacion', 'publication_status' => 'draft',
+            'inventory_purpose' => 'repair_then_sell', 'currency_code' => 'UYU', 'stock_quantity' => 1,
+        ]);
+        $spare = InventoryItem::create([
+            'sku' => 'REP-COST-01', 'title' => 'Pantalla A325', 'item_type' => 'spare_part',
+            'operational_status' => 'en_stock', 'publication_status' => 'draft',
+            'inventory_purpose' => 'sell_as_spare_part', 'currency_code' => 'UYU', 'stock_quantity' => 2,
+        ]);
+        $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts", [
+            'request_id' => (string) Str::uuid(), 'part_name' => 'Pantalla A325',
+            'cost_amount_minor' => 90000, 'spare_part_item_id' => $spare->id,
+        ])->assertUnprocessable();
+        $this->assertSame(2, $spare->fresh()->stock_quantity);
+        $this->assertDatabaseCount('device_installed_parts', 0);
+        $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts", [
+            'request_id' => (string) Str::uuid(), 'part_name' => 'Pantalla comprada',
+            'cost_amount_minor' => 90000,
+        ])->assertCreated()->assertJsonPath('data.cost_amount_minor', 90000);
+        $this->assertSame(2, $spare->fresh()->stock_quantity);
     }
 
     public function test_official_option_a_formula_for_direct_sales_settlement(): void
@@ -353,7 +379,7 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
         $addResponse = $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts", [
             'request_id' => (string) Str::uuid(),
             'part_name' => 'Pantalla Redmi Note 10',
-            'cost_amount_minor' => 80000,
+            'cost_amount_minor' => 0,
             'spare_part_item_id' => $sparePart->id,
         ]);
 
