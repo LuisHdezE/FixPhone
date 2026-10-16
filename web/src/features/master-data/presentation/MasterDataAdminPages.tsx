@@ -8,6 +8,7 @@ import { TextField } from '@/components/forms/TextField';
 import { PageShell } from '@/shell/PageShell';
 import { ModalShell } from '@/components/layout/ModalShell';
 import { FormModal } from '@/components/forms/FormModal';
+import { DeviceModelTechnicalModal } from './DeviceModelTechnicalModal';
 import type { MasterDataAdminViewProvider, MasterDataGateway, MasterDataProvider } from '../application/master-data.contracts';
 import type { MasterDataBrandDto, MasterDataCategoryDto, MasterDataDeviceModelDto } from '../application/master-data.dto';
 
@@ -221,6 +222,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
   const view = viewProvider.getView('deviceModels');
   const [brands] = useState<readonly MasterDataBrandDto[]>(() => masterDataProvider.getBrands());
   const [models, setModels] = useState<MasterDataDeviceModelDto[]>(() => [...masterDataProvider.getDeviceModels()]);
+  const [technicalModel, setTechnicalModel] = useState<MasterDataDeviceModelDto | null>(null);
   const [form, setForm] = useState<DeviceModelFormState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
@@ -310,7 +312,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
     { id: 'slug', header: view.columns.find((column) => column.id === 'slug')?.header ?? 'Slug', cell: (model) => <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{model.slug}</code>, sortable: true, sortValue: (model) => model.slug, searchValue: (model) => model.slug },
     { id: 'status', header: view.columns.find((column) => column.id === 'status')?.header ?? 'Estado', cell: (model) => status(model.active), sortable: true, sortValue: (model) => Number(model.active), searchValue: (model) => (model.active ? 'activo' : 'inactivo') },
     { id: 'sortOrder', header: view.columns.find((column) => column.id === 'sortOrder')?.header ?? 'Orden', cell: (model) => model.sortOrder, align: 'right', sortable: true, sortValue: (model) => model.sortOrder, searchValue: (model) => String(model.sortOrder) },
-    { id: 'actions', header: 'Acciones', cell: (model) => <div className="flex flex-wrap gap-1"><ActionButton onClick={() => editModel(model)}>Editar</ActionButton><ActionButton onClick={() => requestToggleModel(model)} tone="warning">{model.active ? 'Desactivar' : 'Activar'}</ActionButton><ActionButton onClick={() => requestDeleteModel(model)} tone="danger">Eliminar</ActionButton></div> },
+    { id: 'actions', header: 'Acciones', cell: (model) => <div className="flex flex-wrap gap-1"><ActionButton onClick={() => editModel(model)}>Editar</ActionButton><ActionButton onClick={() => setTechnicalModel(model)}>Ficha técnica</ActionButton><ActionButton onClick={() => requestToggleModel(model)} tone="warning">{model.active ? 'Desactivar' : 'Activar'}</ActionButton><ActionButton onClick={() => requestDeleteModel(model)} tone="danger">Eliminar</ActionButton></div> },
   ];
 
   return <PageShell actions={<PrimaryAction onClick={newModel}>Nuevo modelo</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
@@ -326,6 +328,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
         <BooleanSelect id="model-active" label="Estado" onChange={(value) => setForm((current) => current ? { ...current, active: value } : current)} value={form.active} trueLabel="Activo" falseLabel="Inactivo" />
       </FormModal> : null}
       <ConfirmDialog action={confirmAction} onCancel={() => setConfirmAction(null)} />
+      {technicalModel && <DeviceModelTechnicalModal key={technicalModel.id} model={technicalModel} ram={masterDataProvider.getRamCapacities()} storage={masterDataProvider.getStorageCapacities()} onClose={() => setTechnicalModel(null)} />}
     </div>
   </PageShell>;
 }
