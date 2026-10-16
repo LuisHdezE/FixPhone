@@ -115,4 +115,39 @@ final class DeviceModelSpecificationsApiTest extends TestCase
             'variant_key' => 'otra',
         ])->assertNotFound();
     }
+    public function test_repeated_spec_save_is_idempotent_and_empty_specs_can_be_saved(): void
+    {
+        $this->signIn();
+        $url = '/api/v1/admin/device-models/model-iphone-11/technical';
+        $payload = ['specs_json' => ['wifi' => '802.11ax'], 'source_type' => 'manual'];
+        $this->putJson($url, $payload)->assertOk();
+        $this->putJson($url, $payload)->assertOk();
+        $this->assertDatabaseCount('audit_events', 1);
+        $this->putJson($url, ['specs_json' => [], 'source_type' => 'manual'])->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('data.specifications.specs_json', []);
+    }
+
+    public function test_invalid_spec_shapes_and_duplicate_variant_keys_return_validation_errors(): void
+    {
+        $this->signIn();
+        $base = '/api/v1/admin/device-models/model-iphone-11';
+        foreach ([['wifi' => ['invalid']], ['wifi' => str_repeat('a', 2001)], ['list-value']] as $specs) {
+            $this->putJson($base.'/technical', ['specs_json' => $specs, 'source_type' => 'manual'])->assertUnprocessable();
+        }
+        $variant = ['name' => 'Base', 'variant_key' => 'base'];
+        $first = $this->postJson($base.'/variants', $variant)->assertCreated()->json('data.id');
+        $this->postJson($base.'/variants', $variant)->assertUnprocessable()->assertJsonValidationErrors('variant_key');
+        $this->putJson($base.'/variants/'.$first, $variant)->assertOk();
+        $this->assertDatabaseCount('device_model_variants', 1);
+    }
+
+    public function test_authenticated_user_without_catalog_permission_cannot_read_or_write(): void
+    {
+        $this->signIn('intake_operator');
+        $base = '/api/v1/admin/device-models/model-iphone-11';
+        $this->getJson($base.'/technical')->assertForbidden();
+        $this->putJson($base.'/technical', ['specs_json' => [], 'source_type' => 'manual'])->assertForbidden();
+        $this->postJson($base.'/variants', ['name' => 'Base', 'variant_key' => 'base'])->assertForbidden();
+    }
+
 }

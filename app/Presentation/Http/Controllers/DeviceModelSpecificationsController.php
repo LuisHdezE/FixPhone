@@ -30,11 +30,19 @@ final class DeviceModelSpecificationsController extends Controller
     {
         $this->rejectUnexpected($request, ['specs_json', 'source_type', 'source_url', 'source_reference']);
         $data = $request->validate([
-            'specs_json' => ['required', 'array'],
+            'specs_json' => ['present', 'array', 'max:64'],
+            ...array_fill_keys(array_map(fn ($key) => 'specs_json.'.$key, ['display', 'chipset', 'wifi', 'bluetooth', 'battery', 'camera', 'network', 'os']), ['sometimes', 'string', 'max:2000']),
             'source_type' => ['required', Rule::in(['manual', 'devicespecsapi', 'other'])],
             'source_url' => ['nullable', 'url', 'max:2048'],
             'source_reference' => ['nullable', 'string', 'max:255'],
         ]);
+        if (strlen(json_encode($data['specs_json'], JSON_THROW_ON_ERROR)) > 65536
+            || ($data['specs_json'] !== [] && array_is_list($data['specs_json']))) {
+            throw ValidationException::withMessages(['specs_json' => 'La ficha debe ser un objeto de hasta 64 KB.']);
+        }
+        // Provenance describes this revision, never a previous import.
+        $data['source_url'] = $data['source_url'] ?? null;
+        $data['source_reference'] = $data['source_reference'] ?? null;
         app(DeviceModelReferenceGuard::class)->assertKind($modelId, 'deviceModels', 'device_model_id');
 
         $saved = DB::transaction(function () use ($request, $modelId, $data): DeviceModelSpec {
@@ -46,6 +54,8 @@ final class DeviceModelSpecificationsController extends Controller
             }
             $before = $spec->exists ? $spec->only(['specs_json', 'source_type', 'source_url', 'source_reference', 'status']) : null;
             $spec->fill($data);
+            if ($spec->exists && !$spec->isDirty()) return $spec;
+            $spec->fetched_at = null;
             $spec->status = 'draft';
             $spec->reviewed_at = null;
             $spec->reviewed_by = null;
@@ -66,6 +76,7 @@ final class DeviceModelSpecificationsController extends Controller
         app(DeviceModelReferenceGuard::class)->assertKind($modelId, 'deviceModels', 'device_model_id');
         app(DeviceModelReferenceGuard::class)->assertCapacities($data['ram_capacity_id'] ?? null, $data['storage_capacity_id'] ?? null);
         $variant = DB::transaction(function () use ($request, $modelId, $data): DeviceModelVariant {
+            $this->assertVariantKeyAvailable($modelId, $data['variant_key']);
             $variant = DeviceModelVariant::query()->create([...$data, 'device_model_id' => $modelId]);
             $this->audit($request, 'device_model.variant_created', $modelId, ['variant_id' => $variant->id]);
             return $variant;
@@ -78,6 +89,7 @@ final class DeviceModelSpecificationsController extends Controller
         $data = $this->variantPayload($request);
         app(DeviceModelReferenceGuard::class)->assertKind($modelId, 'deviceModels', 'device_model_id');
         $variant = DB::transaction(function () use ($request, $modelId, $variantId, $data): DeviceModelVariant {
+            $this->assertVariantKeyAvailable($modelId, $data['variant_key'], $variantId);
             $variant = DeviceModelVariant::query()->where('device_model_id', $modelId)->whereKey($variantId)->lockForUpdate()->firstOrFail();
             $before = $variant->only(array_keys($data));
             $variant->fill($data)->save();
@@ -89,6 +101,16 @@ final class DeviceModelSpecificationsController extends Controller
             return $variant;
         });
         return response()->json(['data' => $variant]);
+    }
+
+    private function assertVariantKeyAvailable(string $modelId, string $key, ?string $exceptId = null): void
+    {
+        MasterDataEntry::query()->whereKey($modelId)->lockForUpdate()->firstOrFail();
+        $exists = DeviceModelVariant::query()->where('device_model_id', $modelId)
+            ->where('variant_key', $key)->when($exceptId !== null, fn ($query) => $query->where('id', '!=', $exceptId))->exists();
+        if ($exists) {
+            throw ValidationException::withMessages(['variant_key' => 'Ya existe una variante con esa clave para el modelo.']);
+        }
     }
 
     private function variantPayload(Request $request): array
