@@ -42,6 +42,7 @@ final class DeviceCommercialPreviewTest extends TestCase
             'model' => 'A32',
             'inventory_purpose' => 'sell_as_used_phone',
             'operational_status' => 'disponible',
+            'publication_status' => 'no_publicable',
             'stock_quantity' => 1,
             'cost_amount_minor' => 180000,
             'sale_price_amount_minor' => 450000,
@@ -156,6 +157,26 @@ final class DeviceCommercialPreviewTest extends TestCase
         foreach (['device_sale_records', 'device_part_extractions', 'device_installed_parts', 'audit_events'] as $table) {
             $this->assertDatabaseCount($table, 0);
         }
+    }
+
+    public function test_consigned_device_does_not_return_owned_profit(): void
+    {
+        $device = $this->device(['inventory_purpose' => 'consignation']);
+        $this->signIn('owner');
+        $this->postJson($this->path($device), $this->payload())->assertOk()
+            ->assertJsonPath('data.status', 'insufficient_data')
+            ->assertJsonPath('data.scenarios', [])
+            ->assertJsonPath('data.reasons.0', 'consignment_terms_unavailable');
+    }
+
+    public function test_missing_device_returns_not_found_and_unknown_scenario_fields_are_rejected(): void
+    {
+        $this->signIn('owner');
+        $this->postJson('/api/v1/admin/devices/missing/commercial-preview', $this->payload())->assertNotFound();
+        $device = $this->device();
+        $payload = $this->payload();
+        $payload['scenarios'][0]['publish'] = true;
+        $this->postJson($this->path($device), $payload)->assertUnprocessable();
     }
 
 }

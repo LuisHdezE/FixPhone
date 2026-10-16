@@ -29,7 +29,7 @@ final class CompareCommercialScenarios
         }
 
         if (!isset($snapshot['acquisition_cost_minor']) || !is_int($snapshot['acquisition_cost_minor'])
-            || $snapshot['acquisition_cost_minor'] < 0) {
+            || $snapshot['acquisition_cost_minor'] < 0 || $snapshot['acquisition_cost_minor'] > 100000000000) {
             return [
                 'status' => 'insufficient_data',
                 'reasons' => ['acquisition_cost_missing'],
@@ -108,6 +108,17 @@ final class CompareCommercialScenarios
         }
         if (($snapshot['can_plan_whole_device_sale'] ?? false) !== true) {
             $warnings[] = 'whole_device_sale_not_eligible';
+        }
+
+        // Ownership and settlement terms are not an acquisition cost. Avoid
+        // presenting owned-device profit for someone else's consigned asset.
+        if (($snapshot['is_consigned'] ?? false) === true) {
+            return [
+                'status' => 'insufficient_data', 'currency_code' => $currency,
+                'inventory_item_id' => $snapshot['inventory_item_id'],
+                'reasons' => ['consignment_terms_unavailable'], 'scenarios' => [],
+                'warnings' => $warnings, 'recommended_kind' => null,
+            ];
         }
 
         // A mathematical winner without evidence would be misleading.
