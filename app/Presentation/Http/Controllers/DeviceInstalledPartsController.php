@@ -99,6 +99,13 @@ final class DeviceInstalledPartsController extends Controller
 
             $sparePartItem = null;
             if (!empty($validated['spare_part_item_id'])) {
+                // A part already acquired into inventory has zero incremental purchase
+                // cost for this device; its historical inventory cost remains separate.
+                if ((int) $validated['cost_amount_minor'] !== 0) {
+                    throw ValidationException::withMessages([
+                        'cost_amount_minor' => 'Al instalar un repuesto existente del inventario, el costo adicional del equipo debe ser cero.',
+                    ]);
+                }
                 $sparePartItem = InventoryItem::query()
                     ->whereKey($validated['spare_part_item_id'])
                     ->lockForUpdate()
@@ -110,9 +117,24 @@ final class DeviceInstalledPartsController extends Controller
                     ]);
                 }
 
-                if ((int) $sparePartItem->stock_quantity < 1) {
+                if ($sparePartItem->item_type !== 'spare_part') {
                     throw ValidationException::withMessages([
-                        'spare_part_item_id' => 'El repuesto seleccionado no tiene existencias disponibles en inventario.',
+                        'spare_part_item_id' => 'Seleccioná un artículo de tipo repuesto.',
+                    ]);
+                }
+                if ($sparePartItem->consignor_id !== null && $sparePartItem->consignor_id !== $device->consignor_id) {
+                    throw ValidationException::withMessages([
+                        'spare_part_item_id' => 'El repuesto pertenece a un consignante diferente. Revisá la autorización de uso.',
+                    ]);
+                }
+                $held = (int) DB::table('order_items')
+                    ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                    ->where('order_items.inventory_item_id', $sparePartItem->id)
+                    ->whereIn('orders.status', ['pending', 'processing', 'ready'])
+                    ->sum('order_items.quantity');
+                if ((int) $sparePartItem->stock_quantity - $held < 1) {
+                    throw ValidationException::withMessages([
+                        'spare_part_item_id' => 'El repuesto no tiene existencias libres: pueden estar reservadas para pedidos.',
                     ]);
                 }
 
