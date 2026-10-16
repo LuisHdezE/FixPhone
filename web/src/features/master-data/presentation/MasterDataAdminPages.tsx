@@ -55,10 +55,6 @@ function AdminNotice({ notice }: { notice: Notice }) {
   return <div className={`rounded-md border px-3 py-2 text-xs ${notice.tone === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`} role="status">{notice.message}</div>;
 }
 
-function PersistenceNote() {
-  return <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] leading-4 text-emerald-700">Conectado a la API. Los cambios se guardan de forma permanente en la base de datos.</p>;
-}
-
 
 function ConfirmDialog({ action, onCancel }: { action: ConfirmAction; onCancel: () => void }) {
   if (!action) return null;
@@ -211,7 +207,7 @@ export function MasterDataBrandsPage({ masterDataProvider, viewProvider, gateway
 
   return <PageShell actions={<PrimaryAction onClick={newBrand}>Nueva marca</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
     <div className="grid gap-3" data-master-data-brands>
-      <PersistenceNote /><AdminNotice notice={notice} />
+      <AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(brand) => brand.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={brands} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
       {form ? <FormModal dataAttribute="data-master-data-form" error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveBrand(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar marca' : 'Nueva marca'}>
         <TextField id="brand-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
@@ -322,7 +318,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
 
   return <PageShell actions={<PrimaryAction onClick={newModel}>Nuevo modelo</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
     <div className="grid gap-3" data-master-data-device-models>
-      <PersistenceNote /><AdminNotice notice={notice} />
+      <AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(model) => model.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={models} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
       {form ? <FormModal dataAttribute="data-master-data-form" error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveModel(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar modelo' : 'Nuevo modelo'}>
         <SelectField id="model-brand" label="Marca" onChange={(value) => setForm((current) => current ? { ...current, brandId: value } : current)} options={brands.map((brand) => ({ value: brand.id, label: brand.name }))} value={form.brandId} />
@@ -443,7 +439,7 @@ export function MasterDataCategoriesPage({ masterDataProvider, viewProvider, gat
 
   return <PageShell actions={<PrimaryAction onClick={newCategory}>Nueva categoría</PrimaryAction>} breadcrumbs={breadcrumbItems(view.breadcrumbs)} description={view.description} title={view.title}>
     <div className="grid gap-3" data-master-data-categories>
-      <PersistenceNote /><AdminNotice notice={notice} />
+      <AdminNotice notice={notice} />
       <DataTable caption={view.title} columns={columns} emptyMessage={view.emptyMessage} getRowId={(category) => category.id} initialPageSize={5} pageSizeOptions={[5, 10, 25]} rows={categories} searchable searchLabel={view.searchLabel} searchPlaceholder={view.searchPlaceholder} />
       {form ? <FormModal dataAttribute="data-master-data-form" error={error} onCancel={() => setForm(null)} onSubmit={(event) => void saveCategory(event)} submitLabel={form.id ? 'Guardar' : 'Crear'} title={form.id ? 'Editar categoría' : 'Nueva categoría'}>
         <SelectField id="category-parent" label="Padre" onChange={(value) => setForm((current) => current ? { ...current, parentId: value || null } : current)} options={[{ value: '', label: 'Raíz' }, ...categories.filter((category) => category.id !== form.id).map((category) => ({ value: category.id, label: category.name }))]} value={form.parentId ?? ''} />
