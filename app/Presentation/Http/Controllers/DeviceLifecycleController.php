@@ -11,8 +11,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
- * Explicit lifecycle transitions. Intake destination is historical; only
- * operational_status and the corresponding current purpose may evolve.
+ * Workshop progress and combined operational history. Destination and purpose
+ * are owned by the existing routing workflow and are never changed here.
  */
 final class DeviceLifecycleController extends Controller
 {
@@ -67,7 +67,7 @@ final class DeviceLifecycleController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         if (array_diff(array_keys($request->all()), ['status', 'reason'])) {
-            return response()->json(['errors' => ['status' => ['No se permite cambiar el destino inicial, stock, venta ni publicación desde esta operación.']]], 422);
+            return response()->json(['errors' => ['status' => ['No se permite cambiar el destino, stock, venta ni publicación desde esta operación.']]], 422);
         }
         $values = $request->validate([
             'status' => ['required', 'string', Rule::in(array_keys(self::TRANSITIONS))],
@@ -87,7 +87,7 @@ final class DeviceLifecycleController extends Controller
             $nextPurpose = $previousPurpose;
             $item->operational_status = $next;
             $item->inventory_purpose = $nextPurpose;
-            // Never touch metadata.destination, SKU, stock or commercial flags.
+            // Preserve destination, purpose, ownership, SKU, stock and commercial flags.
             $item->save();
 
             DB::table('audit_events')->insert([
