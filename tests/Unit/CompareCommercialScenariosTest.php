@@ -80,6 +80,8 @@ final class CompareCommercialScenariosTest extends TestCase
         $snapshot['is_consigned'] = true;
         $snapshot['can_plan_whole_device_sale'] = false;
         $result = $this->service()->compare($snapshot, $this->proposal());
+        self::assertSame('insufficient_data', $result['status']);
+        self::assertSame([], $result['scenarios']);
         self::assertContains('consignment_terms_must_be_reviewed', $result['warnings']);
         self::assertContains('whole_device_sale_not_eligible', $result['warnings']);
     }
@@ -110,6 +112,22 @@ final class CompareCommercialScenariosTest extends TestCase
     {
         $proposal = $this->proposal();
         $proposal['scenarios'][1]['incremental_cash_outlay_minor'] = 150000;
+        $this->expectException(InvalidArgumentException::class);
+        $this->service()->compare($this->snapshot(), $proposal);
+    }
+
+    public function test_zero_cost_own_stock_does_not_inflate_historical_cost(): void
+    {
+        $snapshot = $this->snapshot();
+        $snapshot['installed_parts_cost_minor'] = 0;
+        $result = $this->service()->compare($snapshot, $this->proposal());
+        self::assertSame(110000, $result['scenarios'][0]['economic_profit_minor']);
+    }
+
+    public function test_duplicate_and_missing_scenarios_are_rejected(): void
+    {
+        $proposal = $this->proposal();
+        $proposal['scenarios'][2]['kind'] = 'sell_as_is';
         $this->expectException(InvalidArgumentException::class);
         $this->service()->compare($this->snapshot(), $proposal);
     }
