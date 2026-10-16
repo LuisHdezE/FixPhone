@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { AppIcon } from '@/components/AppIcon';
@@ -71,6 +72,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
   const [busy, setBusy] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const canEdit = permissions.includes('catalog.manage');
   const canAdjust = permissions.includes('inventory.adjust');
@@ -95,7 +97,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
         return r.json() as Promise<{ data: { brands: CatalogItem[]; deviceModels: CatalogItem[] } }>;
       })
       .then(payload => { if (active) setCatalog({ brands: payload.data.brands.filter(x => x.active), deviceModels: payload.data.deviceModels.filter(x => x.active) }); })
-      .catch(() => { if (active) setMessage('No se pudieron cargar los codificadores de marca y modelo.'); });
+      .catch(() => { if (active) setCatalogError('No se pudieron cargar los codificadores de marca y modelo.'); });
     return () => { active = false; };
   }, []);
 
@@ -248,7 +250,8 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
         <button className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold disabled:opacity-40" disabled={!hasFilters} onClick={() => setFilter(initialFilter)} type="button">Limpiar</button>
       </div>
     </section>
-    {message ? <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">{message}</p> : null}
+    <SuccessToast message={message} />
+    {catalogError ? <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">{catalogError}</p> : null}
     {state.status === 'loading' || state.status === 'idle' ? <InlineFeedback title="Cargando inventario" message="Consultando los artículos reales." tone="info" /> : null}
     {state.status === 'error' ? <div className="grid gap-2"><InlineFeedback title="Error de inventario" message={state.message} tone="error" /><button className="w-fit text-xs underline" type="button" onClick={() => setRefreshToken((v) => v + 1)}>Reintentar</button></div> : null}
     {state.status === 'empty' ? <InlineFeedback title="Sin coincidencias" message={state.message} /> : null}
