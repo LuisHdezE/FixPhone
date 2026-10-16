@@ -184,6 +184,7 @@ final class MasterDataController extends Controller
                 ->exists();
 
             if ($usedByInventory
+                || DB::table('inventory_part_model_compatibilities')->where('device_model_id', $id)->exists()
                 || DB::table('device_model_specs')->where('device_model_id', $id)->exists()
                 || DB::table('device_model_variants')->where('device_model_id', $id)->exists()
                 || DB::table('device_model_media')->where('device_model_id', $id)->exists()) {

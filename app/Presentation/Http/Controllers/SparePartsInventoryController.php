@@ -49,6 +49,13 @@ final class SparePartsInventoryController extends Controller
                     'device_model_id' => $data['device_model_id'],
                 ],
             ]);
+            DB::table('inventory_part_model_compatibilities')->insert([
+                'id' => (string) Str::ulid(),
+                'inventory_item_id' => $item->id,
+                'device_model_id' => $data['device_model_id'],
+                'source' => 'catalog',
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
             DB::table('audit_events')->insert([
                 'id' => (string) Str::ulid(),
                 'event_type' => 'inventory.spare_part_created',

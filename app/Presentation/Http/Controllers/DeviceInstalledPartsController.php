@@ -23,6 +23,15 @@ final class DeviceInstalledPartsController extends Controller
         $deviceBrandId = $deviceMeta['brand_id'] ?? null;
         $partBrandId = $partMeta['brand_id'] ?? null;
 
+        // Explicit compatible-model relations take precedence over the single
+        // legacy model stored in metadata. This supports shared components.
+        if ($deviceModelId && DB::table('inventory_part_model_compatibilities')
+            ->where('inventory_item_id', $part->id)->exists()) {
+            return DB::table('inventory_part_model_compatibilities')
+                ->where('inventory_item_id', $part->id)
+                ->where('device_model_id', $deviceModelId)->exists();
+        }
+
         // Fully identified catalog models must agree; names cannot override
         // a documented mismatch (e.g. A22 LTE vs A22 5G).
         if ($deviceModelId && $partModelId) {
