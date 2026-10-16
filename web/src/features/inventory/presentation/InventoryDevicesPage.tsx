@@ -214,7 +214,7 @@ export function InventoryDevicesPage({
       id: 'actions',
       header: 'Acciones',
       align: 'right',
-      cell: (device) => <div className="flex items-center justify-end gap-1">
+      cell: (device) => <div className="flex max-w-44 items-center justify-start gap-1 overflow-x-auto sm:max-w-56" aria-label={'Acciones de ' + device.id}>
         <button
           aria-label={'Ver detalle de ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600"
