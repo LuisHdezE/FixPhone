@@ -244,8 +244,8 @@ export function InventoryDevicesPage({
         {canAdjust ? <button
           aria-label={'Reparaciones e inversiones de ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"
-          onClick={() => setRepairDevice(device)} title={'Agregar repuesto a ' + device.id} type="button"
-        ><AppIcon className="size-3.5" name="wrench" /></button> : null}
+          onClick={() => setRepairDevice(device)} title={'Reparaciones e inversiones de ' + device.id} type="button"
+        ><AppIcon className="size-3.5" name="chart" /></button> : null}
         {canManage ? <button
           aria-label={'Editar ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
