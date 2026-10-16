@@ -21,6 +21,7 @@ type ApiInventoryItem = {
   inventory_purpose: string;
   dismantling_status?: string | null;
   public_listing_status?: 'draft' | 'published';
+  phone_listing_status?: 'draft' | 'published';
   public_valuation_id?: string | null;
   consignor_id?: string | null;
   cost_amount_minor?: number | null;
@@ -123,6 +124,7 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
     isDonor: mappedDestination === 'Donor',
     dismantlingStatus: isDismantlingStatus(item.dismantling_status) ? item.dismantling_status : 'unknown',
     publicListingStatus: item.public_listing_status === 'published' ? 'published' : 'draft',
+    phoneListingStatus: item.phone_listing_status === 'published' ? 'published' : 'draft',
     publicValuationId: item.public_valuation_id ?? null,
     ownershipType: item.consignor_id || ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'].includes(item.inventory_purpose) ? 'consignment' : 'owned',
     consignorId: item.consignor_id ?? null,
