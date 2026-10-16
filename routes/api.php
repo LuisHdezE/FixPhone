@@ -10,6 +10,7 @@ use App\Presentation\Http\Controllers\DeviceInventoryCrudController;
 use App\Presentation\Http\Controllers\OperationalDashboardController;
 use App\Presentation\Http\Controllers\DeviceDismantlingController;
 use App\Presentation\Http\Controllers\DeviceRoutingController;
+use App\Presentation\Http\Controllers\DeviceLifecycleController;
 use App\Presentation\Http\Controllers\MasterDataController;
 use App\Presentation\Http\Controllers\DeviceValuationController;
 use App\Presentation\Http\Controllers\RepairQuoteController;
@@ -193,6 +194,8 @@ Route::prefix('v1')->group(function (): void {
   Route::patch('/admin/inventory/{id}',[DeviceInventoryCrudController::class, 'update'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.device.update');
   Route::delete('/admin/inventory/{id}',[DeviceInventoryCrudController::class, 'destroy'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.device.destroy');
   Route::patch('/admin/inventory/{id}/dismantling',[DeviceDismantlingController::class, 'update'])->middleware('permission:workshop.dismantle')->name('api.v1.admin.inventory.dismantling.update');
+  Route::get('/admin/inventory/{id}/lifecycle', [DeviceLifecycleController::class, 'show'])->middleware('permission:inventory.view');
+  Route::patch('/admin/inventory/{id}/lifecycle', [DeviceLifecycleController::class, 'update'])->middleware('permission:inventory.adjust');
   Route::patch('/admin/inventory/{id}/routing',[DeviceRoutingController::class, 'update'])->middleware('permission:routing.manage')->name('api.v1.admin.inventory.device.routing.update');
   Route::prefix('admin/media/storage-profiles')->middleware('permission:integrations.manage')->group(function (): void {
    Route::get('/', [MediaStorageSettingsController::class, 'index'])->name('api.v1.admin.media.storage.index');

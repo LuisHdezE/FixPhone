@@ -2,6 +2,8 @@ import type { InventoryDeviceIntakeViewDto, InventoryDevicesViewDto } from './de
 import type { InventoryDashboardDto, OperationalDashboardDto } from './inventory.dto';
 
 export interface InventoryDevicesGateway {
+  getLifecycle(inventoryId: string): Promise<import('./devices.dto').DeviceLifecycleSnapshot>;
+  changeLifecycle(inventoryId: string, status: import('./devices.dto').DeviceLifecycleStatus, reason: string): Promise<void>;
   updateDevice(inventoryId: string, fields: import('./devices.dto').InventoryDeviceEditDto): Promise<void>;
   deleteDevice(inventoryId: string): Promise<void>;
   listDevices(): Promise<readonly import('./devices.dto').InventoryDeviceListItemDto[]>;

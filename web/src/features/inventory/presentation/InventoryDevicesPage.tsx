@@ -12,6 +12,8 @@ import { PageShell } from '@/shell/PageShell';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
+import { DeviceLifecycleModal } from './DeviceLifecycleModal';
+import { lifecycleLabel } from '../application/devices.dto';
 import { DeviceComponentsModal } from './DeviceComponentsModal';
 import { DeviceDestinationModal } from './DeviceDestinationModal';
 import { DeviceRepairCostsModal } from './DeviceRepairCostsModal';
@@ -53,6 +55,7 @@ export function InventoryDevicesPage({
   const [notice, setNotice] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [canDismantle, setCanDismantle] = useState(false);
+  const [lifecycleDevice, setLifecycleDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [canAdjust, setCanAdjust] = useState(false);
   const [extractingDevice, setExtractingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [canValuate, setCanValuate] = useState(false);
@@ -191,6 +194,11 @@ export function InventoryDevicesPage({
       searchValue: (device) => device.destination,
     },
     {
+      id: 'operational', header: 'Estado actual',
+      cell: (device) => <span className="text-xs font-semibold">{lifecycleLabel(device.operationalStatus)}</span>,
+      sortable: true, sortValue: (device) => device.operationalStatus,
+    },
+    {
       id: 'dismantling',
       header: 'Despiece',
       cell: (device) => device.isDonor
@@ -228,6 +236,9 @@ export function InventoryDevicesPage({
           title={'Consultar evaluación técnica de ' + device.id}
           to={'/apps/inventory/devices/' + encodeURIComponent(device.inventoryId) + '/evaluation'}
         ><AppIcon className="size-3.5" name="check-circle" /></Link>
+        <button aria-label={'Estado e historial de ' + device.id} title={'Estado e historial de ' + device.id}
+          className="grid size-7 shrink-0 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"
+          onClick={() => setLifecycleDevice(device)} type="button"><AppIcon className="size-3.5" name="layers" /></button>
         {canRoute ? <button
           aria-label={'Cambiar estado o destino de ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
@@ -418,6 +429,10 @@ export function InventoryDevicesPage({
         void loadDevices();
       }}
     /> : null}
+    {lifecycleDevice ? <DeviceLifecycleModal device={lifecycleDevice} gateway={gateway} canManage={canAdjust}
+      onClose={() => setLifecycleDevice(null)} onSaved={message => {
+        setLifecycleDevice(null); setNotice(message); void loadDevices();
+      }} /> : null}
     {editingDevice ? <InventoryDeviceIntakeModal
       key={editingDevice.inventoryId}
       editDevice={editingDevice}

@@ -2,6 +2,8 @@ import { adminFetch } from '@/auth/adminApiSession';
 import type { InventoryDevicesGateway } from '../application/inventory.contracts';
 import type {
   DeviceDestination,
+  DeviceLifecycleSnapshot,
+  DeviceLifecycleStatus,
   DismantlingStatus,
   DevicePhysicalCondition,
   DevicePowerState,
@@ -122,6 +124,7 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
     id: item.sku?.trim() || item.id,
     inventoryId: item.id,
     isDonor: mappedDestination === 'Donor',
+    operationalStatus: item.operational_status,
     dismantlingStatus: isDismantlingStatus(item.dismantling_status) ? item.dismantling_status : 'unknown',
     publicListingStatus: item.public_listing_status === 'published' ? 'published' : 'draft',
     phoneListingStatus: item.phone_listing_status === 'published' ? 'published' : 'draft',
@@ -151,6 +154,23 @@ async function readApiError(response: Response, fallback: string): Promise<strin
 }
 
 export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
+  async getLifecycle(inventoryId: string): Promise<DeviceLifecycleSnapshot> {
+    const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId) + '/lifecycle', { cache: 'no-store' });
+    if (!response.ok) throw new Error(await readApiError(response, 'No se pudo obtener el estado e historial'));
+    const payload = await response.json() as { data: DeviceLifecycleSnapshot };
+    return payload.data;
+  }
+
+  async changeLifecycle(inventoryId: string, status: DeviceLifecycleStatus, reason: string): Promise<void> {
+    const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId) + '/lifecycle', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, reason }),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'No se pudo actualizar el estado operativo'));
+  }
+
+
   async updateDestination(inventoryId: string, destination: DeviceDestination, reason: string): Promise<void> {
     const response = await adminFetch('/api/v1/admin/inventory/' + encodeURIComponent(inventoryId) + '/routing', {
       method: 'PATCH',

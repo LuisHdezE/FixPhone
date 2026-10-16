@@ -6,6 +6,52 @@ export type DevicePowerState = 'Yes' | 'No' | 'Unknown';
 export type DeviceAccountLock = 'Clear' | 'Locked' | 'Unknown';
 export type DismantlingStatus = 'unknown' | 'not_started' | 'partial' | 'exhausted';
 
+export type DeviceLifecycleStatus =
+  | 'ingresado' | 'en_evaluacion' | 'en_espera' | 'para_reparar'
+  | 'en_reparacion' | 'reparado' | 'listo_para_venta'
+  | 'para_deshuesar' | 'descartado' | 'en_stock' | 'vendido' | 'sold';
+
+export type DeviceLifecycleHistory = {
+  id: string;
+  occurred_at: string;
+  actor_id: string;
+  from_status: string | null;
+  to_status: string | null;
+  from_purpose: string | null;
+  to_purpose: string | null;
+  reason: string | null;
+};
+
+export type DeviceLifecycleSnapshot = {
+  id: string;
+  sku: string;
+  current_destination: DeviceDestination | null;
+  operational_status: string;
+  inventory_purpose: string;
+  allowed_statuses: readonly DeviceLifecycleStatus[];
+  history: readonly DeviceLifecycleHistory[];
+};
+
+export const lifecycleLabels: Record<DeviceLifecycleStatus, string> = {
+  ingresado: 'Ingresado',
+  en_evaluacion: 'En evaluación',
+  en_espera: 'En espera',
+  para_reparar: 'Pendiente de reacondicionar',
+  en_reparacion: 'En reacondicionamiento',
+  reparado: 'Reacondicionado',
+  listo_para_venta: 'Listo para vender',
+  para_deshuesar: 'Donante para repuestos',
+  descartado: 'Descartado',
+  en_stock: 'En stock (anterior)',
+  vendido: 'Vendido',
+  sold: 'Vendido',
+};
+
+export function lifecycleLabel(status: string): string {
+  return Object.hasOwn(lifecycleLabels, status) ? lifecycleLabels[status as DeviceLifecycleStatus] : status;
+}
+
+
 export interface InventoryDeviceEditDto {
   brandId: string;
   deviceModelId: string;
@@ -37,6 +83,7 @@ export interface InventoryDeviceListItemDto {
   id: string;
   inventoryId: string;
   isDonor: boolean;
+  operationalStatus: string;
   dismantlingStatus: DismantlingStatus;
   publicListingStatus: 'draft' | 'published';
   phoneListingStatus: 'draft' | 'published';
@@ -59,7 +106,7 @@ export interface InventoryDeviceListItemDto {
 
 // Static presentation reference data is not a persisted inventory record.
 export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
-  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'phoneListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
+  'operationalStatus' | 'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'phoneListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
 
 export interface InventoryFilterOptionDto {
   value: string;
