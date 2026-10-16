@@ -17,7 +17,7 @@ final class DeviceCommercialPreviewTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function signIn(string $role): void
+    private function signIn(?string $role): void
     {
         $user = User::query()->create([
             'id' => (string) Str::ulid(),
@@ -26,7 +26,9 @@ final class DeviceCommercialPreviewTest extends TestCase
             'password' => Hash::make('test-password'),
             'active' => true,
         ]);
-        DB::table('user_roles')->insert(['user_id' => $user->id, 'role_slug' => $role]);
+        if ($role !== null) {
+            DB::table('user_roles')->insert(['user_id' => $user->id, 'role_slug' => $role]);
+        }
         Sanctum::actingAs($user);
     }
 
@@ -70,9 +72,7 @@ final class DeviceCommercialPreviewTest extends TestCase
     public function test_user_without_inventory_permission_is_rejected(): void
     {
         $device = $this->device();
-        $this->signIn('technician');
-        // Technician role access should be evaluated against inventory.view.
-        // If role grants the permission, the positive behavior is covered below.
+        $this->signIn(null);
         $this->postJson($this->path($device), $this->payload())->assertStatus(403);
     }
 
