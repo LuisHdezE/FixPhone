@@ -14,6 +14,7 @@ import type { MasterDataProvider } from '@/features/master-data/application/mast
 import { InventoryDeviceIntakeModal } from './InventoryDeviceIntakeModal';
 import { DeviceComponentsModal } from './DeviceComponentsModal';
 import { DeviceDestinationModal } from './DeviceDestinationModal';
+import { PhonePublicationModal } from './PhonePublicationModal';
 import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
 
 const dismantlingNames: Record<DismantlingStatus, string> = {
@@ -57,6 +58,7 @@ export function InventoryDevicesPage({
   const [canManage, setCanManage] = useState(false);
   const [canRoute, setCanRoute] = useState(false);
   const [routingDevice, setRoutingDevice] = useState<InventoryDeviceListItemDto | null>(null);
+  const [publishingPhone, setPublishingPhone] = useState<InventoryDeviceListItemDto | null>(null);
   const [deletingDevice, setDeletingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [editingDevice, setEditingDevice] = useState<InventoryDeviceListItemDto | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -230,6 +232,11 @@ export function InventoryDevicesPage({
           title={'Cambiar estado o destino de ' + device.id}
           type="button"
         ><AppIcon className="size-3.5" name="map" /></button> : null}
+        {canManage && device.destination === 'Direct Sale' ? <button
+          aria-label={'Publicar teléfono ' + device.id}
+          className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"
+          onClick={() => setPublishingPhone(device)} title={'Publicar en tienda ' + device.id} type="button"
+        ><AppIcon className="size-3.5" name="store" /></button> : null}
         {canManage ? <button
           aria-label={'Editar ' + device.id}
           className="grid size-7 place-items-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-600 disabled:opacity-40"
@@ -387,6 +394,7 @@ export function InventoryDevicesPage({
       </div>
     </ModalShell> : null}
     {extractingDevice ? <DeviceComponentsModal key={extractingDevice.inventoryId} device={extractingDevice} canPublish={canManage} onClose={() => setExtractingDevice(null)} onSaved={message => { setExtractingDevice(null); setNotice(message); void loadDevices(); }} /> : null}
+    {publishingPhone ? <PhonePublicationModal key={publishingPhone.inventoryId} id={publishingPhone.inventoryId} onClose={() => setPublishingPhone(null)} onSaved={message => { setPublishingPhone(null); setNotice(message); void loadDevices(); }} /> : null}
     {routingDevice ? <DeviceDestinationModal
       key={routingDevice.inventoryId}
       inventoryId={routingDevice.inventoryId}
