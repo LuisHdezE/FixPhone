@@ -134,6 +134,49 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
         $this->assertSame(2, $spare->fresh()->stock_quantity);
     }
 
+    public function test_legacy_a22_without_catalog_ids_matches_extracted_a22_parts(): void
+    {
+        Sanctum::actingAs($this->admin);
+        $device = InventoryItem::create([
+            'sku' => 'FXP-A22-009', 'title' => 'Samsung Galaxy A22 5G',
+            'brand' => 'Samsung', 'model' => 'Galaxy A22 5G',
+            'item_type' => 'used_phone', 'operational_status' => 'en_reparacion',
+            'publication_status' => 'draft', 'inventory_purpose' => 'repair_then_sell',
+            'currency_code' => 'UYU', 'stock_quantity' => 1,
+        ]);
+        $part = InventoryItem::create([
+            'sku' => 'REP-A22-001', 'title' => 'Parlante Samsung Galaxy A22 5G',
+            'brand' => 'Samsung', 'model' => 'Samsung Galaxy A22 5G',
+            'item_type' => 'spare_part', 'operational_status' => 'en_stock',
+            'publication_status' => 'draft', 'inventory_purpose' => 'sell_as_spare_part',
+            'currency_code' => 'UYU', 'stock_quantity' => 1,
+            'metadata' => ['brand_id' => 'brand-samsung', 'device_model_id' => 'model-a22-5g'],
+        ]);
+        $this->getJson("/api/v1/admin/devices/{$device->id}/compatible-parts")
+            ->assertOk()->assertJsonFragment(['id' => $part->id]);
+        $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts", [
+            'request_id' => (string) Str::uuid(), 'part_name' => $part->title,
+            'cost_amount_minor' => 0, 'spare_part_item_id' => $part->id,
+        ])->assertCreated();
+        $this->assertSame(0, $part->fresh()->stock_quantity);
+
+        $wrong = InventoryItem::create([
+            'sku' => 'REP-A22-4G', 'title' => 'Parlante A22 LTE',
+            'brand' => 'Samsung', 'model' => 'Galaxy A22',
+            'item_type' => 'spare_part', 'operational_status' => 'en_stock',
+            'publication_status' => 'draft', 'inventory_purpose' => 'sell_as_spare_part',
+            'currency_code' => 'UYU', 'stock_quantity' => 1,
+            'metadata' => ['device_model_id' => 'model-a22-4g'],
+        ]);
+        $this->getJson("/api/v1/admin/devices/{$device->id}/compatible-parts")
+            ->assertDontSee($wrong->id);
+        $this->postJson("/api/v1/admin/devices/{$device->id}/installed-parts", [
+            'request_id' => (string) Str::uuid(), 'part_name' => $wrong->title,
+            'cost_amount_minor' => 0, 'spare_part_item_id' => $wrong->id,
+        ])->assertUnprocessable();
+        $this->assertSame(1, $wrong->fresh()->stock_quantity);
+    }
+
     public function test_official_option_a_formula_for_direct_sales_settlement(): void
     {
         Sanctum::actingAs($this->admin);
