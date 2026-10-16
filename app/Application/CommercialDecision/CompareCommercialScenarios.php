@@ -43,6 +43,16 @@ final class CompareCommercialScenarios
             throw new InvalidArgumentException('Exactly three explicit scenarios are required.');
         }
 
+        $historicalParts = $snapshot['installed_parts_cost_minor'] ?? null;
+        if (!is_int($historicalParts) || $historicalParts < 0 || $historicalParts > 100000000000) {
+            return [
+                'status' => 'insufficient_data',
+                'reasons' => ['installed_parts_cost_unavailable'],
+                'scenarios' => [],
+                'recommended_kind' => null,
+            ];
+        }
+
         $rows = [];
         foreach ($proposal['scenarios'] as $row) {
             if (!is_array($row) || !isset($row['kind']) || !is_string($row['kind'])) {
@@ -59,12 +69,26 @@ final class CompareCommercialScenarios
                 throw new InvalidArgumentException('Explicit estimates required; no automatic market price is assumed.');
             }
 
+            // The proposal's extra costs refer ONLY to prospective interventions.
+            // The installed part ledger contributes historical costs exactly once.
+            foreach (['gross_sale_minor', 'economic_extra_cost_minor',
+                'incremental_cash_outlay_minor', 'sale_expenses_minor'] as $moneyField) {
+                if (!is_int($row[$moneyField]) || $row[$moneyField] < 0 || $row[$moneyField] > 100000000000) {
+                    throw new InvalidArgumentException("Invalid scenario amount: {$moneyField}.");
+                }
+            }
+            if ($row['economic_extra_cost_minor'] > 100000000000 - $historicalParts) {
+                throw new InvalidArgumentException('Combined costs exceed permitted range.');
+            }
+            if ($row['incremental_cash_outlay_minor'] > $row['economic_extra_cost_minor']) {
+                throw new InvalidArgumentException('Incremental outlay cannot exceed prospective economic costs.');
+            }
+
             $rows[$kind] = $this->calculator->calculate([
                 'kind' => $kind,
                 'gross_sale_minor' => $row['gross_sale_minor'],
                 'acquisition_cost_minor' => $snapshot['acquisition_cost_minor'],
-                'economic_extra_cost_minor' => $row['economic_extra_cost_minor']
-                    + ($snapshot['installed_parts_cost_minor'] ?? 0),
+                'economic_extra_cost_minor' => $row['economic_extra_cost_minor'] + $historicalParts,
                 'incremental_cash_outlay_minor' => $row['incremental_cash_outlay_minor'],
                 'sale_expenses_minor' => $row['sale_expenses_minor'],
                 'expected_days_to_cash' => $row['expected_days_to_cash'] ?? null,
