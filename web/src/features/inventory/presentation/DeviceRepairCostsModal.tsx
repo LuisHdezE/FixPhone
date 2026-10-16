@@ -3,10 +3,10 @@ import { adminFetch } from '@/auth/adminApiSession';
 import { ModalShell } from '@/components/layout/ModalShell';
 type Part = { id: string; sku: string | null; title: string; item_type: string; stock_quantity: number; currency_code?: string; consignor_id?: string | null };
 type Install = { id: string; part_name: string; cost_amount_minor: number; spare_part_item_id: string | null; voided_at: string | null };
-type Record = { device: { currency_code: string; cost_amount_minor: number | null; title: string }; installed_parts: Install[]; total_installed_parts_cost_minor: number };
+type RepairRecord = { device: { currency_code: string; cost_amount_minor: number | null; title: string }; installed_parts: Install[]; total_installed_parts_cost_minor: number };
 const money = (minor: number, currency: string) => new Intl.NumberFormat('es-UY', { style: 'currency', currency: currency || 'UYU' }).format(minor / 100);
 export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: string; code: string; onClose: () => void; onSaved: () => void }) {
-  const [record, setRecord] = useState<Record | null>(null);
+  const [record, setRecord] = useState<RepairRecord | null>(null);
   const [parts, setParts] = useState<Part[]>([]);
   const [origin, setOrigin] = useState<'stock' | 'external'>('stock');
   const [partId, setPartId] = useState('');
@@ -22,7 +22,7 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
       adminFetch('/api/v1/admin/inventory/items', { cache: 'no-store' }),
     ]);
     if (!installed.ok || !inventory.ok) throw new Error('No se pudieron cargar los repuestos.');
-    const a = await installed.json() as { data: Record };
+    const a = await installed.json() as { data: RepairRecord };
     const b = await inventory.json() as { data: Part[] };
     setRecord(a.data);
     setParts(b.data.filter(p => p.item_type === 'spare_part' && p.stock_quantity > 0));
