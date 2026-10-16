@@ -1,6 +1,6 @@
 export type InventoryHealth = 'healthy' | 'reorder' | 'out-of-stock' | 'available';
 export type InventoryHealthFilter = 'all' | InventoryHealth;
-export type InventoryFilter = { search: string; health: InventoryHealthFilter; category: string };
+export type InventoryFilter = { search: string; health: InventoryHealthFilter; category: string; publication: 'all' | 'published' | 'unpublished' };
 
 export type InventoryItem = {
   id: string;
@@ -16,6 +16,8 @@ export type InventoryItem = {
   inventoryPurpose: string;
   operationalStatus: string;
   publicationStatus: string;
+  storeVisible: boolean;
+  storeUrl: string | null;
   stockQuantity: number;
   reorderPoint: number | null;
   health: InventoryHealth;
