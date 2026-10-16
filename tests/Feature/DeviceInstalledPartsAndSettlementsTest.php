@@ -57,6 +57,7 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
             'id' => (string) Str::ulid(),
             'sku' => 'REP-BAT-001',
             'title' => 'Batería iPhone 11',
+            'brand' => 'Apple', 'model' => 'iPhone 11',
             'item_type' => 'spare_part',
             'operational_status' => 'en_stock',
             'publication_status' => 'draft',
@@ -111,12 +112,12 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
     {
         Sanctum::actingAs($this->admin);
         $device = InventoryItem::create([
-            'sku' => 'FXP-COST-01', 'title' => 'Samsung A325', 'item_type' => 'used_phone',
+            'sku' => 'FXP-COST-01', 'title' => 'Samsung A325', 'brand' => 'Samsung', 'model' => 'A325', 'item_type' => 'used_phone',
             'operational_status' => 'en_reparacion', 'publication_status' => 'draft',
             'inventory_purpose' => 'repair_then_sell', 'currency_code' => 'UYU', 'stock_quantity' => 1,
         ]);
         $spare = InventoryItem::create([
-            'sku' => 'REP-COST-01', 'title' => 'Pantalla A325', 'item_type' => 'spare_part',
+            'sku' => 'REP-COST-01', 'title' => 'Pantalla A325', 'brand' => 'Samsung', 'model' => 'A325', 'item_type' => 'spare_part',
             'operational_status' => 'en_stock', 'publication_status' => 'draft',
             'inventory_purpose' => 'sell_as_spare_part', 'currency_code' => 'UYU', 'stock_quantity' => 2,
         ]);
@@ -354,6 +355,7 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
             'id' => (string) Str::ulid(),
             'sku' => 'FXP-000500',
             'title' => 'Xiaomi Redmi Note 10',
+            'brand' => 'Xiaomi', 'model' => 'Redmi Note 10',
             'item_type' => 'used_phone',
             'operational_status' => 'en_reparacion',
             'publication_status' => 'draft',
@@ -366,6 +368,7 @@ class DeviceInstalledPartsAndSettlementsTest extends TestCase
             'id' => (string) Str::ulid(),
             'sku' => 'REP-SCR-001',
             'title' => 'Pantalla Redmi Note 10',
+            'brand' => 'Xiaomi', 'model' => 'Redmi Note 10',
             'item_type' => 'spare_part',
             'operational_status' => 'en_stock',
             'publication_status' => 'draft',

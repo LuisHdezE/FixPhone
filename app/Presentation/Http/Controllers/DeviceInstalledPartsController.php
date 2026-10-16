@@ -13,6 +13,45 @@ use Illuminate\Validation\ValidationException;
 
 final class DeviceInstalledPartsController extends Controller
 {
+    private function compatible(InventoryItem $device, InventoryItem $part): bool
+    {
+        if ($part->item_type !== 'spare_part') return false;
+        $deviceMeta = $device->metadata ?? [];
+        $partMeta = $part->metadata ?? [];
+        $deviceModelId = $deviceMeta['device_model_id'] ?? null;
+        $partModelId = $partMeta['device_model_id'] ?? null;
+        $deviceBrandId = $deviceMeta['brand_id'] ?? null;
+        $partBrandId = $partMeta['brand_id'] ?? null;
+        if ($deviceModelId && $partModelId) {
+            return $deviceModelId === $partModelId && (!$deviceBrandId || !$partBrandId || $deviceBrandId === $partBrandId);
+        }
+        if ($deviceModelId || $partModelId) return false;
+        // Legacy entries without catalog identifiers require an exact normalized
+        // brand/model pair. Never guess from titles or approximate model strings.
+        $normalize = static fn (?string $value): string => mb_strtolower(trim(preg_replace('/\\s+/u', ' ', $value ?? '')));
+        return $normalize($device->brand) !== '' && $normalize($device->model) !== ''
+            && $normalize($device->brand) === $normalize($part->brand)
+            && $normalize($device->model) === $normalize($part->model);
+    }
+
+    public function compatibleParts(string $id): JsonResponse
+    {
+        $device = InventoryItem::query()->whereKey($id)->whereIn('item_type', ['device', 'used_phone'])->firstOrFail();
+        $parts = InventoryItem::query()->where('item_type', 'spare_part')->where('stock_quantity', '>', 0)
+            ->orderBy('title')->get()->filter(fn (InventoryItem $part) => $this->compatible($device, $part)
+                && ($part->consignor_id === null || $part->consignor_id === $device->consignor_id));
+        $ids = $parts->pluck('id')->all();
+        $held = DB::table('order_items')->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereIn('order_items.inventory_item_id', $ids)
+            ->whereIn('orders.status', ['pending', 'processing', 'ready'])
+            ->select('order_items.inventory_item_id', DB::raw('SUM(order_items.quantity) as quantity'))
+            ->groupBy('order_items.inventory_item_id')->pluck('quantity', 'inventory_item_id');
+        return response()->json(['data' => $parts->filter(fn (InventoryItem $part) => $part->stock_quantity > (int) ($held[$part->id] ?? 0))
+            ->map(fn (InventoryItem $part) => ['id' => $part->id, 'sku' => $part->sku, 'title' => $part->title,
+                'stock_quantity' => (int) $part->stock_quantity - (int) ($held[$part->id] ?? 0)])
+            ->values()->all()])->header('Cache-Control', 'private, no-store');
+    }
+
     public function index(string $id): JsonResponse
     {
         $device = InventoryItem::query()
@@ -120,6 +159,11 @@ final class DeviceInstalledPartsController extends Controller
                 if ($sparePartItem->item_type !== 'spare_part') {
                     throw ValidationException::withMessages([
                         'spare_part_item_id' => 'Seleccioná un artículo de tipo repuesto.',
+                    ]);
+                }
+                if (!$this->compatible($device, $sparePartItem)) {
+                    throw ValidationException::withMessages([
+                        'spare_part_item_id' => 'Este repuesto no es compatible con la marca y modelo del dispositivo.',
                     ]);
                 }
                 if ($sparePartItem->consignor_id !== null && $sparePartItem->consignor_id !== $device->consignor_id) {
