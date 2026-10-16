@@ -16,11 +16,12 @@ return new class extends Migration {
             $table->string('source_reference')->nullable();
             $table->timestamp('fetched_at')->nullable();
             $table->timestamp('reviewed_at')->nullable();
-            $table->foreignId('reviewed_by')->nullable();
+            $table->ulid('reviewed_by')->nullable();
             $table->unsignedInteger('schema_version')->default(1);
             $table->string('status', 24)->default('draft');
             $table->timestamps();
             $table->foreign('device_model_id')->references('id')->on('master_data_entries')->restrictOnDelete();
+            $table->foreign('reviewed_by')->references('id')->on('users')->restrictOnDelete();
         });
 
         Schema::create('device_model_media', function (Blueprint $table) {

@@ -6,9 +6,9 @@ use Illuminate\Validation\ValidationException;
 
 final class DeviceModelReferenceGuard
 {
-    public function assertKind(string $id, string $kind, string $field): void
+    public function assertKind(?string $id, string $kind, string $field): void
     {
-        if (!MasterDataEntry::query()->whereKey($id)->where('kind', $kind)->exists()) {
+        if ($id === null || trim($id) === '' || !MasterDataEntry::query()->whereKey($id)->where('kind', $kind)->exists()) {
             throw ValidationException::withMessages([$field => 'La referencia no pertenece al tipo de catálogo esperado.']);
         }
     }
