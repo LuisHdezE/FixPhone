@@ -89,6 +89,20 @@ final class OperationalInventoryController extends Controller
                 if (!is_array($brand) || ($brand['active'] ?? false) !== true || !is_array($model) || ($model['active'] ?? false) !== true || ($model['brandId'] ?? null) !== $brandId) {
                     throw ValidationException::withMessages(['device_model_id' => 'Seleccioná una marca y un modelo activo correspondiente.']);
                 }
+                // Replace only the automatic primary-model relation. Additional
+                // reviewed compatibilities remain attached to this same item.
+                $oldModelId = $item->metadata['device_model_id'] ?? null;
+                if ($oldModelId !== $modelId) {
+                    DB::table('inventory_part_model_compatibilities')
+                        ->where('inventory_item_id', $item->id)
+                        ->where('device_model_id', $oldModelId)
+                        ->where('source', 'catalog')->delete();
+                }
+                DB::table('inventory_part_model_compatibilities')->insertOrIgnore([
+                    'id' => (string) Str::ulid(), 'inventory_item_id' => $item->id,
+                    'device_model_id' => $modelId, 'source' => 'catalog',
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
                 $validated['brand'] = $brand['name'];
                 $validated['model'] = $model['name'];
                 $metadata = is_array($item->metadata) ? $item->metadata : [];
