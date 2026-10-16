@@ -24,6 +24,7 @@
         { "value": "Pending Evaluation", "label": "Pendiente evaluación" },
         { "value": "Donor", "label": "Donante" },
         { "value": "Refurbish", "label": "Reacondicionar" },
+        { "value": "Direct Sale", "label": "Venta directa (tal cual)" },
         { "value": "Hold", "label": "En espera" },
         { "value": "Discard", "label": "Descartar" }
       ],
