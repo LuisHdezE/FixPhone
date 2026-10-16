@@ -28,3 +28,22 @@ test('success notices expire while warnings remain persistent', () => {
   assert.match(notices, /notice\.tone === 'warning'/);
   assert.match(notices, /role="alert"/);
 });
+
+test('other admin screens use temporary success feedback', () => {
+  const screens = [
+    '../src/features/inventory/presentation/InventoryDevicesPage.tsx',
+    '../src/features/media-storage/presentation/MediaStorageSettingsPage.tsx',
+    '../src/features/reference-prices/presentation/ReferencePriceImportPage.tsx',
+    '../src/features/repair-quotes/presentation/RepairQuotesPage.tsx',
+    '../src/features/valuation/presentation/ValuPhonePage.tsx',
+    '../src/features/prompts/presentation/AiPromptCatalogPage.tsx',
+    '../src/customers/CustomerDirectoryView.tsx',
+    '../src/orders/OrderListView.tsx',
+  ];
+  for (const screen of screens) {
+    assert.match(read(screen), /<SuccessToast message=\{notice\} \/>/);
+  }
+  const toast = read('../src/components/feedback/SuccessToast.tsx');
+  assert.match(toast, /setTimeout\(\(\) => setVisible\(false\), 4000\)/);
+  assert.match(toast, /clearTimeout\(timer\)/);
+});
