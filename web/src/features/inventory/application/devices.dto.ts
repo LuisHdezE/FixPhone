@@ -1,6 +1,6 @@
 import type { StatusBadgeTone } from '@/components/data-display/StatusBadge';
 
-export type DeviceDestination = 'Pending Evaluation' | 'Donor' | 'Refurbish' | 'Hold' | 'Discard';
+export type DeviceDestination = 'Pending Evaluation' | 'Donor' | 'Refurbish' | 'Direct Sale' | 'Hold' | 'Discard';
 export type DevicePhysicalCondition = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Damaged' | 'Unknown';
 export type DevicePowerState = 'Yes' | 'No' | 'Unknown';
 export type DeviceAccountLock = 'Clear' | 'Locked' | 'Unknown';
@@ -39,6 +39,7 @@ export interface InventoryDeviceListItemDto {
   isDonor: boolean;
   dismantlingStatus: DismantlingStatus;
   publicListingStatus: 'draft' | 'published';
+  phoneListingStatus: 'draft' | 'published';
   publicValuationId: string | null;
   ownershipType: 'owned' | 'consignment';
   consignorId: string | null;
@@ -58,7 +59,7 @@ export interface InventoryDeviceListItemDto {
 
 // Static presentation reference data is not a persisted inventory record.
 export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
-  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
+  'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'phoneListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
 
 export interface InventoryFilterOptionDto {
   value: string;

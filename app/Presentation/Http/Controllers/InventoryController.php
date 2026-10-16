@@ -32,7 +32,8 @@ class InventoryController extends Controller
             $publication = $visible->get($item->id);
             return [
                 ...$item->toArray(),
-                'public_listing_status' => $publication ? 'published' : 'draft',
+                'public_listing_status' => ($publication || ($item->publication_status === 'publicado' && $item->inventory_purpose === 'sell_as_used_phone')) ? 'published' : 'draft',
+                'phone_listing_status' => ($item->publication_status === 'publicado' && ($item->metadata['destination'] ?? null) === 'Direct Sale') ? 'published' : 'draft',
                 'public_valuation_id' => $publication?->id,
             ];
         })])->header('Cache-Control', 'private, no-store, no-cache, must-revalidate');
@@ -117,8 +118,11 @@ class InventoryController extends Controller
         $items = InventoryItem::where('publication_status', 'publicado')
             ->where('is_sellable', true)->where('stock_quantity', '>', 0)
             ->where('sale_price_amount_minor', '>', 0)
-            ->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
-            ->whereIn('operational_status', ['reparado', 'en_stock'])
+            ->where(function ($query): void {
+                $query->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
+                    ->orWhere('metadata->destination', 'Direct Sale');
+            })
+            ->whereIn('operational_status', ['reparado', 'en_stock', 'disponible'])
             ->where(function ($query): void {
                 $query->whereNull('metadata->origin')->orWhere('metadata->origin', '!=', 'recovered')->orWhere('metadata->part_condition', 'functional');
             })->get();

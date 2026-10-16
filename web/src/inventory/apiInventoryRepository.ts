@@ -17,6 +17,8 @@ type InventoryRecord = {
   inventory_purpose: string;
   operational_status: string;
   publication_status: string;
+  store_visible: boolean;
+  store_url: string | null;
   stock_quantity: number;
   reorder_point: number | null;
   updated_at: string | null;
@@ -51,6 +53,8 @@ function mapRecord(record: InventoryRecord): InventoryItem {
     inventoryPurpose: record.inventory_purpose,
     operationalStatus: record.operational_status,
     publicationStatus: record.publication_status,
+    storeVisible: record.store_visible === true,
+    storeUrl: record.store_url ?? null,
     stockQuantity: record.stock_quantity,
     reorderPoint: record.reorder_point,
     health: health(record.stock_quantity, record.reorder_point),
@@ -79,6 +83,9 @@ export const apiInventoryRepository: InventoryRepository = {
     const search = filter.search.trim().toLocaleLowerCase('es');
     const items = payload.data.map(mapRecord).filter((item) => {
       if (filter.health !== 'all' && item.health !== filter.health) return false;
+      if (filter.category !== 'all' && item.itemType !== filter.category) return false;
+      if (filter.publication === 'published' && !item.storeVisible) return false;
+      if (filter.publication === 'unpublished' && item.storeVisible) return false;
       return !search || [item.productName, item.sku, item.category, item.brand ?? '', item.model ?? '']
         .some((value) => value.toLocaleLowerCase('es').includes(search));
     });

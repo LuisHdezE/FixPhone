@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Inventory\InventoryItem;
+use App\Infrastructure\Valuation\PublishedPartsDonor;
 use App\Infrastructure\MasterData\MasterDataEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,29 @@ final class OperationalInventoryController extends Controller
     public function index(): JsonResponse
     {
         $items = InventoryItem::query()->orderByDesc('created_at')->orderByDesc('id')->get();
-        return response()->json(['data' => $items->map(fn (InventoryItem $item) => $this->summary($item))]);
+        // Apply the same eligibility gates as the public product catalog.
+        $storeIds = InventoryItem::query()
+            ->where('publication_status', 'publicado')
+            ->where('is_sellable', true)->where('stock_quantity', '>', 0)
+            ->where('sale_price_amount_minor', '>', 0)
+            ->where(function ($query): void {
+                $query->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
+                    ->orWhere('metadata->destination', 'Direct Sale');
+            })
+            ->whereIn('operational_status', ['reparado', 'en_stock', 'disponible'])
+            ->where(function ($query): void {
+                $query->whereNull('metadata->origin')->orWhere('metadata->origin', '!=', 'recovered')
+                    ->orWhere('metadata->part_condition', 'functional');
+            })->pluck('id')->flip();
+        $donorListings = PublishedPartsDonor::query()
+            ->whereIn('inventory_item_id', $items->pluck('id'))
+            ->get(['id', 'inventory_item_id'])->keyBy('inventory_item_id');
+        return response()->json(['data' => $items->map(function (InventoryItem $item) use ($storeIds, $donorListings): array {
+            $donor = $donorListings->get($item->id);
+            $url = $storeIds->has($item->id) ? '/store/products/'.$item->id
+                : ($donor ? '/store/for-parts/'.$donor->id : null);
+            return [...$this->summary($item), 'store_visible' => $url !== null, 'store_url' => $url];
+        })])->header('Cache-Control', 'private, no-store');
     }
 
     public function show(string $id): JsonResponse

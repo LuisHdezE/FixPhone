@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useEffect, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { AppIcon } from '@/components/AppIcon';
@@ -162,7 +163,7 @@ export function OrderListView({ repository = apiOrdersRepository }: { repository
       </div>
     </section>
 
-    {notice ? <p className="rounded-md border border-green-200 bg-green-50 p-2 text-xs text-green-800" role="status">{notice}</p> : null}
+    <SuccessToast message={notice} />
     {actionError ? <p className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700" role="alert">{actionError}</p> : null}
     {loading ? <InlineFeedback title="Cargando pedidos" message="Consultando los pedidos persistidos en FixPhone." tone="info"/> : null}
     {!loading && error ? <div className="grid gap-2">
