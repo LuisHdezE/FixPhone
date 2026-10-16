@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { AppIcon } from '@/components/AppIcon';
@@ -298,7 +299,7 @@ export function InventoryDevicesPage({
         </div>
       ) : null}
 
-      {notice ? <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">{notice}</p> : null}
+      <SuccessToast message={notice} />
       {actionError && !deletingDevice ? <p role="alert" className="mt-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">{actionError}</p> : null}
 
       {error ? (
