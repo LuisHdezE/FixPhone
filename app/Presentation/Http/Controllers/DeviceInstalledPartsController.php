@@ -22,16 +22,33 @@ final class DeviceInstalledPartsController extends Controller
         $partModelId = $partMeta['device_model_id'] ?? null;
         $deviceBrandId = $deviceMeta['brand_id'] ?? null;
         $partBrandId = $partMeta['brand_id'] ?? null;
+
+        // Fully identified catalog models must agree; names cannot override
+        // a documented mismatch (e.g. A22 LTE vs A22 5G).
         if ($deviceModelId && $partModelId) {
-            return $deviceModelId === $partModelId && (!$deviceBrandId || !$partBrandId || $deviceBrandId === $partBrandId);
+            return $deviceModelId === $partModelId
+                && (!$deviceBrandId || !$partBrandId || $deviceBrandId === $partBrandId);
         }
-        if ($deviceModelId || $partModelId) return false;
-        // Legacy entries without catalog identifiers require an exact normalized
-        // brand/model pair. Never guess from titles or approximate model strings.
-        $normalize = static fn (?string $value): string => mb_strtolower(trim(preg_replace('/\\s+/u', ' ', $value ?? '')));
-        return $normalize($device->brand) !== '' && $normalize($device->model) !== ''
-            && $normalize($device->brand) === $normalize($part->brand)
-            && $normalize($device->model) === $normalize($part->model);
+        if ($deviceBrandId && $partBrandId && $deviceBrandId !== $partBrandId) return false;
+
+        // Legacy/quick intake may omit model IDs even though extracted parts
+        // have them. Require an exact brand and model name match in that case.
+        // Removing a repeated brand prefix allows "Galaxy A22 5G" and
+        // "Samsung Galaxy A22 5G", but never guesses similar model numbers.
+        $normalize = static fn (?string $value): string =>
+            mb_strtolower(trim(preg_replace('/\\s+/u', ' ', $value ?? '')));
+        $deviceBrand = $normalize($device->brand);
+        $partBrand = $normalize($part->brand);
+        if ($deviceBrand === '' || $deviceBrand !== $partBrand) return false;
+        $normalizeModel = static function (?string $value) use ($normalize, $deviceBrand): string {
+            $model = $normalize($value);
+            if (str_starts_with($model, $deviceBrand.' ')) {
+                $model = trim(mb_substr($model, mb_strlen($deviceBrand) + 1));
+            }
+            return $model;
+        };
+        $deviceModel = $normalizeModel($device->model);
+        return $deviceModel !== '' && $deviceModel === $normalizeModel($part->model);
     }
 
     public function compatibleParts(string $id): JsonResponse
