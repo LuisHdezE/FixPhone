@@ -1,3 +1,4 @@
+import { SuccessToast } from '@/components/feedback/SuccessToast';
 import { useEffect, useState } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { AppIcon } from '@/components/AppIcon';
@@ -207,7 +208,7 @@ export function CustomerDirectoryView({ repository = apiCustomersRepository }: C
       </div>
     </section>
 
-    {notice ? <p className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800" role="status">{notice}</p> : null}
+    <SuccessToast message={notice} />
     {actionError ? <p className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700" role="alert">{actionError}</p> : null}
 
     {state.status === 'loading' || state.status === 'idle'
