@@ -20,7 +20,7 @@ final class StorefrontCampaignController extends Controller
     public function update(Request $request): JsonResponse
     {
         $values = $request->validate([
-            'slides' => ['present', 'array', 'max:8'],
+            'slides' => ['present', 'array', 'list', 'max:8'],
             'slides.*' => ['array:id,eyebrow,title,description,actionLabel,actionHref,image'],
             'slides.*.id' => ['required', 'string', 'max:80', 'distinct', 'regex:/^[a-zA-Z0-9_-]+$/'],
             'slides.*.eyebrow' => ['present', 'nullable', 'string', 'max:60'],

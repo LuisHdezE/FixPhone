@@ -67,6 +67,7 @@ final class StorefrontCampaignTest extends TestCase
         $this->putJson('/api/v1/admin/store/campaigns', ['slides' => [$this->slide(), $this->slide()]])->assertUnprocessable();
         $this->putJson('/api/v1/admin/store/campaigns', ['slides' => array_map(fn ($i) => $this->slide('slide-'.$i), range(1, 9))])->assertUnprocessable();
         $this->putJson('/api/v1/admin/store/campaigns', [])->assertUnprocessable();
+        $this->putJson('/api/v1/admin/store/campaigns', ['slides' => ['named' => $this->slide()]])->assertUnprocessable();
         $this->getJson('/api/v1/store/campaigns')->assertJsonCount(1, 'data.slides')->assertJsonPath('data.slides.0.id', 'phones');
     }
 
