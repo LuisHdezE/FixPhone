@@ -4,6 +4,7 @@ import type { StorefrontProvider } from '../application/storefront.contracts';
 import { discoverStorefrontProducts } from '../application/storefront.discovery';
 import { StorefrontPageIntro } from './StorefrontPrimitives';
 import { StorefrontProductCard } from './StorefrontProductCard';
+import { StorefrontDiscoverySummary } from './StorefrontDiscoverySummary';
 
 export function StorefrontProductListingPage({ provider }: { provider: StorefrontProvider }) {
   const listing = provider.getProductListingView();
@@ -34,7 +35,7 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
         />
       </section>
 
-      <section className="grid gap-3 lg:grid-cols-[17rem_minmax(0,1fr)]">
+      <section className="grid items-start gap-3 lg:grid-cols-[17rem_minmax(0,1fr)]">
         <aside className="grid gap-3 rounded-xl border border-black/10 bg-white p-3 shadow-sm lg:sticky lg:top-24 lg:self-start" data-storefront-listing-filters>
           <label className="grid gap-1.5">
             <span className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">Búsqueda</span>
@@ -124,30 +125,18 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
           ))}
         </aside>
 
-        <div className="grid gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/10 bg-white px-4 py-3 shadow-sm" data-storefront-discovery-summary>
-            <div>
-              <p className="text-sm font-black text-slate-950" data-storefront-discovery-count>
-                {discovery.resultCount} de {listing.products.length} productos
-              </p>
-              <p className="mt-0.5 text-[11px] font-bold text-slate-500">
-                Búsqueda + {discovery.activeFilterCount} filtro{discovery.activeFilterCount === 1 ? '' : 's'} activo{discovery.activeFilterCount === 1 ? '' : 's'} · orden: {listing.sortOptions.find((option) => option.id === discovery.sortId)?.label ?? discovery.sortId}
-              </p>
-            </div>
-            {discovery.hasActiveCriteria ? (
-              <button
-                className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 transition hover:border-[var(--storefront-primary)] hover:text-[var(--storefront-primary-strong)]"
-                data-storefront-discovery-clear
-                onClick={clearDiscovery}
-                type="button"
-              >
-                Limpiar criterios
-              </button>
-            ) : null}
-          </div>
+        <div className="flex min-w-0 flex-col gap-3" data-storefront-discovery-content>
+          <StorefrontDiscoverySummary
+            resultCount={discovery.resultCount}
+            totalCount={listing.products.length}
+            activeFilterCount={discovery.activeFilterCount}
+            sortLabel={listing.sortOptions.find((option) => option.id === discovery.sortId)?.label ?? discovery.sortId}
+            hasActiveCriteria={discovery.hasActiveCriteria}
+            onClear={clearDiscovery}
+          />
 
           {discovery.resultCount > 0 ? (
-            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-label="Listado de productos" data-storefront-discovery-results>
+            <section className="grid content-start items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-label="Listado de productos" data-storefront-discovery-results>
               {discovery.products.map((product) => (
                 <StorefrontProductCard key={product.id} context="listing" product={product} />
               ))}
