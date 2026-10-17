@@ -14,6 +14,8 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
+  const [diagnosticSku, setDiagnosticSku] = useState('REP-0030');
+  const [diagnostic, setDiagnostic] = useState<{ results: { sku: string; eligible: boolean; reasons: string[]; stock_quantity: number; reserved_quantity: number; model_id_present_on_device: boolean; has_explicit_model_links: boolean; explicit_link_matches_device: boolean }[] } | null>(null);
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +76,14 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
           </select>
           {!parts.length ? <span className="text-amber-700">No hay repuestos compatibles y disponibles. Revisá marca/modelo de los repuestos y existencias.</span>
             : !matchingParts.length ? <span className="text-slate-500">No hay coincidencias con la búsqueda.</span> : null}
-          <span className="text-slate-500">Descuenta una unidad. Costo adicional imputado: 0 {currency}.</span>
+          <div className="rounded border border-slate-200 p-2">
+            <label className="block font-semibold" htmlFor="repair-diagnostic-sku">DiagnÃ³stico de compatibilidad por cÃ³digo</label>
+            <div className="mt-1 flex gap-1">
+              <input id="repair-diagnostic-sku" className="h-8 min-w-0 flex-1 rounded border px-2" value={diagnosticSku} onChange={e => setDiagnosticSku(e.target.value)} placeholder="REP-0030" />
+              <button className="rounded border px-2" type="button" onClick={() => { void adminFetch('/api/v1/admin/devices/' + encodeURIComponent(id) + '/part-compatibility-diagnostics?sku=' + encodeURIComponent(diagnosticSku.trim()), { cache: 'no-store' }).then(async r => { if (!r.ok) throw new Error('No se pudo realizar el diagnÃ³stico.'); return r.json() as Promise<{ data: NonNullable<typeof diagnostic> }>; }).then(r => setDiagnostic(r.data)).catch(e => setError(e instanceof Error ? e.message : 'Error de diagnÃ³stico')); }}>Diagnosticar</button>
+            </div>
+            {diagnostic ? <div className="mt-2 text-slate-700" role="status">{diagnostic.results.length ? diagnostic.results.map(p => <p key={p.sku}>{p.sku}: {p.eligible ? 'Disponible' : p.reasons.join(', ')}. Stock {p.stock_quantity}, reservado {p.reserved_quantity}. ID modelo equipo: {p.model_id_present_on_device ? 'sÃ­' : 'no'}; relaciÃ³n explÃ­cita: {p.has_explicit_model_links ? (p.explicit_link_matches_device ? 'coincide' : 'no coincide') : 'sin registrar'}.</p>) : <p>No existe un repuesto con ese cÃ³digo.</p>}</div> : null}
+          </div>          <span className="text-slate-500">Descuenta una unidad. Costo adicional imputado: 0 {currency}.</span>
         </div> : <><label className="grid min-w-0 gap-1">Componente adquirido
           <input required minLength={2} maxLength={255} className="h-8 w-full min-w-0 rounded border px-2" value={name} onChange={e => setName(e.target.value)} />
         </label><label className="grid min-w-0 gap-1">Costo de compra ({currency})

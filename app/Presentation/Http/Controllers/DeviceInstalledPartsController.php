@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 final class DeviceInstalledPartsController extends Controller
 {
-    private function compatible(InventoryItem $device, InventoryItem $part): bool
+    public function compatible(InventoryItem $device, InventoryItem $part): bool
     {
         if ($part->item_type !== 'spare_part') return false;
         $deviceMeta = $device->metadata ?? [];
