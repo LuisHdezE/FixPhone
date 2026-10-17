@@ -103,6 +103,11 @@ final class DeviceInstalledPartsController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $actors = DB::table('users')->whereIn('id', $parts->pluck('installed_by_actor_id')->filter()->all())
+            ->pluck('name', 'id');
+        $spares = InventoryItem::query()->whereIn('id', $parts->pluck('spare_part_item_id')->filter()->all())
+            ->get()->keyBy('id');
+
         $activeParts = $parts->whereNull('voided_at');
         $totalCostMinor = (int) $activeParts->sum('cost_amount_minor');
 
@@ -120,7 +125,7 @@ final class DeviceInstalledPartsController extends Controller
                     'operational_status' => $device->operational_status,
                     'inventory_purpose' => $device->inventory_purpose,
                 ],
-                'installed_parts' => $parts->map(fn (DeviceInstalledPart $part) => $this->transformPart($part))->values()->all(),
+                'installed_parts' => $parts->map(fn (DeviceInstalledPart $part) => [ ...$this->transformPart($part), 'installed_by_name' => $actors[$part->installed_by_actor_id] ?? null, 'spare_part_sku' => $spares->get($part->spare_part_item_id)?->sku, 'spare_part_origin' => $spares->get($part->spare_part_item_id)?->metadata['origin'] ?? null ])->values()->all(),
                 'total_installed_parts_cost_minor' => $totalCostMinor,
                 'currency_code' => $device->currency_code ?? 'UYU',
             ],
@@ -175,6 +180,7 @@ final class DeviceInstalledPartsController extends Controller
             }
 
             $sparePartItem = null;
+            $adjustmentId = null;
             if (!empty($validated['spare_part_item_id'])) {
                 // A part already acquired into inventory has zero incremental purchase
                 // cost for this device; its historical inventory cost remains separate.
@@ -259,6 +265,7 @@ final class DeviceInstalledPartsController extends Controller
                 'installed_by_actor_id' => (string) $request->user()->getAuthIdentifier(),
                 'notes' => $validated['notes'] ?? null,
                 'request_id' => $validated['request_id'],
+                'stock_adjustment_id' => $adjustmentId,
             ]);
 
             $this->audit($request, $installedPart->id, 'DeviceInstalledPart', 'device.part_installed', [
@@ -375,6 +382,7 @@ final class DeviceInstalledPartsController extends Controller
             'currency_code' => $part->currency_code,
             'installed_at' => $part->installed_at?->toIso8601String(),
             'installed_by_actor_id' => $part->installed_by_actor_id,
+            'stock_adjustment_id' => $part->stock_adjustment_id,
             'notes' => $part->notes,
             'voided_at' => $part->voided_at?->toIso8601String(),
             'voided_by_actor_id' => $part->voided_by_actor_id,

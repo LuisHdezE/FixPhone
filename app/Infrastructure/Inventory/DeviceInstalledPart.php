@@ -15,6 +15,7 @@ class DeviceInstalledPart extends Model
     protected $fillable = [
         'inventory_item_id',
         'spare_part_item_id',
+        'stock_adjustment_id',
         'part_name',
         'cost_amount_minor',
         'currency_code',

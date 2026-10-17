@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { ModalShell } from '@/components/layout/ModalShell';
 type Part = { id: string; sku: string | null; title: string; item_type: string; stock_quantity: number; currency_code?: string; consignor_id?: string | null };
-type Install = { id: string; part_name: string; cost_amount_minor: number; spare_part_item_id: string | null; voided_at: string | null };
+type Install = { id: string; part_name: string; cost_amount_minor: number; spare_part_item_id: string | null; voided_at: string | null; installed_at: string | null; installed_by_name: string | null; spare_part_sku: string | null; spare_part_origin: string | null; stock_adjustment_id: string | null };
 type RepairRecord = { device: { currency_code: string; cost_amount_minor: number | null; title: string }; installed_parts: Install[]; total_installed_parts_cost_minor: number };
 const money = (minor: number, currency: string) => new Intl.NumberFormat('es-UY', { style: 'currency', currency: currency || 'UYU' }).format(minor / 100);
 export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: string; code: string; onClose: () => void; onSaved: () => void }) {
@@ -14,8 +14,8 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
-  const [diagnosticSku, setDiagnosticSku] = useState('REP-0030');
-  const [diagnostic, setDiagnostic] = useState<{ results: { sku: string; eligible: boolean; reasons: string[]; stock_quantity: number; reserved_quantity: number; model_id_present_on_device: boolean; has_explicit_model_links: boolean; explicit_link_matches_device: boolean }[] } | null>(null);
+  const [movement, setMovement] = useState<{ id: string; quantity_before: number; quantity_delta: number; quantity_after: number; reason: string; created_at: string } | null>(null);
+  const [movementMessage, setMovementMessage] = useState<string | null>(null);
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +52,19 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
     } catch (e) { setError(e instanceof Error ? e.message : 'No se pudo guardar.'); }
     finally { setBusy(false); }
   }
+  async function showMovement(part: Install) {
+    if (!part.spare_part_item_id || !part.stock_adjustment_id) return;
+    setMovement(null); setMovementMessage(null);
+    try {
+      const result = await adminFetch('/api/v1/admin/inventory/items/' + encodeURIComponent(part.spare_part_item_id) + '/adjustments', { cache: 'no-store' });
+      if (!result.ok) throw new Error('No se pudo consultar el movimiento.');
+      const data = await result.json() as { data: { id: string; quantity_before: number; quantity_delta: number; quantity_after: number; reason: string; created_at: string }[] };
+      const match = data.data.find(x => x.id === part.stock_adjustment_id);
+      if (!match) throw new Error('El movimiento no aparece entre los últimos 50 ajustes del repuesto.');
+      setMovement(match);
+    } catch (e) { setMovementMessage(e instanceof Error ? e.message : 'Error al consultar el movimiento.'); }
+  }
+  const formatDate = (value: string | null) => value ? new Intl.DateTimeFormat('es-UY', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : 'Fecha no disponible';
   const currency = record?.device.currency_code || 'UYU';
   return <ModalShell title={'Reparaciones e inversiones · ' + code} density="compact" onClose={onClose} disabled={busy}>
     <div className="grid min-w-0 gap-3 overflow-x-hidden p-3 text-xs">
@@ -76,14 +89,7 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
           </select>
           {!parts.length ? <span className="text-amber-700">No hay repuestos compatibles y disponibles. Revisá marca/modelo de los repuestos y existencias.</span>
             : !matchingParts.length ? <span className="text-slate-500">No hay coincidencias con la búsqueda.</span> : null}
-          <div className="rounded border border-slate-200 p-2">
-            <label className="block font-semibold" htmlFor="repair-diagnostic-sku">DiagnÃ³stico de compatibilidad por cÃ³digo</label>
-            <div className="mt-1 flex gap-1">
-              <input id="repair-diagnostic-sku" className="h-8 min-w-0 flex-1 rounded border px-2" value={diagnosticSku} onChange={e => setDiagnosticSku(e.target.value)} placeholder="REP-0030" />
-              <button className="rounded border px-2" type="button" onClick={() => { void adminFetch('/api/v1/admin/devices/' + encodeURIComponent(id) + '/part-compatibility-diagnostics?sku=' + encodeURIComponent(diagnosticSku.trim()), { cache: 'no-store' }).then(async r => { if (!r.ok) throw new Error('No se pudo realizar el diagnÃ³stico.'); return r.json() as Promise<{ data: NonNullable<typeof diagnostic> }>; }).then(r => setDiagnostic(r.data)).catch(e => setError(e instanceof Error ? e.message : 'Error de diagnÃ³stico')); }}>Diagnosticar</button>
-            </div>
-            {diagnostic ? <div className="mt-2 text-slate-700" role="status">{diagnostic.results.length ? diagnostic.results.map(p => <p key={p.sku}>{p.sku}: {p.eligible ? 'Disponible' : p.reasons.join(', ')}. Stock {p.stock_quantity}, reservado {p.reserved_quantity}. ID modelo equipo: {p.model_id_present_on_device ? 'sÃ­' : 'no'}; relaciÃ³n explÃ­cita: {p.has_explicit_model_links ? (p.explicit_link_matches_device ? 'coincide' : 'no coincide') : 'sin registrar'}.</p>) : <p>No existe un repuesto con ese cÃ³digo.</p>}</div> : null}
-          </div>          <span className="text-slate-500">Descuenta una unidad. Costo adicional imputado: 0 {currency}.</span>
+          <span className="text-slate-500">Descuenta una unidad. Costo adicional imputado: 0 {currency}.</span>
         </div> : <><label className="grid min-w-0 gap-1">Componente adquirido
           <input required minLength={2} maxLength={255} className="h-8 w-full min-w-0 rounded border px-2" value={name} onChange={e => setName(e.target.value)} />
         </label><label className="grid min-w-0 gap-1">Costo de compra ({currency})
@@ -96,7 +102,19 @@ export function DeviceRepairCostsModal({ id, code, onClose, onSaved }: { id: str
         <div className="flex min-w-0 flex-wrap justify-end gap-2"><button disabled={!record || busy} className="h-8 max-w-full rounded bg-brand-600 px-3 text-xs text-white disabled:opacity-40" type="submit">{busy ? 'Registrando…' : 'Registrar instalación'}</button></div>
       </form>
       {record ? <section className="border-t pt-2"><p className="mb-2 font-semibold">Historial de instalaciones</p>
-        {record.installed_parts.length ? <div className="grid gap-1">{record.installed_parts.map(p => <div key={p.id} className="flex min-w-0 flex-wrap justify-between gap-2 border-b py-1"><span>{p.part_name}{p.voided_at ? ' (Anulada)' : ''}</span><span>{p.spare_part_item_id ? 'Inventario · ' : 'Compra · '}{money(p.cost_amount_minor, currency)}</span></div>)}</div> : <p className="text-slate-500">Sin instalaciones registradas.</p>}
+        {record.installed_parts.length ? <div className="grid gap-2">{record.installed_parts.map(p => <div key={p.id} className="rounded border border-slate-200 p-2">
+          <div className="flex flex-wrap justify-between gap-2"><strong>{p.part_name}{p.voided_at ? ' (Anulada)' : ''}</strong><span>{money(p.cost_amount_minor, currency)}</span></div>
+          <div className="mt-1 grid gap-1 text-slate-600 sm:grid-cols-2">
+            <span>Fecha: {formatDate(p.installed_at)}</span><span>SKU: {p.spare_part_sku ?? 'Compra externa'}</span>
+            <span>Procedencia: {p.spare_part_item_id ? (p.spare_part_origin === 'recovered' ? 'Recuperado de despiece' : 'Inventario') : 'Compra externa'}</span>
+            <span>Responsable: {p.installed_by_name ?? 'Usuario no disponible'}</span>
+          </div>
+          {p.spare_part_item_id ? (p.stock_adjustment_id
+            ? <button type="button" className="mt-1 text-brand-700 underline" onClick={() => void showMovement(p)}>Ver movimiento de inventario</button>
+            : <span className="mt-1 block text-slate-500">Movimiento histórico sin enlace individual.</span>) : null}
+        </div>)}</div> : <p className="text-slate-500">Sin instalaciones registradas.</p>}
+        {movement ? <div role="status" className="mt-2 rounded bg-slate-50 p-2">Movimiento {movement.id}: {movement.quantity_before} → {movement.quantity_after} ({movement.quantity_delta}). {movement.reason} · {formatDate(movement.created_at)}.</div> : null}
+        {movementMessage ? <p role="alert" className="mt-2 text-amber-700">{movementMessage}</p> : null}
       </section> : null}
     </div>
   </ModalShell>;

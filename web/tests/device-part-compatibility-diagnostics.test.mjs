@@ -11,7 +11,7 @@ test('repair diagnostics are read-only and explain unavailable spare parts', () 
   assert.match(backend, /owner_mismatch/);
   assert.match(backend, /out_of_stock/);
   assert.match(backend, /reserved_stock/);
-  assert.match(repair, /Diagnosticar/);
+  assert.doesNotMatch(repair, /Diagnosticar/);
   assert.match(routes, /part-compatibility-diagnostics/);
   assert.match(routes, /permission:inventory.view/);
 });
