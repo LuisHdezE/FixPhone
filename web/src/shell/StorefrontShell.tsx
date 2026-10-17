@@ -38,9 +38,9 @@ export function StorefrontShell({ provider }: { provider: StorefrontProvider }) 
     </div></header>
     <main id="store-content" className="min-h-[60dvh]"><Outlet /></main>
     <footer className="fp-footer" data-storefront-footer><div className="fp-container fp-footer-grid">
-      <div><Link className="fp-footer-logo" to="/store">{shell.storeName}</Link><p>{shell.support.serviceArea}</p><a className="fp-footer-contact" href={shell.support.whatsappHref} target="_blank" rel="noopener noreferrer">{shell.support.whatsappLabel}</a></div>
+      <div><Link className="fp-footer-logo" to="/store">{shell.storeName}</Link><p>{shell.support.serviceArea}</p><a className="fp-footer-contact" href={shell.support.whatsappHref} target="_blank" rel="noopener noreferrer"><StorefrontIcon name="chat" /><span>{shell.support.whatsappLabel}</span></a></div>
       {shell.footerColumns.map(column => <div key={column.id}><strong>{column.title}</strong>{column.links.map(link => <Link key={link.id} to={link.href}>{link.label}</Link>)}</div>)}
     </div></footer>
-    <a aria-label="Consultar por WhatsApp" className="fp-whatsapp" data-storefront-floating-action href={shell.support.whatsappHref} target="_blank" rel="noopener noreferrer"><StorefrontIcon name="chat" /></a>
+    <a aria-label="Consultar por WhatsApp" className="fp-whatsapp" data-storefront-floating-action href={shell.support.whatsappHref} target="_blank" rel="noopener noreferrer"><StorefrontIcon name="chat" /><span>WhatsApp</span></a>
   </div>;
 }
