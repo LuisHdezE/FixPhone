@@ -61,7 +61,7 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:col-start-2">
           <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">{detail.eyebrow}</p>
-          <h1 className="mt-2 text-[clamp(1.35rem,2.2vw,2rem)] font-medium leading-tight tracking-[-0.03em] text-slate-950">{product.title}</h1>
+          <h1 className="mt-2 text-[clamp(0.95rem,1.55vw,1.4rem)] font-medium leading-tight tracking-[-0.03em] text-slate-950">{product.title}</h1>
           <p className="mt-3 text-[11px] leading-5 text-slate-600">{product.subtitle}</p>
           <div className="mt-5 border-t border-slate-200 pt-4">
             <h2 className="text-sm font-black text-slate-950">Detalles del producto</h2>
