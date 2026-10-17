@@ -28,12 +28,7 @@ export function StorefrontHomePage({ provider }: { provider: StorefrontProvider 
   const phones = products.filter(product => product.discoveryFacets?.category === 'phones' || product.discoveryFacets?.category === 'used-phones');
   const featured = phones.length ? phones.slice(0, 6) : products.slice(0, 6);
   return <div className="fp-home" data-storefront-home>
-    <StorefrontHeroCarousel banners={campaigns ?? home.heroBanners} />
-    <section className="fp-trust fp-container" aria-label="Nuestra atención">
-      <div><StorefrontIcon name="check" /><span><strong>Presupuesto sin costo</strong><small>En reparaciones</small></span></div>
-      <Link to="/store/warranty"><StorefrontIcon name="shield" /><span><strong>Garantía de 1 mes</strong><small>Consultá las condiciones</small></span></Link>
-      <a href={shell.support.whatsappHref} target="_blank" rel="noopener noreferrer"><StorefrontIcon name="chat" /><span><strong>Atención por WhatsApp</strong><small>Hablemos de lo que necesitás</small></span></a>
-    </section>
+    <StorefrontHeroCarousel banners={campaigns ?? home.heroBanners} whatsappHref={shell.support.whatsappHref} />
     <section className="fp-container fp-section">
       <div className="fp-section-heading"><h2>Categorías</h2><Link to="/store/products">Ver todas <span aria-hidden="true">›</span></Link></div>
       <div className="fp-categories">{categories.map(category => <Link className="fp-category" to={category.href} key={category.title}><img src={category.image} alt="" loading="lazy" /><span>{category.title}<span aria-hidden="true">›</span></span></Link>)}</div>

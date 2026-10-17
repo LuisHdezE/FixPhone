@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import type { StorefrontHeroBannerDto } from '../application/storefront.dto';
+import { StorefrontHeroBenefits } from './StorefrontHeroBenefits';
 
-export function StorefrontHeroCarousel({ banners }: { banners: readonly StorefrontHeroBannerDto[] }) {
+export function StorefrontHeroCarousel({ banners, whatsappHref }: { banners: readonly StorefrontHeroBannerDto[]; whatsappHref: string }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -36,6 +37,7 @@ export function StorefrontHeroCarousel({ banners }: { banners: readonly Storefro
         <button className="fp-carousel-play" onClick={() => setPlaying(value => !value)} aria-label={playing ? 'Pausar carrusel' : 'Reproducir carrusel'}>{playing ? 'Ⅱ' : '▷'}</button>
       </div>
     </>}
+    <StorefrontHeroBenefits whatsappHref={whatsappHref} />
     <span className="sr-only" aria-live={playing ? 'off' : 'polite'}>{slide.title}</span>
   </section>;
 }
