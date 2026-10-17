@@ -76,11 +76,13 @@ final class StorefrontCustomerCartTest extends TestCase
     }
     public function test_cart_persists_per_user_with_authoritative_price_stock_and_no_inventory_reservation(): void
     {
-        $user = $this->customer(); $other = $this->customer(); $item = $this->product();
+        $user = $this->customer(); $other = $this->customer();
+        $item = $this->product(['main_image_url' => 'https://example.test/samsung-a22.jpg']);
         Sanctum::actingAs($user);
         $this->postJson('/api/v1/store/cart', ['product_id' => $item->id, 'quantity' => 1,
             'unit_price_minor' => 1, 'user_id' => $other->id])
-            ->assertOk()->assertJsonPath('data.lines.0.unit_price_minor', 450000);
+            ->assertOk()->assertJsonPath('data.lines.0.unit_price_minor', 450000)
+            ->assertJsonPath('data.lines.0.image_url', 'https://example.test/samsung-a22.jpg');
         $this->postJson('/api/v1/store/cart', ['product_id' => $item->id, 'quantity' => 1])
             ->assertOk()->assertJsonPath('data.lines.0.quantity', 2);
         $this->assertDatabaseCount('storefront_cart_lines', 1);

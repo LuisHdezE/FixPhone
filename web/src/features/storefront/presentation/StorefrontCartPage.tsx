@@ -3,14 +3,20 @@ import { Link, useLocation } from 'react-router';
 import type { StorefrontProvider } from '../application/storefront.contracts';
 import { cartRequest, type CartLine } from '../infrastructure/storefrontApi';
 import { useStorefrontSession } from './useStorefrontSession';
+import { StorefrontIcon } from './StorefrontIcon';
+
+function money(currency: string, amount: number) {
+  return new Intl.NumberFormat('es-UY', { style: 'currency', currency }).format(amount / 100);
+}
 
 export function StorefrontCartPage({ provider }: { provider: StorefrontProvider }) {
   const { customer, loading, sessionError } = useStorefrontSession();
   const location = useLocation();
   const [lines, setLines] = useState<CartLine[]>([]);
   const [fetching, setFetching] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busyProduct, setBusyProduct] = useState<string | null>(null);
   const [error, setError] = useState('');
+
   useEffect(() => {
     let active = true;
     setLines([]); setError('');
@@ -21,45 +27,77 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
       .finally(() => { if (active) setFetching(false); });
     return () => { active = false; };
   }, [customer]);
+
   async function change(line: CartLine, quantity: number) {
-    setBusy(true); setError('');
+    setBusyProduct(line.product_id); setError('');
     try { setLines(await cartRequest(quantity === 0 ? 'DELETE' : 'PATCH', line.product_id, quantity)); }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo actualizar el carrito.'); }
-    finally { setBusy(false); }
+    finally { setBusyProduct(null); }
   }
-  const money = (currency: string, amount: number) => new Intl.NumberFormat('es-UY', { style: 'currency', currency }).format(amount / 100);
+
   const totals = lines.filter(line => line.available).reduce<Record<string, number>>((acc, line) => {
-    acc[line.currency_code] = (acc[line.currency_code] ?? 0) + line.quantity * line.unit_price_minor; return acc;
+    acc[line.currency_code] = (acc[line.currency_code] ?? 0) + line.quantity * line.unit_price_minor;
+    return acc;
   }, {});
-  return <section className="mx-auto max-w-4xl px-4 py-8" data-storefront-cart>
-    <h1 className="text-xl font-bold">Mi carrito</h1>
-    {loading ? <p role="status" className="mt-4">Comprobando sesión…</p> : !customer ? <div className="mt-4 grid gap-3">
+  const units = lines.reduce((count, line) => count + line.quantity, 0);
+  const unavailable = lines.some(line => !line.available);
+
+  return <section className="fp-cart mx-auto max-w-[1280px] px-4 py-6 sm:px-6 lg:py-8" data-storefront-cart aria-label={`Carrito de ${provider.getShellView().storeName}`}>
+    <h1 className="fp-cart-title">Mi carrito</h1>
+    {loading ? <p role="status" className="fp-cart-state">Comprobando sesión…</p> : !customer ? <div className="fp-cart-empty">
+      <StorefrontIcon name="cart" />
       <p>Iniciá sesión para agregar productos y consultar tu carrito.</p>
-      {sessionError && <p role="alert">{sessionError}</p>}
-      <Link className="font-bold text-red-600" to="/store/account/sign-in" state={{ from: location.pathname }}>Iniciar sesión</Link>
-      <Link to="/store/products">Seguir viendo productos</Link>
+      {sessionError && <p role="alert" className="fp-cart-error">{sessionError}</p>}
+      <Link className="fp-cart-primary" to="/store/account/sign-in" state={{ from: location.pathname }}>Iniciar sesión</Link>
+      <Link className="fp-cart-text-link" to="/store/products">Seguir viendo productos</Link>
     </div> : <>
-      {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
-      {fetching ? <p role="status" className="mt-4">Cargando carrito…</p> : !lines.length && !error ? <p className="mt-4">Tu carrito está vacío.</p> : null}
-      <div className="mt-4 grid gap-3">{lines.map(line => <article key={line.product_id} className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 p-4">
-        <div><Link to={'/store/products/' + line.product_id} className="font-semibold">{line.title}</Link>
-          <p className="mt-1 text-sm">{money(line.currency_code, line.unit_price_minor)} por unidad</p>
-          {!line.available && <p className="mt-1 text-sm text-red-700">Cantidad no disponible. Ajustá la cantidad o quitá el producto.</p>}
+      {error && <p role="alert" className="fp-cart-error">{error}</p>}
+      {fetching ? <p role="status" className="fp-cart-state">Cargando carrito…</p> : !lines.length && !error ? <div className="fp-cart-empty">
+        <StorefrontIcon name="cart" />
+        <p>Tu carrito está vacío.</p>
+        <Link className="fp-cart-primary" to="/store/products">Explorar productos</Link>
+      </div> : null}
+      {!!lines.length && <div className="fp-cart-layout">
+        <div className="fp-cart-items">
+          <div className="fp-cart-items-heading"><StorefrontIcon name="truck" /><div>
+            <h2>Productos de FixPhone</h2>
+            <p>Envíos a Montevideo y al interior del país. El costo de envío lo paga el cliente.</p>
+          </div></div>
+          {lines.map(line => <article key={line.product_id} className="fp-cart-item">
+            <div className="fp-cart-photo">
+              {line.image_url ? <img src={line.image_url} alt="" loading="lazy" /> : <StorefrontIcon name="phone" />}
+            </div>
+            <div className="fp-cart-item-main">
+              <Link to={'/store/products/' + line.product_id} className="fp-cart-item-title">{line.title}</Link>
+              <p className="fp-cart-unit-price">{money(line.currency_code, line.unit_price_minor)} por unidad</p>
+              {!line.available && <p className="fp-cart-stock" role="status">Cantidad no disponible. Ajustá la cantidad o quitá el producto.</p>}
+              <div className="fp-cart-actions">
+                <div className="fp-cart-quantity" aria-label={`Cantidad de ${line.title}`}>
+                  <button type="button" aria-label={'Reducir cantidad de ' + line.title} disabled={busyProduct !== null || line.quantity <= 1 || line.stock_quantity < 1} onClick={() => { void change(line, Math.min(line.quantity - 1, line.stock_quantity)); }}>−</button>
+                  <span aria-live="polite">{line.quantity}</span>
+                  <button type="button" aria-label={'Aumentar cantidad de ' + line.title} disabled={busyProduct !== null || line.quantity >= Math.min(line.stock_quantity, 999)} onClick={() => { void change(line, line.quantity + 1); }}>+</button>
+                </div>
+                <button type="button" className="fp-cart-remove" aria-label={'Quitar ' + line.title + ' del carrito'} title="Quitar del carrito" disabled={busyProduct !== null} onClick={() => { void change(line, 0); }}>
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v6m4-6v6"/></svg>
+                </button>
+              </div>
+            </div>
+            <p className="fp-cart-line-price">{money(line.currency_code, line.quantity * line.unit_price_minor)}</p>
+          </article>)}
+          <p className="fp-cart-delivery"><StorefrontIcon name="truck" /> Coordinamos el envío a Montevideo o al interior al consultar tu compra.</p>
+          <Link className="fp-cart-text-link fp-cart-continue" to="/store/products">← Seguir viendo productos</Link>
         </div>
-        <div className="flex items-center gap-3">
-          <button aria-label={'Reducir cantidad de ' + line.title} disabled={busy || line.quantity <= 1 || line.stock_quantity < 1} onClick={() => { void change(line, Math.min(line.quantity - 1, line.stock_quantity)); }} className="rounded border px-3 py-1">−</button>
-          <span>{line.quantity}</span>
-          <button aria-label={'Aumentar cantidad de ' + line.title} disabled={busy || line.quantity >= Math.min(line.stock_quantity,999)} onClick={() => { void change(line, line.quantity + 1); }} className="rounded border px-3 py-1">+</button>
-          <button disabled={busy} onClick={() => { void change(line, 0); }} className="text-sm font-semibold text-red-600">Quitar</button>
-        </div>
-      </article>)}</div>
-      {!!lines.length && <div className="mt-5 grid gap-2 rounded-lg bg-slate-50 p-4">
-        {Object.entries(totals).map(([currency, total]) => <p key={currency} className="font-bold">Subtotal: {money(currency, total)}</p>)}
-        <p className="text-xs text-slate-600">El carrito no reserva stock. Precios y disponibilidad se verifican al consultarlo. El envío se paga aparte.</p>
-        <Link to="/store/contact" className="font-bold text-red-600">Consultar mi compra</Link>
+        <aside className="fp-cart-summary" aria-label="Detalle de la compra">
+          <h2>Detalle de la compra</h2>
+          <div className="fp-cart-summary-row"><span>Productos ({units})</span><span>{lines.length} {lines.length === 1 ? 'artículo' : 'artículos'}</span></div>
+          {Object.entries(totals).map(([currency, total]) => <div key={currency} className="fp-cart-total">
+            <span>Subtotal {Object.keys(totals).length > 1 ? currency : ''}</span><strong>{money(currency, total)}</strong>
+          </div>)}
+          {unavailable && <p className="fp-cart-stock">Los productos sin disponibilidad no se incluyen en el subtotal.</p>}
+          <p className="fp-cart-summary-note">El envío se paga aparte. El precio y la disponibilidad se verifican al consultar; el carrito no reserva stock.</p>
+          <Link className="fp-cart-primary" to="/store/contact">Consultar mi compra</Link>
+        </aside>
       </div>}
-      <Link className="mt-4 inline-block text-sm font-semibold" to="/store/products">Seguir viendo productos</Link>
     </>}
-    <p className="mt-5 text-xs text-slate-500">{provider.getShellView().storeName}</p>
   </section>;
 }

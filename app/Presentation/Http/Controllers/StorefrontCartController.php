@@ -23,6 +23,7 @@ final class StorefrontCartController
             $stock = $item && in_array($item->id, $available, true) ? $item->stock_quantity : 0;
             return ['product_id' => $row->inventory_item_id, 'title' => $item?->title ?? 'Producto no disponible',
                 'quantity' => $row->quantity, 'stock_quantity' => $stock,
+                'image_url' => $item?->main_image_url,
                 'available' => $stock >= $row->quantity,
                 'unit_price_minor' => $item?->sale_price_amount_minor ?? 0,
                 'currency_code' => $item?->currency_code ?? 'UYU'];

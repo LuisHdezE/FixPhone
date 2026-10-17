@@ -3,7 +3,7 @@ import { adminFetch } from '@/auth/adminApiSession';
 export interface StoreCustomer { id: string; name: string; email: string; permissions: string[]; }
 export interface CartLine {
   product_id: string; title: string; quantity: number; stock_quantity: number;
-  available: boolean; unit_price_minor: number; currency_code: string;
+  image_url: string | null; available: boolean; unit_price_minor: number; currency_code: string;
 }
 export interface StoreCredentials { name?: string; email: string; password: string; password_confirmation?: string; }
 export async function readStoreResponse<T>(response: Response): Promise<T> {
