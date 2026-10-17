@@ -31,7 +31,7 @@ final class DevicePartCompatibilityDiagnosticController extends Controller
             $stock = (int) $part->stock_quantity;
             $reserved = (int) ($held[$part->id] ?? 0);
             $modelMatched = $checker->compatible($device, $part);
-            $ownerMatched = $part->consignor_id === null || $part->consignor_id === $device->consignor_id;
+            $ownerMatched = $checker->ownershipAllowed($device, $part);
             $reasons = [];
             if (!$modelMatched) $reasons[] = 'model_mismatch';
             if (!$ownerMatched) $reasons[] = 'owner_mismatch';

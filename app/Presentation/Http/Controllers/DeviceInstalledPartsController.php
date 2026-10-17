@@ -60,12 +60,24 @@ final class DeviceInstalledPartsController extends Controller
         return $deviceModel !== '' && $deviceModel === $normalizeModel($part->model);
     }
 
+    /**
+     * Extraction is the explicit authorization to circulate recovered components
+     * as spare parts; retain their consignor for audit and settlement history.
+     */
+    public function ownershipAllowed(InventoryItem $device, InventoryItem $part): bool
+    {
+        if ($part->consignor_id === null || $part->consignor_id === $device->consignor_id) return true;
+        return $part->item_type === 'spare_part'
+            && ($part->metadata['origin'] ?? null) === 'recovered'
+            && ($part->component_identity_key !== null
+                || DB::table('device_part_extractions')->where('spare_part_item_id', $part->id)->exists());
+    }
     public function compatibleParts(string $id): JsonResponse
     {
         $device = InventoryItem::query()->whereKey($id)->whereIn('item_type', ['device', 'used_phone'])->firstOrFail();
         $parts = InventoryItem::query()->where('item_type', 'spare_part')->where('stock_quantity', '>', 0)
             ->orderBy('title')->get()->filter(fn (InventoryItem $part) => $this->compatible($device, $part)
-                && ($part->consignor_id === null || $part->consignor_id === $device->consignor_id));
+                && $this->ownershipAllowed($device, $part));
         $ids = $parts->pluck('id')->all();
         $held = DB::table('order_items')->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->whereIn('order_items.inventory_item_id', $ids)
@@ -192,7 +204,7 @@ final class DeviceInstalledPartsController extends Controller
                         'spare_part_item_id' => 'Este repuesto no es compatible con la marca y modelo del dispositivo.',
                     ]);
                 }
-                if ($sparePartItem->consignor_id !== null && $sparePartItem->consignor_id !== $device->consignor_id) {
+                if (!$this->ownershipAllowed($device, $sparePartItem)) {
                     throw ValidationException::withMessages([
                         'spare_part_item_id' => 'El repuesto pertenece a un consignante diferente. Revisá la autorización de uso.',
                     ]);
