@@ -15,6 +15,12 @@ export type FixPhoneNavGroup = {
 
 export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
   {
+    label: 'Panel administrativo',
+    items: [
+      { label: 'Panel operativo', to: '/apps/inventory/dashboard', icon: 'dashboard', exact: true },
+    ],
+  },
+  {
     label: 'Tienda online',
     items: [
       { label: 'Carrusel y anuncios', to: '/admin/settings/store-campaigns', icon: 'store' },
@@ -23,7 +29,6 @@ export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
   {
     label: 'Operación',
     items: [
-      { label: 'Panel operativo', to: '/apps/inventory/dashboard', icon: 'dashboard', exact: true },
       { label: 'Equipos', to: '/apps/inventory/devices', icon: 'device', exact: true },
       { label: 'Presupuestos', to: '/admin/repair-quotes', icon: 'forms' },
       { label: 'ValuPhone · Tasaciones', to: '/admin/valuations', icon: 'chart' },

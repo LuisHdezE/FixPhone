@@ -13,9 +13,9 @@ export function StorefrontProductCard({ product, context }: { product: Storefron
       <p className="fp-product-brand">{brand}</p>
       <h3><Link to={product.href}>{product.title}</Link></h3>
       <p className="fp-product-description">{product.compatibilityLabel}{product.subtitle ? ` · ${product.subtitle}` : ''}</p>
-      <div className="fp-product-meta"><span className="fp-product-badge">{product.badgeLabel}</span><small>{product.stockLabel}</small></div>
+      <div className="fp-product-meta"><span className="fp-product-badge">{product.badgeLabel}</span>{product.originalLabel ? <span className="fp-product-original">{product.originalLabel}</span> : null}<small>{product.stockLabel}</small></div>
       <p className="fp-product-installments">¡Comprá en hasta 12 cuotas sin interés con todas tus tarjetas!</p>
     </div>
-    <div className="fp-product-bottom"><div><p className="fp-product-price">{product.priceLabel}</p>{product.compareLabel && <small>{product.compareLabel}</small>}</div><Link className="fp-product-view" to={product.href} aria-label={`Ver detalles de ${product.title}`}><StorefrontIcon name="arrow" /></Link></div>
+    <div className="fp-product-bottom"><div><p className="fp-product-price">{product.priceLabel}</p>{product.referencePriceLabel ? <small className="fp-product-reference">Nuevo en tienda: {product.referencePriceLabel}</small> : product.compareLabel && <small>{product.compareLabel}</small>}</div><Link className="fp-product-view" to={product.href} aria-label={`Ver detalles de ${product.title}`}><StorefrontIcon name="arrow" /></Link></div>
   </article>;
 }
