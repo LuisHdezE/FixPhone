@@ -45,8 +45,8 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
       <Link className="text-xs font-black text-slate-600 hover:text-slate-950" to={detail.backHref}>← {detail.backLabel}</Link>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(18rem,.9fr)_20rem] lg:items-start">
-        <div className="grid gap-3 lg:contents">
-          <div className="grid min-h-[20rem] place-items-center rounded-xl border border-slate-200 bg-white p-3 shadow-sm lg:col-start-1">
+        <div className="grid gap-3">
+          <div className="grid min-h-[20rem] place-items-center rounded-xl bg-transparent p-0 lg:col-start-1">
             {product.image ? <img src={product.image.src} alt={product.image.alt} className="max-h-[24rem] w-full object-contain" /> : <div className="grid aspect-[4/3] w-full place-items-center rounded-xl bg-slate-50 text-xs text-slate-500">Sin imagen disponible</div>}
           </div>
 
@@ -82,7 +82,7 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
             <span className="rounded-full bg-[#f7f2ea] px-2.5 py-1 text-[10px] font-black text-slate-700">{product.stockLabel}</span>
           </div>
           <div className="mt-4 rounded-xl bg-[#f7f2ea] p-3">
-            <p className="text-2xl font-black tracking-[-0.03em] text-slate-950">{product.priceLabel}</p>
+            <p className="text-xl font-medium tracking-[-0.02em] text-slate-950">{product.priceLabel}</p>
             {product.compareLabel ? <p className="mt-1 text-xs font-black text-slate-600">{product.compareLabel}</p> : null}
           </div>
 
