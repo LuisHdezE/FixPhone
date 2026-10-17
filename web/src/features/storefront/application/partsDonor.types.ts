@@ -1,6 +1,7 @@
 export type PublicPartsDonor = {
   id: string;
   model_name: string;
+  brand?: string | null;
   title: string;
   category: 'phones_for_parts';
   fault_type: 'icloud' | 'no_signal' | 'board' | 'other';
