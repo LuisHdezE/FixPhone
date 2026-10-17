@@ -71,40 +71,55 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
               data-storefront-discovery-filter={filter.id}
             >
               <legend className="text-sm font-black text-slate-950">{filter.title}</legend>
-              <div className="grid gap-1.5">
-                {filter.options.map((option) => {
-                  const selectedValue = filterSelections[filter.id] ?? 'all';
-                  const checked = selectedValue === option.id;
+              {filter.id === 'brand' ? (
+                <select
+                  aria-label="Filtrar por marca"
+                  className="h-9 w-full rounded-lg border border-black/10 bg-white px-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-[var(--storefront-primary)] focus:ring-2 focus:ring-[var(--storefront-primary-soft)]"
+                  data-storefront-discovery-brand
+                  onChange={(event) => setFilterSelections((current) => ({
+                    ...current,
+                    [filter.id]: event.target.value,
+                  }))}
+                  value={filterSelections[filter.id] ?? 'all'}
+                >
+                  {filter.options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                </select>
+              ) : (
+                <div className="grid gap-1.5">
+                  {filter.options.map((option) => {
+                    const selectedValue = filterSelections[filter.id] ?? 'all';
+                    const checked = selectedValue === option.id;
 
-                  return (
-                    <label
-                      key={option.id}
-                      className={[
-                        'grid cursor-pointer gap-0.5 rounded-xl border p-2.5 text-xs transition',
-                        checked
-                          ? 'border-[var(--storefront-primary)] bg-[var(--storefront-primary-soft)]'
-                          : 'border-black/10 hover:border-[var(--storefront-primary)]',
-                      ].join(' ')}
-                    >
-                      <span className="flex items-center gap-2 font-bold text-slate-800">
-                        <input
-                          checked={checked}
-                          className="size-3.5 accent-slate-950"
-                          name={filter.id}
-                          onChange={() => setFilterSelections((current) => ({
-                            ...current,
-                            [filter.id]: option.id,
-                          }))}
-                          type="radio"
-                          value={option.id}
-                        />
-                        {option.label}
-                      </span>
-                      {option.helper ? <span className="pl-5.5 text-[11px] leading-4 text-slate-500">{option.helper}</span> : null}
-                    </label>
-                  );
-                })}
-              </div>
+                    return (
+                      <label
+                        key={option.id}
+                        className={[
+                          'grid cursor-pointer gap-0.5 rounded-xl border p-2.5 text-xs transition',
+                          checked
+                            ? 'border-[var(--storefront-primary)] bg-[var(--storefront-primary-soft)]'
+                            : 'border-black/10 hover:border-[var(--storefront-primary)]',
+                        ].join(' ')}
+                      >
+                        <span className="flex items-center gap-2 font-bold text-slate-800">
+                          <input
+                            checked={checked}
+                            className="size-3.5 accent-slate-950"
+                            name={filter.id}
+                            onChange={() => setFilterSelections((current) => ({
+                              ...current,
+                              [filter.id]: option.id,
+                            }))}
+                            type="radio"
+                            value={option.id}
+                          />
+                          {option.label}
+                        </span>
+                        {option.helper ? <span className="pl-5.5 text-[11px] leading-4 text-slate-500">{option.helper}</span> : null}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </fieldset>
           ))}
         </aside>

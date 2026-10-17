@@ -402,36 +402,24 @@
         ]
       },
       {
-        "id": "brand-model",
-        "title": "Marca / modelo",
+        "id": "brand",
+        "title": "Marca",
         "options": [
           {
             "id": "all",
-            "label": "Todos"
+            "label": "Todas"
           },
           {
-            "id": "iphone-13",
-            "label": "Apple · iPhone 13"
+            "id": "apple",
+            "label": "Apple"
           },
           {
-            "id": "iphone-12",
-            "label": "Apple · iPhone 12"
+            "id": "samsung",
+            "label": "Samsung"
           },
           {
-            "id": "galaxy-s21",
-            "label": "Samsung · Galaxy S21"
-          },
-          {
-            "id": "iphone-11",
-            "label": "Apple · iPhone 11"
-          },
-          {
-            "id": "galaxy-s20",
-            "label": "Samsung · Galaxy S20"
-          },
-          {
-            "id": "redmi-note",
-            "label": "Xiaomi · Redmi Note"
+            "id": "xiaomi",
+            "label": "Xiaomi"
           }
         ]
       },
@@ -502,7 +490,7 @@
         },
         "discoveryFacets": {
           "category": "spare-parts",
-          "brand-model": "iphone-13",
+          "brand": "apple",
           "condition": "new",
           "price": "over-2000"
         },
@@ -529,7 +517,7 @@
         },
         "discoveryFacets": {
           "category": "spare-parts",
-          "brand-model": "galaxy-s21",
+          "brand": "samsung",
           "condition": "new",
           "price": "under-2000"
         },
@@ -555,7 +543,7 @@
         },
         "discoveryFacets": {
           "category": "used-phones",
-          "brand-model": "iphone-12",
+          "brand": "apple",
           "condition": "used-a",
           "price": "usd"
         },
@@ -582,7 +570,7 @@
         },
         "discoveryFacets": {
           "category": "spare-parts",
-          "brand-model": "redmi-note",
+          "brand": "xiaomi",
           "condition": "new",
           "price": "under-2000"
         },
@@ -609,7 +597,7 @@
         },
         "discoveryFacets": {
           "category": "spare-parts",
-          "brand-model": "iphone-11",
+          "brand": "apple",
           "condition": "new",
           "price": "over-2000"
         },
@@ -635,7 +623,7 @@
         },
         "discoveryFacets": {
           "category": "used-phones",
-          "brand-model": "galaxy-s20",
+          "brand": "samsung",
           "condition": "used-b",
           "price": "usd"
         },
