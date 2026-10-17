@@ -1,10 +1,11 @@
 import { createContext } from 'react';
-import type { StorefrontCustomerSession } from '../application/storefront.session';
+import type { StoreCustomer, StoreCredentials } from '../infrastructure/storefrontApi';
 
 export interface StorefrontSessionContextValue {
-  customer: StorefrontCustomerSession | null;
-  signIn: (customer: StorefrontCustomerSession) => void;
-  signOut: () => void;
+  customer: StoreCustomer | null;
+  loading: boolean;
+  sessionError: string;
+  signIn: (mode: 'sign-in' | 'register', credentials: StoreCredentials) => Promise<void>;
+  signOut: () => Promise<void>;
 }
-
 export const StorefrontSessionContext = createContext<StorefrontSessionContextValue | undefined>(undefined);

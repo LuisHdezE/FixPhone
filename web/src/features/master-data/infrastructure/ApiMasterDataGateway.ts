@@ -1,3 +1,4 @@
+import { adminFetch } from '@/auth/adminApiSession';
 import type { MasterDataCatalogDto } from '../application/master-data.dto';
 import type { MasterDataGateway, MasterDataKind } from '../application/master-data.contracts';
 
@@ -42,7 +43,7 @@ export class ApiMasterDataGateway implements MasterDataGateway {
   }
 
   async create<T>(kind: MasterDataKind, payload: object): Promise<T> {
-    const response = await fetch(`/api/v1/admin/master-data/${kind}`, {
+    const response = await adminFetch(`/api/v1/admin/master-data/${kind}`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -55,7 +56,7 @@ export class ApiMasterDataGateway implements MasterDataGateway {
   }
 
   async update<T>(kind: MasterDataKind, id: string, payload: object): Promise<T> {
-    const response = await fetch(`/api/v1/admin/master-data/${kind}/${encodeURIComponent(id)}`, {
+    const response = await adminFetch(`/api/v1/admin/master-data/${kind}/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: {
         Accept: 'application/json',
@@ -68,7 +69,7 @@ export class ApiMasterDataGateway implements MasterDataGateway {
   }
 
   async delete(kind: MasterDataKind, id: string): Promise<void> {
-    const response = await fetch(`/api/v1/admin/master-data/${kind}/${encodeURIComponent(id)}`, {
+    const response = await adminFetch(`/api/v1/admin/master-data/${kind}/${encodeURIComponent(id)}`, {
       method: 'DELETE',
       headers: { Accept: 'application/json' },
     });

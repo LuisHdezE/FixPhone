@@ -134,18 +134,23 @@ Route::post('/_deploy/spare-parts-production-reset', function (\Illuminate\Http\
 })->middleware('throttle:3,1');
 
 Route::prefix('v1')->group(function (): void {
- Route::post('/auth/login',AuthLoginController::class)->name('api.v1.auth.login');
+ Route::post('/auth/login',AuthLoginController::class)->middleware('throttle:10,1')->name('api.v1.auth.login');
+ Route::post('/store/register', \App\Presentation\Http\Controllers\StorefrontRegistrationController::class)->middleware('throttle:5,1');
  Route::get('/store/parts-donors', [PartsDonorStorefrontController::class, 'index'])->name('api.v1.store.parts-donors.index');
  Route::get('/store/parts-donors/{id}', [PartsDonorStorefrontController::class, 'show'])->name('api.v1.store.parts-donors.show');
  Route::get('/store/campaigns', [StorefrontCampaignController::class, 'index']);
  Route::get('/store/products',[InventoryController::class, 'showroomList'])->name('api.v1.store.products.index');
  Route::get('/admin/master-data',[MasterDataController::class, 'catalog'])->name('api.v1.admin.master-data.catalog');
  Route::get('/admin/master-data/{kind}',[MasterDataController::class, 'index'])->name('api.v1.admin.master-data.index');
- Route::post('/admin/master-data/{kind}',[MasterDataController::class, 'store'])->name('api.v1.admin.master-data.store');
- Route::patch('/admin/master-data/{kind}/{id}',[MasterDataController::class, 'update'])->name('api.v1.admin.master-data.update');
- Route::delete('/admin/master-data/{kind}/{id}',[MasterDataController::class, 'destroy'])->name('api.v1.admin.master-data.destroy');
+ Route::post('/admin/master-data/{kind}',[MasterDataController::class, 'store'])->middleware(['auth:sanctum', 'permission:catalog.manage'])->name('api.v1.admin.master-data.store');
+ Route::patch('/admin/master-data/{kind}/{id}',[MasterDataController::class, 'update'])->middleware(['auth:sanctum', 'permission:catalog.manage'])->name('api.v1.admin.master-data.update');
+ Route::delete('/admin/master-data/{kind}/{id}',[MasterDataController::class, 'destroy'])->middleware(['auth:sanctum', 'permission:catalog.manage'])->name('api.v1.admin.master-data.destroy');
 
  Route::middleware('auth:sanctum')->group(function (): void {
+  Route::get('/store/cart', [\App\Presentation\Http\Controllers\StorefrontCartController::class, 'index']);
+  Route::post('/store/cart', [\App\Presentation\Http\Controllers\StorefrontCartController::class, 'add']);
+  Route::patch('/store/cart/{product}', [\App\Presentation\Http\Controllers\StorefrontCartController::class, 'update']);
+  Route::delete('/store/cart/{product}', [\App\Presentation\Http\Controllers\StorefrontCartController::class, 'remove']);
   Route::get('/admin/device-models/{modelId}/technical', [DeviceModelSpecificationsController::class, 'show'])->middleware('permission:catalog.manage');
   Route::put('/admin/device-models/{modelId}/technical', [DeviceModelSpecificationsController::class, 'saveSpecs'])->middleware('permission:catalog.manage');
   Route::post('/admin/device-models/{modelId}/variants', [DeviceModelSpecificationsController::class, 'storeVariant'])->middleware('permission:catalog.manage');

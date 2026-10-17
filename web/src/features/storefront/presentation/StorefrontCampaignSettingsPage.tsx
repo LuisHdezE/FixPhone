@@ -38,17 +38,19 @@ export function StorefrontCampaignSettingsPage() {
     finally { setBusy(false); }
   }
   return <div className="mx-auto max-w-5xl p-4">
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-xl font-bold">Carrusel de la tienda</h1><p className="mt-1 text-xs text-slate-600">Editá imágenes, anuncios y enlaces. Hasta 8 diapositivas, en el orden mostrado.</p></div><Link className="text-xs font-semibold text-red-600" to="/store" target="_blank">Ver tienda ↗</Link></div>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-xl font-bold">Carrusel de la tienda</h1><p className="mt-1 text-xs text-slate-600">Agregá o quitá imágenes y editá los textos de cada anuncio. De 0 a 8 anuncios, en el orden mostrado.</p></div><Link className="text-xs font-semibold text-red-600" to="/store" target="_blank">Ver tienda ↗</Link></div>
     {error && <p role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-xs text-red-700">{error}</p>}
     {notice && <p role="status" className="mb-4 rounded-md bg-green-50 p-3 text-xs text-green-800">{notice}</p>}
     {loading ? <p>Cargando carrusel…</p> : !ready ? <p className="text-xs">Recargá la página para volver a intentar.</p> : <form onSubmit={save}>
+      <p className="mb-3 text-xs font-semibold text-slate-600">{slides.length} de 8 anuncios · Usá Subir y Bajar para cambiar el orden.</p>
       <fieldset disabled={busy} className="grid gap-3">
         {slides.map((slide, index) => <section key={slide.id} className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between gap-2"><h2 className="text-sm font-bold">Anuncio {index + 1}</h2><div className="flex gap-2 text-xs">
-            <button type="button" disabled={index === 0} aria-label={`Subir anuncio ${index + 1}`} onClick={() => move(index, -1)} className="rounded border px-3 py-2 disabled:opacity-30">↑</button>
-            <button type="button" disabled={index === slides.length - 1} aria-label={`Bajar anuncio ${index + 1}`} onClick={() => move(index, 1)} className="rounded border px-3 py-2 disabled:opacity-30">↓</button>
+            <button type="button" disabled={index === 0} aria-label={`Subir anuncio ${index + 1}`} onClick={() => move(index, -1)} className="rounded border px-3 py-2 disabled:opacity-30">Subir</button>
+            <button type="button" disabled={index === slides.length - 1} aria-label={`Bajar anuncio ${index + 1}`} onClick={() => move(index, 1)} className="rounded border px-3 py-2 disabled:opacity-30">Bajar</button>
             <button type="button" onClick={() => { setSlides(current => current.filter((_, i) => i !== index)); setNotice(''); }} className="rounded border px-3 py-2 text-red-600">Quitar</button>
           </div></div>
+          <img src={slide.image.src} alt={slide.image.alt} className="mb-3 h-28 w-full rounded-md bg-slate-100 object-contain" />
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-xs">Título<input required maxLength={100} className={input} value={slide.title} onChange={e => patch(index, { title: e.target.value })} /></label>
             <label className="grid gap-1 text-xs">Antetítulo<input maxLength={60} className={input} value={slide.eyebrow} onChange={e => patch(index, { eyebrow: e.target.value })} /></label>

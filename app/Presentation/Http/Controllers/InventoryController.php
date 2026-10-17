@@ -115,17 +115,7 @@ class InventoryController extends Controller
 
     public function showroomList()
     {
-        $items = InventoryItem::where('publication_status', 'publicado')
-            ->where('is_sellable', true)->where('stock_quantity', '>', 0)
-            ->where('sale_price_amount_minor', '>', 0)
-            ->where(function ($query): void {
-                $query->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
-                    ->orWhere('metadata->destination', 'Direct Sale');
-            })
-            ->whereIn('operational_status', ['reparado', 'en_stock', 'disponible'])
-            ->where(function ($query): void {
-                $query->whereNull('metadata->origin')->orWhere('metadata->origin', '!=', 'recovered')->orWhere('metadata->part_condition', 'functional');
-            })->get();
+        $items = \App\Infrastructure\Inventory\StorefrontCatalog::query()->get();
         return response()->json($items->map(fn ($item) => [
             'id' => $item->id, 'title' => $item->title, 'description' => $item->description,
             'item_type' => $item->item_type, 'brand' => $item->brand, 'model' => $item->model,
