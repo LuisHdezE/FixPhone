@@ -1,117 +1,47 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 import type { StorefrontProvider } from '../application/storefront.contracts';
-import { createStorefrontCustomerSession } from '../application/storefront.session';
-import { StorefrontPageIntro } from './StorefrontPrimitives';
+import { canAccessAdministration, safeStoreReturn } from '../infrastructure/storefrontApi';
 import { useStorefrontSession } from './useStorefrontSession';
 
-interface StorefrontCustomerIdentityPageProps {
-  provider: StorefrontProvider;
-  mode: 'sign-in' | 'register';
-}
-
-export function StorefrontCustomerIdentityPage({ provider, mode }: StorefrontCustomerIdentityPageProps) {
-  const identity = provider.getCustomerIdentityView();
-  const panel = mode === 'sign-in' ? identity.signIn : identity.register;
-  const { customer, signIn, signOut } = useStorefrontSession();
+export function StorefrontCustomerIdentityPage({ mode }: { provider: StorefrontProvider; mode: 'sign-in' | 'register' }) {
+  const { customer, loading, signIn, signOut } = useStorefrontSession();
+  const location = useLocation();
   const navigate = useNavigate();
-  const initialValues = useMemo(
-    () => Object.fromEntries(panel.fields.map((field) => [field.id, ''])),
-    [panel.fields],
-  );
-  const [values, setValues] = useState<Record<string, string>>(initialValues);
-  const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const result = createStorefrontCustomerSession(mode, {
-      name: values.name,
-      email: values.email ?? '',
-      phone: values.phone,
-      password: values.password ?? '',
-    });
-
-    setErrors(result.errors);
-    if (!result.session) return;
-
-    signIn(result.session);
-    navigate(identity.returnToCheckoutHref);
+  const returnTo = safeStoreReturn((location.state as { from?: string } | null)?.from);
+  const register = mode === 'register';
+  const [values, setValues] = useState({ name: '', email: '', password: '', password_confirmation: '' });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function submit(event: FormEvent) {
+    event.preventDefault(); setBusy(true); setError('');
+    try { await signIn(mode, values); navigate(returnTo, { replace: true }); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo iniciar sesión.'); }
+    finally { setBusy(false); }
   }
-
-  return (
-    <main className="bg-[#f7f2ea]" data-storefront-customer-identity data-storefront-customer-identity-mode={mode}>
-      <section className="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:px-8 lg:py-4">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-          <section>
-            <StorefrontPageIntro eyebrow={identity.eyebrow} title={customer ? identity.session.signedInTitle : panel.title} description={customer ? identity.session.signedInDescription : panel.description} />
-
-            {customer ? (
-              <section className="mt-5 rounded-xl border border-emerald-200 bg-white p-3 shadow-sm" data-storefront-customer-session-active>
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">{identity.session.signedInTitle}</p>
-                <p className="mt-2 text-sm font-black text-slate-950" data-storefront-customer-session-name>{customer.name}</p>
-                <p className="mt-1 text-[11px] text-slate-600" data-storefront-customer-session-email>{customer.email}</p>
-                {customer.phone ? <p className="mt-1 text-[11px] text-slate-600">{customer.phone}</p> : null}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Link className="rounded-full bg-[var(--storefront-primary)] px-4 py-2 text-[11px] font-black text-[var(--storefront-on-primary)]" to={identity.returnToCheckoutHref}>
-                    {identity.returnToCheckoutLabel}
-                  </Link>
-                  <button
-                    className="rounded-full border border-slate-300 bg-white px-4 py-2 text-[11px] font-black text-slate-700"
-                    data-storefront-customer-sign-out
-                    onClick={signOut}
-                    type="button"
-                  >
-                    {identity.session.signOutLabel}
-                  </button>
-                </div>
-              </section>
-            ) : (
-              <form className="mt-5 rounded-xl border border-slate-200 bg-white p-3 shadow-sm" data-storefront-customer-identity-form onSubmit={handleSubmit}>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {panel.fields.map((field) => (
-                    <label key={field.id} className="block">
-                      <span className="text-xs font-black text-slate-900">{field.label}</span>
-                      <input
-                        aria-label={field.label}
-                        className="mt-1.5 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[var(--storefront-primary)]"
-                        data-storefront-customer-field={field.id}
-                        onChange={(event) => setValues((current) => ({ ...current, [field.id]: event.target.value }))}
-                        placeholder={field.placeholder}
-                        type={field.type}
-                        value={values[field.id] ?? ''}
-                      />
-                      <span className="mt-1.5 block text-[11px] leading-4 text-slate-500">{field.helper}</span>
-                      {errors[field.id] ? <span className="mt-1 block text-[10px] font-bold text-rose-600" data-storefront-customer-field-error={field.id}>{errors[field.id]}</span> : null}
-                    </label>
-                  ))}
-                </div>
-
-                <button className="mt-5 w-full rounded-full bg-[var(--storefront-primary)] px-4 py-2 text-[11px] font-black text-[var(--storefront-on-primary)]" data-storefront-customer-submit type="submit">
-                  {panel.submitLabel}
-                </button>
-
-                <div className="mt-4 flex flex-col gap-2 text-xs font-black sm:flex-row sm:items-center sm:justify-between">
-                  <Link className="text-orange-700" to={panel.alternateHref}>{panel.alternateLabel}</Link>
-                  <Link className="text-slate-700" to={identity.returnToCheckoutHref}>{identity.returnToCheckoutLabel}</Link>
-                </div>
-              </form>
-            )}
-          </section>
-
-          <aside className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm" data-storefront-customer-identity-notices>
-            <p className="text-xs leading-5 text-slate-600">{identity.description}</p>
-            <div className="mt-4 space-y-3">
-              {identity.notices.map((notice) => (
-                <article key={notice.id} className="rounded-xl bg-slate-50 p-3">
-                  <h2 className="text-xs font-black text-slate-950">{notice.title}</h2>
-                  <p className="mt-1.5 text-[11px] leading-4 text-slate-600">{notice.description}</p>
-                </article>
-              ))}
-            </div>
-          </aside>
-        </div>
-      </section>
-    </main>
-  );
+  return <section className="mx-auto max-w-md px-4 py-8" data-storefront-customer-identity>
+    <h1 className="text-xl font-bold">{customer ? 'Mi cuenta' : register ? 'Crear cuenta' : 'Iniciar sesión'}</h1>
+    <p className="mt-2 text-sm text-slate-600">Podés explorar y consultar sin cuenta. Para agregar productos al carrito, iniciá sesión.</p>
+    {loading ? <p role="status" className="mt-4">Comprobando sesión…</p> : customer ? <div className="mt-5 grid gap-3">
+      <p>{customer.name} · {customer.email}</p>
+      <Link to={returnTo} className="font-semibold text-red-600">Volver a la tienda</Link>
+      {canAccessAdministration(customer.permissions) && <Link to="/apps/inventory/dashboard" className="font-semibold text-red-600">Administración</Link>}
+      <button type="button" className="text-left text-sm underline" onClick={() => { void signOut().catch(() => setError('La sesión local se cerró.')); }}>Cerrar sesión</button>
+    </div> : <form onSubmit={submit} className="mt-5 grid gap-4">
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      <fieldset disabled={busy} className="grid gap-4">
+        {(register ? ['name', 'email', 'password', 'password_confirmation'] as const : ['email', 'password'] as const).map(field => <label key={field} className="grid gap-1 text-sm">
+          {({ name: 'Nombre', email: 'Correo electrónico', password: 'Contraseña', password_confirmation: 'Confirmar contraseña' })[field]}
+          <input required type={field === 'email' ? 'email' : field.includes('password') ? 'password' : 'text'}
+            autoComplete={field === 'email' ? 'email' : field === 'name' ? 'name' : register ? 'new-password' : 'current-password'}
+            minLength={field.includes('password') && register ? 8 : field === 'name' ? 2 : undefined}
+            maxLength={field === 'name' ? 120 : field === 'email' ? 255 : 128}
+            className="rounded-md border border-slate-300 p-2" value={values[field]}
+            onChange={event => setValues(current => ({ ...current, [field]: event.target.value }))} />
+        </label>)}
+        <button className="rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white" type="submit">{busy ? 'Procesando…' : register ? 'Crear cuenta' : 'Iniciar sesión'}</button>
+      </fieldset>
+      <Link className="text-sm font-semibold text-red-600" to={register ? '/store/account/sign-in' : '/store/account/register'} state={{ from: returnTo }}>{register ? 'Ya tengo cuenta' : 'Crear una cuenta'}</Link>
+    </form>}
+  </section>;
 }

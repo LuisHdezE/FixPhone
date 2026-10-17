@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { ADMIN_REMEMBERED_KEY, ADMIN_SESSION_CHANGED, adminFetch, adminToken, clearAdminToken } from '@/auth/adminApiSession';
+import { canAccessAdministration } from '@/features/storefront/infrastructure/storefrontApi';
 import { FixPhoneAdminShell } from '@/shell/FixPhoneAdminShell';
 
 export interface AdminPrincipal {
@@ -123,5 +124,6 @@ export function AuthenticatedAdminShell() {
     </main>;
   }
 
+  if (!canAccessAdministration(session.principal.permissions)) return <Navigate to="/store" replace />;
   return <FixPhoneAdminShell principal={session.principal} />;
 }

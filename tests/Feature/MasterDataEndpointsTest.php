@@ -9,6 +9,17 @@ final class MasterDataEndpointsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $user = \App\Infrastructure\Identity\User::query()->create([
+            'id' => (string) \Illuminate\Support\Str::ulid(), 'name' => 'Owner',
+            'email' => 'master-owner@example.test', 'password' => \Illuminate\Support\Facades\Hash::make('test-password'), 'active' => true,
+        ]);
+        \Illuminate\Support\Facades\DB::table('user_roles')->insert(['user_id' => $user->id, 'role_slug' => 'owner']);
+        \Laravel\Sanctum\Sanctum::actingAs($user);
+    }
+
     public function test_seed_catalog_is_loaded_from_versioned_json(): void
     {
         $this->getJson('/api/v1/admin/master-data')

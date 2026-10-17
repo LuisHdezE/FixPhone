@@ -4,6 +4,7 @@ import type { StorefrontProvider } from '@/features/storefront/application/store
 import { useStorefrontSession } from '@/features/storefront/presentation/useStorefrontSession';
 import { StorefrontIcon } from '@/features/storefront/presentation/StorefrontIcon';
 import { StorefrontBrandMark } from '@/features/storefront/presentation/StorefrontBrandMark';
+import { canAccessAdministration } from '@/features/storefront/infrastructure/storefrontApi';
 import '@/styles/storefront.css';
 
 const navigation = [
@@ -28,7 +29,8 @@ export function StorefrontShell({ provider }: { provider: StorefrontProvider }) 
       <nav className="fp-desktop-nav" aria-label="Navegación principal de tienda">{navigation.map(item => <NavLink key={item.href} to={item.href}>{item.title}</NavLink>)}</nav>
       <form className="fp-search" role="search" onSubmit={searchProducts}><StorefrontIcon name="search" /><input aria-label="Buscar en la tienda" type="search" placeholder="Buscar productos..." value={search} onChange={event => setSearch(event.target.value)} /><button type="submit" className="sr-only">Buscar</button></form>
       <nav className="fp-utility" aria-label="Acciones de tienda">
-        {customer ? <button aria-label={`Cerrar sesión de ${customer.name}`} title={`${customer.name} · Salir`} data-storefront-session-shell onClick={signOut}><StorefrontIcon name="user" /></button> : <Link to="/store/account" aria-label="Mi cuenta"><StorefrontIcon name="user" /></Link>}
+        {customer ? <button aria-label={`Cerrar sesión de ${customer.name}`} title={`${customer.name} · Salir`} data-storefront-session-shell onClick={() => { void signOut().catch(() => undefined); }}><StorefrontIcon name="user" /></button> : <Link to="/store/account" aria-label="Mi cuenta"><StorefrontIcon name="user" /></Link>}
+        {customer && canAccessAdministration(customer.permissions) && <Link to="/apps/inventory/dashboard" aria-label="Administración" title="Administración"><StorefrontIcon name="wrench" /></Link>}
         <Link to="/store/favorites" aria-label="Favoritos"><StorefrontIcon name="heart" /></Link>
         <Link to="/store/cart" aria-label="Carrito"><StorefrontIcon name="cart" /></Link>
       </nav>

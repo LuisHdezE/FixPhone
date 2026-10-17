@@ -128,6 +128,7 @@ export function AppRouter() {
 
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/store" replace />} />
       <Route path="authentication/sign-in" element={<SignInPage contentProvider={signInContentProvider} gateway={signInGateway} />} />
       <Route path="authentication/password-reset" element={<PasswordResetPage contentProvider={passwordResetContentProvider} gateway={passwordResetGateway} />} />
       <Route path="authentication/two-factor" element={<TwoFactorPage contentProvider={twoFactorContentProvider} gateway={twoFactorGateway} />} />
@@ -154,7 +155,7 @@ export function AppRouter() {
       </Route>
 
       <Route element={<AuthenticatedAdminShell />}>
-        <Route index element={<Navigate to="/apps/inventory/dashboard" replace />} />
+        <Route path="admin" element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="dashboard" element={<Navigate to="/apps/inventory/dashboard" replace />} />
         <Route path="apps/inventory/dashboard" element={<InventoryDashboardPage gateway={operationalDashboardGateway} />} />
         <Route path="apps/inventory/devices" element={<InventoryDevicesPage provider={inventoryDemoProvider} gateway={inventoryDevicesGateway} masterDataProvider={masterDataProvider} />} />
@@ -184,7 +185,7 @@ export function AppRouter() {
         <Route path="user/account-settings" element={<AccountSettingsPage />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/apps/inventory/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/store" replace />} />
     </Routes>
   );
 }

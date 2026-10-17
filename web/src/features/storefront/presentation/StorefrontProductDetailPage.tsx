@@ -1,4 +1,7 @@
-import { Link, useParams } from 'react-router';
+import { useState } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
+import { cartRequest } from '../infrastructure/storefrontApi';
+import { useStorefrontSession } from './useStorefrontSession';
 import type { StorefrontProvider } from '../application/storefront.contracts';
 
 function galleryClassName(tone: string) {
@@ -9,6 +12,18 @@ function galleryClassName(tone: string) {
 
 export function StorefrontProductDetailPage({ provider }: { provider: StorefrontProvider }) {
   const { slug = '' } = useParams();
+  const { customer, loading } = useStorefrontSession();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  async function addToCart() {
+    if (!customer) { navigate('/store/account/sign-in', { state: { from: location.pathname } }); return; }
+    setBusy(true); setNotice('');
+    try { await cartRequest('POST', slug); navigate('/store/cart'); }
+    catch (reason) { setNotice(reason instanceof Error ? reason.message : 'No se pudo agregar al carrito.'); }
+    finally { setBusy(false); }
+  }
   const detail = provider.getProductDetailView();
   const product = provider.getProductDetailBySlug(slug);
 
@@ -68,15 +83,13 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
             <Link className="rounded-full bg-[var(--storefront-primary)] px-4 py-2.5 text-center text-xs font-black text-[var(--storefront-on-primary)] transition hover:bg-[var(--storefront-primary-strong)]" to="/store/contact">
               Consultar disponibilidad
             </Link>
-            <button className="rounded-full border border-black/10 bg-white px-4 py-2 text-[11px] font-black text-slate-400" disabled type="button">
-              Carrito pendiente
+            <button className="rounded-full border border-red-600 bg-white px-4 py-2 text-xs font-bold text-red-600 disabled:opacity-50" disabled={loading || busy} onClick={() => { void addToCart(); }} type="button">
+              {busy ? 'Agregando…' : 'Agregar al carrito'}
             </button>
+            {!customer && !loading && <p className="text-xs text-slate-500">Iniciá sesión para agregar al carrito.</p>}
+            {notice && <p role="alert" className="text-xs text-red-700">{notice}</p>}
           </div>
 
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3" data-storefront-product-action-notice>
-            <p className="text-xs font-black text-amber-950">{detail.actionNotice.title}</p>
-            <p className="mt-1 text-[11px] leading-4 text-amber-900">{detail.actionNotice.description}</p>
-          </div>
         </aside>
       </section>
 

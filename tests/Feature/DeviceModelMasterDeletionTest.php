@@ -13,6 +13,17 @@ final class DeviceModelMasterDeletionTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $user = \App\Infrastructure\Identity\User::query()->create([
+            'id' => (string) \Illuminate\Support\Str::ulid(), 'name' => 'Owner',
+            'email' => 'master-owner@example.test', 'password' => \Illuminate\Support\Facades\Hash::make('test-password'), 'active' => true,
+        ]);
+        \Illuminate\Support\Facades\DB::table('user_roles')->insert(['user_id' => $user->id, 'role_slug' => 'owner']);
+        \Laravel\Sanctum\Sanctum::actingAs($user);
+    }
+
     private const MODEL = 'model-iphone-11';
     private const URL = '/api/v1/admin/master-data/deviceModels/';
 

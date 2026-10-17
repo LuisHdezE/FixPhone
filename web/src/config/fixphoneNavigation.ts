@@ -15,6 +15,12 @@ export type FixPhoneNavGroup = {
 
 export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
   {
+    label: 'Tienda online',
+    items: [
+      { label: 'Carrusel y anuncios', to: '/admin/settings/store-campaigns', icon: 'store' },
+    ],
+  },
+  {
     label: 'Operación',
     items: [
       { label: 'Panel operativo', to: '/apps/inventory/dashboard', icon: 'dashboard', exact: true },
@@ -59,7 +65,6 @@ export const fixPhoneNavigation: readonly FixPhoneNavGroup[] = [
       { label: 'Prompts de IA', to: '/admin/ai-prompts', icon: 'book' },
       { label: 'Precios de referencia', to: '/admin/reference-prices', icon: 'chart' },
       { label: 'Comparador de tarifas', to: '/admin/reference-prices/compare', icon: 'chart' },
-      { label: 'Carrusel de la tienda', to: '/admin/settings/store-campaigns', icon: 'store' },
       { label: 'Almacenamiento multimedia', to: '/admin/settings/media-storage', icon: 'pages' },
       { label: 'Configuración', to: '/user/account-settings', icon: 'settings' },
       { label: 'Usuarios y roles', icon: 'user', planned: true },
