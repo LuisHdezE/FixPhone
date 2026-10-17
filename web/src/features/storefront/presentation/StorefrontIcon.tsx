@@ -1,4 +1,4 @@
-type IconName = 'phone' | 'search' | 'cart' | 'heart' | 'user' | 'check' | 'shield' | 'chat' | 'arrow' | 'menu';
+type IconName = 'phone' | 'search' | 'cart' | 'heart' | 'user' | 'check' | 'shield' | 'chat' | 'arrow' | 'menu' | 'wrench' | 'truck';
 const paths: Record<IconName, string> = {
 phone: 'M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2ZM10 5h4M11 19h2',
 search: 'm21 21-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
@@ -10,6 +10,8 @@ shield: 'M12 2 3 6v6c0 6 9 10 9 10s9-4 9-10V6ZM8 12l3 3 5-6',
 chat: 'M21 11.5a9 9 0 0 1-9 9 10 10 0 0 1-4-.8L2 22l2.3-5.6a9 9 0 1 1 16.7-4.9ZM8 8c0 4 2 6 6 7l2-2-3-1-1 1-2-2 1-1Z',
 arrow: 'M5 12h14m-6-6 6 6-6 6',
 menu: 'M3 6h18M3 12h18M3 18h18',
+wrench: 'M14.7 6.3a5 5 0 0 0-6.4 6.4L2 19a2.1 2.1 0 0 0 3 3l6.3-6.3a5 5 0 0 0 6.4-6.4l-3.4 3.4-3-3Z',
+truck: 'M1 4h13v12H1ZM14 9h4l4 4v3h-8M7 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z',
 };
 export function StorefrontIcon({ name, className = '' }: { name: IconName; className?: string }) {
 return <svg aria-hidden="true" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>;
