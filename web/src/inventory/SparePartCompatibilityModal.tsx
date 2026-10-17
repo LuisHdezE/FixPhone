@@ -26,7 +26,7 @@ export function SparePartCompatibilityModal({ id, onClose, onSaved }: {
       return Promise.all([a.json(), b.json()]) as Promise<[{ data: Compatibility }, { data: { brands: BrandEntry[]; deviceModels: ModelEntry[] } }]>;
     }).then(([a, b]) => {
       if (!active) return;
-      setPart(a.data); setIds(a.data.device_model_ids);
+      setPart(a.data); setIds(a.data.locked_identity && a.data.legacy_model_id ? Array.from(new Set([...a.data.device_model_ids, a.data.legacy_model_id])) : a.data.device_model_ids);
       setBrands(b.data.brands.filter(x => x.active));
       setModels(b.data.deviceModels.filter(x => x.active));
     }).catch(e => { if (active) setError(e instanceof Error ? e.message : 'Error de carga.'); });
