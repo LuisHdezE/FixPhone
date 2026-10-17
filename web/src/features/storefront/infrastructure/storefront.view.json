@@ -132,20 +132,20 @@
     ],
     "support": {
       "whatsappLabel": "Consultar por WhatsApp",
-      "whatsappHref": "https://wa.me/59800000000",
+      "whatsappHref": "https://wa.me/59898901428",
       "serviceArea": "Montevideo y zona metropolitana"
     },
     "theme": {
-      "primary": "#1d4ed8",
-      "primaryStrong": "#1e40af",
-      "primarySoft": "#dbeafe",
+      "primary": "#ed1028",
+      "primaryStrong": "#bd0d20",
+      "primarySoft": "#fff0f2",
       "onPrimary": "#ffffff"
     },
     "floatingAction": {
       "id": "whatsapp",
       "label": "WhatsApp",
       "ariaLabel": "Consultar por WhatsApp",
-      "href": "https://wa.me/59800000000",
+      "href": "https://wa.me/59898901428",
       "icon": "whatsapp",
       "backgroundColor": "#25D366",
       "foregroundColor": "#ffffff"
@@ -164,7 +164,7 @@
       },
       {
         "label": "Consultar por WhatsApp",
-        "href": "https://wa.me/59800000000",
+        "href": "https://wa.me/59898901428",
         "variant": "secondary"
       }
     ],
@@ -320,41 +320,41 @@
     },
     "heroBanners": [
       {
-        "id": "banner-repairs",
-        "eyebrow": "Repuestos destacados",
-        "title": "Todo para devolverle vida a tu equipo",
-        "description": "Displays, baterías y módulos preparados para una vitrina comercial más visual.",
+        "id": "phones",
+        "eyebrow": "Celulares seleccionados",
+        "title": "Tu próximo celular está acá",
+        "description": "Seleccionados y testeados.",
+        "actionLabel": "Ver celulares",
+        "actionHref": "/store/used-phones",
+        "image": {
+          "src": "/assets/store/hero.webp",
+          "alt": "Celulares en una composición de FixPhone",
+          "objectPosition": "center"
+        }
+      },
+      {
+        "id": "repairs",
+        "eyebrow": "Servicio técnico",
+        "title": "Dale una nueva vida a tu celular",
+        "description": "Contanos qué le pasa. Tu presupuesto es sin costo.",
+        "actionLabel": "Consultar reparación",
+        "actionHref": "/store/contact",
+        "image": {
+          "src": "/assets/login-fixphone.jpg",
+          "alt": "Servicio técnico de reparación de celulares",
+          "objectPosition": "center"
+        }
+      },
+      {
+        "id": "parts",
+        "eyebrow": "Repuestos para tu equipo",
+        "title": "La pieza que necesitás, en FixPhone",
+        "description": "Consultá el catálogo y la compatibilidad con tu modelo.",
         "actionLabel": "Ver repuestos",
-        "actionHref": "/store/products",
+        "actionHref": "/store/spare-parts",
         "image": {
-          "src": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1600&q=82",
-          "alt": "Teléfono móvil sobre una superficie clara",
-          "objectPosition": "center"
-        }
-      },
-      {
-        "id": "banner-used-phones",
-        "eyebrow": "Celulares usados",
-        "title": "Equipos revisados listos para encontrar nuevo dueño",
-        "description": "Una sección visual para unidades usadas con ficha, condición y precio.",
-        "actionLabel": "Explorar equipos",
-        "actionHref": "/store/products",
-        "image": {
-          "src": "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=1600&q=82",
-          "alt": "Smartphone moderno visto de frente",
-          "objectPosition": "center"
-        }
-      },
-      {
-        "id": "banner-accessories",
-        "eyebrow": "Accesorios",
-        "title": "Productos que completan la experiencia de compra",
-        "description": "Espacio promocional reutilizable para campañas, categorías o marcas destacadas.",
-        "actionLabel": "Ver catálogo",
-        "actionHref": "/store/products",
-        "image": {
-          "src": "https://images.unsplash.com/photo-1585060544812-6b45742d762f?auto=format&fit=crop&w=1600&q=82",
-          "alt": "Accesorios tecnológicos y teléfono sobre escritorio",
+          "src": "/assets/store/parts.webp",
+          "alt": "Pantalla, batería y componentes de reparación",
           "objectPosition": "center"
         }
       }
