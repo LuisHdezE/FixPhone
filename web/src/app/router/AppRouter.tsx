@@ -30,6 +30,8 @@ import { StorefrontCheckoutPage } from '@/features/storefront/presentation/Store
 import { StorefrontContactPage } from '@/features/storefront/presentation/StorefrontContactPage';
 import { StorefrontCustomerIdentityPage } from '@/features/storefront/presentation/StorefrontCustomerIdentityPage';
 import { StorefrontFavoritesPage } from '@/features/storefront/presentation/StorefrontFavoritesPage';
+import type { StorefrontProvider } from '@/features/storefront/application/storefront.contracts';
+import { StorefrontCampaignSettingsPage } from '@/features/storefront/presentation/StorefrontCampaignSettingsPage';
 import { StorefrontHomePage } from '@/features/storefront/presentation/StorefrontHomePage';
 import { StorefrontProductDetailPage } from '@/features/storefront/presentation/StorefrontProductDetailPage';
 import { StorefrontProductListingPage } from '@/features/storefront/presentation/StorefrontProductListingPage';
@@ -67,7 +69,8 @@ const masterDataAdminViewProvider = new JsonMasterDataAdminViewProvider();
 const defaultStorefrontProvider = new JsonStorefrontProvider();
 
 export function AppRouter() {
-  const [storefrontProvider, setStorefrontProvider] = useState<any>(defaultStorefrontProvider);
+  const [storefrontProvider, setStorefrontProvider] = useState<StorefrontProvider>(defaultStorefrontProvider);
+  const [storefrontLoading, setStorefrontLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [masterDataProvider, setMasterDataProvider] = useState(defaultMasterDataProvider);
   const [masterDataLoading, setMasterDataLoading] = useState(true);
@@ -93,7 +96,8 @@ export function AppRouter() {
         return res.json();
       })
       .then(products => setStorefrontProvider(new ApiStorefrontProvider(products)))
-      .catch(e => setError(e.message));
+      .catch(e => setError(e.message))
+      .finally(() => setStorefrontLoading(false));
   }, []);
 
   const needsMasterData = location.pathname.startsWith('/admin/master-data') || location.pathname === '/apps/inventory/devices';
@@ -104,6 +108,10 @@ export function AppRouter() {
 
   if (needsMasterData && masterDataError) {
     return <div className="grid min-h-dvh place-items-center bg-slate-50 p-6"><div className="max-w-md rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800"><strong>No se pudo cargar el catálogo maestro.</strong><p className="mt-2">{masterDataError}</p></div></div>;
+  }
+
+  if (storefrontLoading && location.pathname.startsWith('/store')) {
+    return <div role="status" className="grid min-h-dvh place-items-center bg-white text-sm text-slate-600">Cargando tienda…</div>;
   }
 
   if (error && location.pathname.startsWith('/store')) {
@@ -168,6 +176,7 @@ export function AppRouter() {
         <Route path="admin/ai-prompts" element={<AiPromptCatalogPage />} />
         <Route path="admin/reference-prices" element={<ReferencePriceImportPage />} />
         <Route path="admin/reference-prices/compare" element={<ReferencePriceComparisonPage />} />
+        <Route path="admin/settings/store-campaigns" element={<StorefrontCampaignSettingsPage />} />
         <Route path="admin/settings/media-storage" element={<MediaStorageSettingsPage />} />
         <Route path="admin/finance/settlements" element={<FinancialSettlementsPage />} />
         <Route path="admin/finance/consignment-sales" element={<ConsignedPhonesSoldPage />} />

@@ -28,6 +28,7 @@ use App\Presentation\Http\Controllers\CommercialOrdersController;
 use App\Presentation\Http\Controllers\AiPromptCatalogController;
 use App\Presentation\Http\Controllers\ReferencePriceImportController;
 use App\Presentation\Http\Controllers\ReferencePriceComparisonController;
+use App\Presentation\Http\Controllers\StorefrontCampaignController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -136,6 +137,7 @@ Route::prefix('v1')->group(function (): void {
  Route::post('/auth/login',AuthLoginController::class)->name('api.v1.auth.login');
  Route::get('/store/parts-donors', [PartsDonorStorefrontController::class, 'index'])->name('api.v1.store.parts-donors.index');
  Route::get('/store/parts-donors/{id}', [PartsDonorStorefrontController::class, 'show'])->name('api.v1.store.parts-donors.show');
+ Route::get('/store/campaigns', [StorefrontCampaignController::class, 'index']);
  Route::get('/store/products',[InventoryController::class, 'showroomList'])->name('api.v1.store.products.index');
  Route::get('/admin/master-data',[MasterDataController::class, 'catalog'])->name('api.v1.admin.master-data.catalog');
  Route::get('/admin/master-data/{kind}',[MasterDataController::class, 'index'])->name('api.v1.admin.master-data.index');
@@ -206,6 +208,8 @@ Route::prefix('v1')->group(function (): void {
   Route::get('/admin/inventory/{id}/lifecycle', [DeviceLifecycleController::class, 'show'])->middleware('permission:inventory.view');
   Route::patch('/admin/inventory/{id}/lifecycle', [DeviceLifecycleController::class, 'update'])->middleware('permission:inventory.adjust');
   Route::patch('/admin/inventory/{id}/routing',[DeviceRoutingController::class, 'update'])->middleware('permission:routing.manage')->name('api.v1.admin.inventory.device.routing.update');
+  Route::get('/admin/store/campaigns', [StorefrontCampaignController::class, 'index'])->middleware('permission:catalog.manage');
+  Route::put('/admin/store/campaigns', [StorefrontCampaignController::class, 'update'])->middleware('permission:catalog.manage');
   Route::prefix('admin/media/storage-profiles')->middleware('permission:integrations.manage')->group(function (): void {
    Route::get('/', [MediaStorageSettingsController::class, 'index'])->name('api.v1.admin.media.storage.index');
    Route::post('/', [MediaStorageSettingsController::class, 'store'])->name('api.v1.admin.media.storage.store');

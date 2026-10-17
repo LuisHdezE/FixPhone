@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import type { StorefrontProvider } from '../application/storefront.contracts';
 import { discoverStorefrontProducts } from '../application/storefront.discovery';
 import { StorefrontPageIntro } from './StorefrontPrimitives';
@@ -6,7 +7,9 @@ import { StorefrontProductCard } from './StorefrontProductCard';
 
 export function StorefrontProductListingPage({ provider }: { provider: StorefrontProvider }) {
   const listing = provider.getProductListingView();
-  const [searchText, setSearchText] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchText = searchParams.get('q') ?? '';
+  const setSearchText = (value: string) => setSearchParams(current => { const next = new URLSearchParams(current); if (value) next.set('q', value); else next.delete('q'); return next; }, { replace: true });
   const [filterSelections, setFilterSelections] = useState<Record<string, string>>({});
   const [sortId, setSortId] = useState('recommended');
   const discovery = useMemo(
