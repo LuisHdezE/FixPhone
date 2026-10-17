@@ -84,6 +84,25 @@ final class StorefrontProductImageUploadTest extends TestCase
         Http::assertSentCount(4);
     }
 
+    public function test_model_image_is_uploaded_to_models_folder_and_can_be_associated(): void
+    {
+        $this->auth(); $this->profile(); $bytes = $this->image()->getSize();
+        Http::fake(function ($request) use ($bytes) {
+            $this->assertStringContainsString('/fixphone-images/media/store/models/', $request->url());
+            return $request->method() === 'PUT' ? Http::response('', 200)
+                : Http::response('', 200, ['Content-Length' => (string) $bytes, 'Content-Type' => 'image/webp']);
+        });
+        $url = $this->postJson('/api/v1/admin/store/models/images', ['image' => $this->image()])
+            ->assertCreated()->json('data.url');
+        $this->assertStringStartsWith('https://cdn.example.test/media/store/models/', $url);
+        $this->patchJson('/api/v1/admin/master-data/deviceModels/model-iphone-11', ['imageUrl' => 'javascript:alert(1)'])
+            ->assertUnprocessable()->assertJsonValidationErrors('imageUrl');
+        $this->patchJson('/api/v1/admin/master-data/deviceModels/model-iphone-11', ['imageUrl' => $url])
+            ->assertOk()->assertJsonPath('imageUrl', $url);
+        $this->getJson('/api/v1/admin/master-data/deviceModels')
+            ->assertOk()->assertJsonFragment(['id' => 'model-iphone-11', 'imageUrl' => $url]);
+    }
+
     public function test_failed_verification_returns_no_public_url(): void
     {
         $this->auth(); $this->profile();

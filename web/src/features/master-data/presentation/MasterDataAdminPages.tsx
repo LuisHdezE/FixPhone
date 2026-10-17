@@ -9,6 +9,8 @@ import { PageShell } from '@/shell/PageShell';
 import { ModalShell } from '@/components/layout/ModalShell';
 import { FormModal } from '@/components/forms/FormModal';
 import { DeviceModelTechnicalModal } from './DeviceModelTechnicalModal';
+import { StoreProductImageField } from '@/features/storefront/presentation/StoreProductImageField';
+import { uploadModelImage } from '@/features/storefront/infrastructure/campaignImageUpload';
 import type { MasterDataAdminViewProvider, MasterDataGateway, MasterDataProvider } from '../application/master-data.contracts';
 import type { MasterDataBrandDto, MasterDataCategoryDto, MasterDataDeviceModelDto } from '../application/master-data.dto';
 
@@ -224,6 +226,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
   const [models, setModels] = useState<MasterDataDeviceModelDto[]>(() => [...masterDataProvider.getDeviceModels()]);
   const [technicalModel, setTechnicalModel] = useState<MasterDataDeviceModelDto | null>(null);
   const [form, setForm] = useState<DeviceModelFormState | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const dismissNotice = useCallback(() => setNotice(null), []);
@@ -232,7 +235,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
 
   function newModel() {
     setError(null);
-    setForm({ brandId: brands[0]?.id ?? '', name: '', slug: '', modelCode: null, active: true, sortOrder: (models.length + 1) * 10 });
+    setForm({ brandId: brands[0]?.id ?? '', name: '', slug: '', modelCode: null, imageUrl: null, active: true, sortOrder: (models.length + 1) * 10 });
   }
 
   function editModel(model: MasterDataDeviceModelDto) {
@@ -242,14 +245,14 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
 
   async function saveModel(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!form) return;
+    if (!form || uploadingImage) return;
     const name = form.name.trim();
     const slug = normalizeSlug(form.slug || name);
     if (!name || !slug) { setError('Nombre y slug son obligatorios.'); return; }
     if (!form.brandId) { setError('El modelo debe tener una marca.'); return; }
     if (models.some((model) => model.slug === slug && model.id !== form.id)) { setError('Ya existe un modelo con ese slug.'); return; }
 
-    const payload = { brandId: form.brandId, name, slug, modelCode: form.modelCode?.trim() || null, active: form.active, sortOrder: form.sortOrder };
+    const payload = { brandId: form.brandId, name, slug, modelCode: form.modelCode?.trim() || null, imageUrl: form.imageUrl?.trim() || null, active: form.active, sortOrder: form.sortOrder };
     try {
       const saved = form.id
         ? await gateway.update<MasterDataDeviceModelDto>('deviceModels', form.id, payload)
@@ -306,6 +309,7 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
   }
 
   const columns: readonly DataTableColumn<MasterDataDeviceModelDto>[] = [
+    { id: 'image', header: 'Imagen', cell: (model) => model.imageUrl ? <img src={model.imageUrl} alt={`Imagen de ${model.name}`} className="size-10 rounded object-contain" /> : <span className="text-xs text-slate-400">Sin imagen</span> },
     { id: 'name', header: view.columns.find((column) => column.id === 'name')?.header ?? 'Modelo', cell: (model) => <div><strong className="text-slate-900">{model.name}</strong><div className="text-xs text-slate-400">{model.id}</div></div>, sortable: true, sortValue: (model) => model.name, searchValue: (model) => textSearch([model.name, model.slug, model.id]) },
     { id: 'brand', header: view.columns.find((column) => column.id === 'brand')?.header ?? 'Marca', cell: (model) => brandsById.get(model.brandId)?.name ?? model.brandId, sortable: true, sortValue: (model) => brandsById.get(model.brandId)?.name ?? model.brandId, searchValue: (model) => brandsById.get(model.brandId)?.name ?? model.brandId },
     { id: 'code', header: view.columns.find((column) => column.id === 'code')?.header ?? 'Código', cell: (model) => model.modelCode ?? 'Sin código', sortable: true, sortValue: (model) => model.modelCode ?? '', searchValue: (model) => model.modelCode ?? '' },
@@ -324,6 +328,9 @@ export function MasterDataDeviceModelsPage({ masterDataProvider, viewProvider, g
         <TextField id="model-name" label="Nombre" onChange={(value) => setForm((current) => current ? { ...current, name: value, slug: current.slug || normalizeSlug(value) } : current)} value={form.name} />
         <TextField id="model-slug" label="Slug" onChange={(value) => setForm((current) => current ? { ...current, slug: value } : current)} value={form.slug} />
         <TextField id="model-code" label="Código" onChange={(value) => setForm((current) => current ? { ...current, modelCode: value } : current)} value={form.modelCode ?? ''} />
+        <div className="sm:col-span-2 lg:col-span-4">
+          <StoreProductImageField value={form.imageUrl ?? null} onChange={(imageUrl) => setForm((current) => current ? { ...current, imageUrl } : current)} disabled={false} onUploadingChange={setUploadingImage} productLabel={form.name || 'modelo'} uploadImage={uploadModelImage} savedMessage="Imagen subida a R2. Guardá el modelo para asociarla a su ficha." />
+        </div>
         <TextField id="model-sort-order" label="Orden" onChange={(value) => setForm((current) => current ? { ...current, sortOrder: toSortOrder(value) } : current)} value={String(form.sortOrder)} />
         <BooleanSelect id="model-active" label="Estado" onChange={(value) => setForm((current) => current ? { ...current, active: value } : current)} value={form.active} trueLabel="Activo" falseLabel="Inactivo" />
       </FormModal> : null}

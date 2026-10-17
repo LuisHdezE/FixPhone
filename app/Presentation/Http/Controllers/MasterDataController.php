@@ -260,6 +260,7 @@ final class MasterDataController extends Controller
             'logo' => ['sometimes', 'nullable', 'string', 'max:500'],
             'brandId' => ['sometimes', 'nullable', 'string', 'max:120'],
             'modelCode' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'imageUrl' => ['sometimes', 'nullable', 'url', 'starts_with:https://', 'max:2000'],
             'parentId' => ['sometimes', 'nullable', 'string', 'max:120'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'imageOrIcon' => ['sometimes', 'nullable', 'string', 'max:500'],
