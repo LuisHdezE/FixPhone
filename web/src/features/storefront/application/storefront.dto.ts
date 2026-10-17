@@ -63,11 +63,11 @@ export interface StorefrontProductCardDto {
   title: string;
   subtitle: string;
   priceLabel: string;
-  compareLabel?: string;
+  compareLabel?: string | undefined;
   badgeLabel: string;
-  brandLabel?: string;
-  referencePriceLabel?: string;
-  originalLabel?: string;
+  brandLabel?: string | undefined;
+  referencePriceLabel?: string | undefined;
+  originalLabel?: string | undefined;
   href: string;
   compatibilityLabel: string;
   stockLabel: string;
