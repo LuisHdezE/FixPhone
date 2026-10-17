@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { ModalShell } from '@/components/layout/ModalShell';
+import { StoreProductImageField } from '@/features/storefront/presentation/StoreProductImageField';
 
 type Publication = {
   id: string; sku: string; title: string; description: string | null; price_minor: number | null;
@@ -14,6 +15,8 @@ export function PhonePublicationModal({ id, onClose, onSaved }: {
   const [price, setPrice] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const locked = busy || uploading;
   const url = '/api/v1/admin/inventory/phones/' + encodeURIComponent(id) + '/publication';
 
   useEffect(() => {
@@ -35,7 +38,7 @@ export function PhonePublicationModal({ id, onClose, onSaved }: {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!data || busy) return;
+    if (!data || locked) return;
     const value = price.trim() ? Number(price.replace(',', '.')) : NaN;
     const minor = Number.isFinite(value) && value > 0 ? Math.round(value * 100) : null;
     if (data.published && (!minor || !Number.isSafeInteger(minor))) {
@@ -60,7 +63,7 @@ export function PhonePublicationModal({ id, onClose, onSaved }: {
     } finally { setBusy(false); }
   }
 
-  return <ModalShell title="Publicar teléfono en tienda" onClose={onClose} density="compact" disabled={busy}>
+  return <ModalShell title="Publicar teléfono en tienda" onClose={onClose} density="compact" disabled={locked}>
     <form className="grid gap-2 p-3 text-xs" onSubmit={event => void submit(event)}>
       {data ? <>
         <p className="text-slate-600">{data.sku} · Existencias: {data.stock_quantity}</p>
@@ -80,16 +83,14 @@ export function PhonePublicationModal({ id, onClose, onSaved }: {
             </select>
           </label>
         </div>
-        <label className="grid gap-1">URL de imagen HTTPS (opcional)
-          <input className="h-8 rounded border border-slate-300 px-2" type="url" value={data.image_url ?? ''} onChange={event => setData({ ...data, image_url: event.target.value })} />
-        </label>
+        <StoreProductImageField value={data.image_url} onChange={image_url => setData(current => current ? { ...current, image_url } : current)} disabled={busy} onUploadingChange={setUploading} productLabel={data.title} />
         <label className="flex items-center gap-2"><input type="checkbox" checked={data.published} onChange={event => setData({ ...data, published: event.target.checked })} /> Visible en tienda</label>
         <p className="text-[11px] text-slate-500">Podés venderlo sin reparar. Indicá los defectos reales. Publicar no registra una venta ni cambia el stock.</p>
       </> : !error ? <p>Cargando ficha…</p> : null}
       {error ? <p role="alert" className="rounded bg-red-50 p-2 text-red-700">{error}</p> : null}
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
-        <button type="button" className="h-8 rounded border px-3" disabled={busy} onClick={onClose}>Cancelar</button>
-        <button type="submit" className="h-8 rounded bg-brand-600 px-3 text-white disabled:opacity-50" disabled={busy || !data}>{busy ? 'Guardando…' : 'Guardar'}</button>
+        <button type="button" className="h-8 rounded border px-3" disabled={locked} onClick={onClose}>Cancelar</button>
+        <button type="submit" className="h-8 rounded bg-brand-600 px-3 text-white disabled:opacity-50" disabled={locked || !data}>{uploading ? 'Subiendo imagen…' : busy ? 'Guardando…' : 'Guardar'}</button>
       </div>
     </form>
   </ModalShell>;
