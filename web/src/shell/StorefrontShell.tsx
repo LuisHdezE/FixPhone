@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import type { StorefrontProvider } from '@/features/storefront/application/storefront.contracts';
 import { useStorefrontSession } from '@/features/storefront/presentation/useStorefrontSession';
 import { StorefrontIcon } from '@/features/storefront/presentation/StorefrontIcon';
+import { StorefrontBrandMark } from '@/features/storefront/presentation/StorefrontBrandMark';
 import '@/styles/storefront.css';
 
 const navigation = [
@@ -23,7 +24,7 @@ export function StorefrontShell({ provider }: { provider: StorefrontProvider }) 
   return <div className="fp-store min-h-dvh bg-white text-slate-900" data-storefront-shell style={storefrontStyle}>
     <a className="fp-skip" href="#store-content">Ir al contenido</a>
     <header className="fp-header"><div className="fp-container fp-header-inner">
-      <Link className="fp-logo" to="/store" aria-label={`Inicio de ${shell.storeName}`}><StorefrontIcon name="phone" /><span><strong><span>Fix</span>Phone</strong><small>CELULARES · REPUESTOS · REPARACIONES</small></span></Link>
+      <Link className="fp-logo" to="/store" aria-label={`Inicio de ${shell.storeName}`}><StorefrontBrandMark /><span><strong><span>Fix</span>Phone</strong><small>CELULARES · REPUESTOS · REPARACIONES</small></span></Link>
       <nav className="fp-desktop-nav" aria-label="Navegación principal de tienda">{navigation.map(item => <NavLink key={item.href} to={item.href}>{item.title}</NavLink>)}</nav>
       <form className="fp-search" role="search" onSubmit={searchProducts}><StorefrontIcon name="search" /><input aria-label="Buscar en la tienda" type="search" placeholder="Buscar productos..." value={search} onChange={event => setSearch(event.target.value)} /><button type="submit" className="sr-only">Buscar</button></form>
       <nav className="fp-utility" aria-label="Acciones de tienda">
