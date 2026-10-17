@@ -20,12 +20,51 @@ export async function prepareCampaignImage(source: File): Promise<Blob> {
     return blob;
   } finally { image.close(); }
 }
-async function uploadStoreImage(source: File, path: 'campaigns' | 'products' | 'models'): Promise<string> {
+type UploadGrant = { upload_url: string; url: string; content_type: string };
+
+function verifyPublicImage(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const timeout = window.setTimeout(() => {
+      image.onload = null; image.onerror = null;
+      reject(new Error('R2 recibió la imagen, pero la URL pública no respondió. Revisá el dominio público del perfil R2.'));
+    }, 15000);
+    image.onload = () => { window.clearTimeout(timeout); resolve(); };
+    image.onerror = () => {
+      window.clearTimeout(timeout);
+      reject(new Error('R2 recibió la imagen, pero no se pudo abrir desde la URL pública. Revisá el dominio público del perfil R2.'));
+    };
+    image.src = url;
+  });
+}
+
+async function uploadStoreImage(source: File, kind: 'campaigns' | 'products' | 'models'): Promise<string> {
   const image = await prepareCampaignImage(source);
-  const form = new FormData(); form.append('image', image, 'store-image.webp');
-  const response = await adminFetch('/api/v1/admin/store/' + path + '/images', { method: 'POST', body: form });
-  const body = await response.json() as { data?: { url: string }; errors?: Record<string, string[]>; detail?: string };
-  if (!response.ok || !body.data?.url) throw new Error(body.errors ? Object.values(body.errors).flat().join(' ') : body.detail || 'No se pudo subir la imagen.');
+  const response = await adminFetch('/api/v1/admin/store/images/presign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kind, byte_size: image.size, content_type: image.type }),
+  });
+  const body = await response.json() as {
+    data?: UploadGrant; errors?: Record<string, string[]>; detail?: string; message?: string;
+  };
+  if (!response.ok || !body.data?.upload_url || !body.data?.url) {
+    throw new Error(body.errors ? Object.values(body.errors).flat().join(' ') :
+      body.detail || body.message || 'No se pudo preparar la subida de la imagen.');
+  }
+
+  let uploaded: Response;
+  try {
+    uploaded = await fetch(body.data.upload_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': body.data.content_type },
+      body: image,
+    });
+  } catch {
+    throw new Error('No se pudo subir la imagen directamente a R2. Revisá la conexión y la regla CORS del bucket para este sitio (PUT y Content-Type).');
+  }
+  if (!uploaded.ok) throw new Error('R2 rechazó la imagen (HTTP ' + uploaded.status + '). Revisá la configuración del bucket.');
+  await verifyPublicImage(body.data.url);
   return body.data.url;
 }
 export function uploadCampaignImage(source: File): Promise<string> { return uploadStoreImage(source, 'campaigns'); }

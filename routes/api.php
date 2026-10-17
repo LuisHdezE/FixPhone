@@ -218,6 +218,7 @@ Route::prefix('v1')->group(function (): void {
   Route::post('/admin/store/campaigns/images', \App\Presentation\Http\Controllers\StorefrontCampaignImageController::class)->middleware(['permission:catalog.manage', 'throttle:10,1']);
   Route::post('/admin/store/products/images', \App\Presentation\Http\Controllers\StorefrontProductImageController::class)->middleware(['permission:catalog.manage', 'throttle:10,1']);
   Route::post('/admin/store/models/images', \App\Presentation\Http\Controllers\DeviceModelImageController::class)->middleware(['permission:catalog.manage', 'throttle:10,1']);
+  Route::post('/admin/store/images/presign', \App\Presentation\Http\Controllers\StorefrontImagePresignController::class)->middleware(['permission:catalog.manage', 'throttle:10,1']);
   Route::prefix('admin/media/storage-profiles')->middleware('permission:integrations.manage')->group(function (): void {
    Route::get('/', [MediaStorageSettingsController::class, 'index'])->name('api.v1.admin.media.storage.index');
    Route::post('/', [MediaStorageSettingsController::class, 'store'])->name('api.v1.admin.media.storage.store');
