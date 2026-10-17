@@ -113,12 +113,13 @@ final class PartsDonorStorefrontTest extends TestCase
             ->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $id)
             ->assertJsonPath('data.0.fault_label', 'Bloqueo de activación iCloud')
-            ->assertJsonPath('data.0.price_minor', 390000);
+            ->assertJsonPath('data.0.price_minor', 390000)
+            ->assertJsonPath('data.0.brand', 'Apple');
 
         $response = $this->getJson('/api/v1/store/parts-donors/'.$id)->assertOk()
             ->assertJsonPath('data.href', '/store/for-parts/'.$id);
         $this->assertSame([
-            'id', 'model_name', 'title', 'category', 'fault_type', 'fault_label',
+            'id', 'model_name', 'brand', 'title', 'category', 'fault_type', 'fault_label',
             'screen_condition', 'power_state', 'price_minor', 'currency_code',
             'image_url', 'images', 'description', 'availability', 'href',
         ], array_keys($response->json('data')));

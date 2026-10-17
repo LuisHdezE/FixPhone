@@ -9,7 +9,7 @@ final class PublishedPartsDonor
 {
     public static function query(): Builder
     {
-        return DeviceValuation::query()->with('verifiedPhotos')
+        return DeviceValuation::query()->with(['verifiedPhotos', 'inventoryItem'])
             ->where('public_listing_status', 'published')
             ->where('provenance_confirmed', true)
             ->whereNotNull('public_image_url')
@@ -39,6 +39,7 @@ final class PublishedPartsDonor
         return [
             'id' => $valuation->id,
             'model_name' => $valuation->model_name,
+            'brand' => $valuation->inventoryItem?->brand,
             'title' => $valuation->model_name.' · Para repuestos',
             'category' => 'phones_for_parts',
             'fault_type' => $valuation->fault_type,

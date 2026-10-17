@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import type { PublicPartsDonor } from '../application/partsDonor.types';
 import { partsDonorPrice } from '../application/partsDonor.types';
+import { partsDonorCatalogCards } from '../application/partsDonorCatalog';
+import { StorefrontCatalogProducts } from './StorefrontCatalogProducts';
 
 const endpoint = '/api/v1/store/parts-donors';
 const conditionLabel: Record<PublicPartsDonor['screen_condition'], string> = {
@@ -33,39 +35,14 @@ export function PartsDonorCatalogPage() {
     return () => { active = false; };
   }, []);
 
-  return <main className="mx-auto grid max-w-[1440px] gap-3 px-4 py-3 sm:px-5 lg:px-6 lg:py-4" data-parts-donor-catalog>
-    <section className="rounded-xl border border-black/10 bg-white p-3 shadow-sm">
-      <Link className="text-[11px] font-semibold text-slate-500" to="/store">← FixPhone</Link>
-      <p className="mt-3 text-[10px] font-black uppercase tracking-[0.12em] text-[var(--storefront-primary)]">Catálogo · Equipos</p>
-      <h1 className="mt-1 text-xl font-black text-slate-950">Celulares para repuestos</h1>
-      <p className="mt-1 max-w-3xl text-[11px] leading-4 text-slate-600">Equipos con fallas declaradas, publicados por unidad para recuperar componentes. No son celulares listos para usar.</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Link className="rounded-full border border-black/10 px-3 py-1.5 text-[11px] font-semibold" to="/store/used-phones">Celulares usados funcionales</Link>
-        <Link className="rounded-full border border-black/10 px-3 py-1.5 text-[11px] font-semibold" to="/store/spare-parts">Repuestos individuales</Link>
-      </div>
-    </section>
-    {pending ? <p className="mt-8 text-sm" role="status">Consultando disponibilidad…</p> : null}
-    {error ? <p className="mt-8 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800" role="alert">{error}</p> : null}
-    {!pending && !error && !items.length ? <section className="mt-8 rounded-xl border bg-white p-6">
-      <h2 className="font-bold">Sin equipos publicados por el momento</h2>
-      <p className="mt-2 text-sm text-slate-600">Pronto habrá nuevas unidades disponibles para repuestos. Consultá también nuestras otras categorías.</p>
-      <Link className="mt-4 inline-block text-sm font-semibold text-[var(--storefront-primary)]" to="/store/contact">Contactar a FixPhone</Link>
-    </section> : null}
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {items.map((item) => <article key={item.id} className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
-        <Link to={item.href} aria-label={'Ver ' + item.title}>
-          <img src={item.image_url} alt={'Fotografía real del ' + item.model_name} className="aspect-[4/3] w-full object-contain bg-slate-50" loading="lazy" />
-        </Link>
-        <div className="grid gap-1.5 p-3">
-          <span className="w-fit rounded bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-900">Para repuestos · Con falla</span>
-          <h2 className="text-sm font-bold text-slate-900">{item.model_name}</h2>
-          <p className="text-[11px] leading-4 text-slate-600">{item.fault_label}</p>
-          <p className="text-base font-semibold">{partsDonorPrice(item.price_minor)}</p>
-          <Link className="w-fit rounded-full bg-[var(--storefront-primary)] px-4 py-2 text-xs font-bold text-[var(--storefront-on-primary)]" to={item.href}>Ver estado y fotos</Link>
-        </div>
-      </article>)}
-    </div>
-  </main>;
+  const products = useMemo(() => partsDonorCatalogCards(items), [items]);
+  return <StorefrontCatalogProducts
+    catalogKey="for-parts"
+    products={products}
+    pending={pending}
+    error={error}
+    emptyMessage="No hay equipos publicados para repuestos con estos criterios."
+  />;
 }
 
 export function PartsDonorDetailPage() {
