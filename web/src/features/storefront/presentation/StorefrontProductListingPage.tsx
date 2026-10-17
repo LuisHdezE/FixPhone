@@ -30,12 +30,7 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
           eyebrow={listing.eyebrow}
           title={listing.title}
           description={listing.description}
-          trailing={(
-            <div className="max-w-xs rounded-xl bg-slate-950 p-3 text-white" data-storefront-listing-notice>
-              <p className="text-sm font-black">{listing.listingNotice.title}</p>
-              <p className="mt-1.5 text-[11px] leading-4 text-white/70">{listing.listingNotice.description}</p>
-            </div>
-          )}
+
         />
       </section>
 
