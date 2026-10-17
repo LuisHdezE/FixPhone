@@ -36,12 +36,12 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
       </section>
 
       <section className="grid items-start gap-3 lg:grid-cols-[17rem_minmax(0,1fr)]">
-        <aside className="grid gap-3 rounded-xl border border-black/10 bg-white p-3 shadow-sm lg:sticky lg:top-24 lg:self-start" data-storefront-listing-filters>
-          <label className="grid gap-1.5">
-            <span className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">Búsqueda</span>
+        <aside className="fp-discovery-filters grid gap-2 rounded-lg border border-black/10 bg-white p-2 shadow-sm lg:sticky lg:top-24 lg:self-start" data-storefront-listing-filters>
+          <label className="grid gap-1">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.06em] text-slate-500">Búsqueda</span>
             <input
               aria-label="Buscar productos"
-              className="h-10 rounded-xl border border-black/10 bg-[#f7f2ea] px-3 text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400 focus:border-[var(--storefront-primary)] focus:ring-4 focus:ring-[var(--storefront-primary-soft)]"
+              className="h-8 rounded-md border border-black/10 bg-[#f7f2ea] px-2 text-[11px] font-normal text-slate-900 outline-none placeholder:text-slate-400 focus:border-[var(--storefront-primary)] focus:ring-4 focus:ring-[var(--storefront-primary-soft)]"
               data-storefront-discovery-search
               onChange={(event) => setSearchText(event.target.value)}
               placeholder={listing.searchPlaceholder}
@@ -50,11 +50,11 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
             />
           </label>
 
-          <label className="grid gap-1.5">
-            <span className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">Orden</span>
+          <label className="grid gap-1">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.06em] text-slate-500">Orden</span>
             <select
               aria-label="Ordenar productos"
-              className="h-10 appearance-none rounded-xl border border-black/10 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-slate-300 focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
+              className="h-8 appearance-none rounded-md border border-black/10 bg-white px-2 text-[11px] font-normal text-slate-900 outline-none focus:border-slate-300 focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
               data-storefront-discovery-sort
               onChange={(event) => setSortId(event.target.value)}
               value={sortId}
@@ -68,14 +68,14 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
           {listing.filters.map((filter) => (
             <fieldset
               key={filter.id}
-              className="grid gap-2 border-t border-black/10 pt-3"
+              className="grid gap-1.5 border-t border-black/10 pt-2"
               data-storefront-discovery-filter={filter.id}
             >
-              <legend className="text-sm font-black text-slate-950">{filter.title}</legend>
+              <legend className="text-[11px] font-semibold text-slate-950">{filter.title}</legend>
               {filter.id === 'brand' ? (
                 <select
                   aria-label="Filtrar por marca"
-                  className="h-9 w-full appearance-none rounded-lg border border-black/10 bg-white px-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-300 focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
+                  className="h-8 w-full appearance-none rounded-md border border-black/10 bg-white px-2 text-[11px] font-normal text-slate-800 outline-none focus:border-slate-300 focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
                   data-storefront-discovery-brand
                   onChange={(event) => setFilterSelections((current) => ({
                     ...current,
@@ -95,16 +95,16 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
                       <label
                         key={option.id}
                         className={[
-                          'grid cursor-pointer gap-0.5 rounded-xl border p-2.5 text-xs transition',
+                          'grid cursor-pointer gap-0.5 rounded-md border px-2 py-1.5 text-[11px] transition',
                           checked
                             ? 'border-[var(--storefront-primary)] bg-[var(--storefront-primary-soft)]'
                             : 'border-black/10 hover:border-[var(--storefront-primary)]',
                         ].join(' ')}
                       >
-                        <span className="flex items-center gap-2 font-bold text-slate-800">
+                        <span className="flex items-center gap-1.5 font-medium leading-4 text-slate-800">
                           <input
                             checked={checked}
-                            className="size-3.5 accent-slate-950"
+                            className="size-3 accent-slate-950"
                             name={filter.id}
                             onChange={() => setFilterSelections((current) => ({
                               ...current,
@@ -115,7 +115,7 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
                           />
                           {option.label}
                         </span>
-                        {option.helper ? <span className="pl-5.5 text-[11px] leading-4 text-slate-500">{option.helper}</span> : null}
+                        {option.helper ? <span className="pl-[18px] text-[10px] leading-3.5 text-slate-500">{option.helper}</span> : null}
                       </label>
                     );
                   })}
