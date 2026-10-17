@@ -122,7 +122,7 @@ class InventoryController extends Controller
             'operational_status' => $item->operational_status, 'stock_quantity' => $item->stock_quantity,
             'sale_price_amount_minor' => $item->sale_price_amount_minor, 'currency_code' => $item->currency_code,
             'main_image_url' => $item->main_image_url,
-            'metadata' => ['origin' => $item->metadata['origin'] ?? null, 'part_condition' => $item->metadata['part_condition'] ?? null],
+            'metadata' => ['origin' => $item->metadata['origin'] ?? null, 'part_condition' => $item->metadata['part_condition'] ?? null, 'reference_price_minor' => $item->metadata['reference_price_minor'] ?? null, 'reference_currency' => $item->metadata['reference_currency'] ?? null, 'is_original' => (bool) ($item->metadata['is_original'] ?? false)],
         ]));
     }
 }

@@ -5,7 +5,7 @@ export type ApiStoreProduct = {
   id: string; title: string; description?: string | null; item_type: string;
   operational_status: string; sale_price_amount_minor: number; currency_code: string;
   stock_quantity: number; brand?: string | null; model?: string | null; main_image_url?: string | null;
-  metadata?: { origin?: string | null; part_condition?: string | null };
+  metadata?: { origin?: string | null; part_condition?: string | null; reference_price_minor?: number | null; reference_currency?: string | null; is_original?: boolean };
 };
 
 export class ApiStorefrontProvider extends JsonStorefrontProvider {
@@ -21,7 +21,9 @@ export class ApiStorefrontProvider extends JsonStorefrontProvider {
       const recovered = item.metadata?.origin === 'recovered';
       const condition = phone ? (item.operational_status === 'reparado' ? 'Reacondicionado' : 'Usado') : recovered ? 'Usado recuperado' : item.metadata?.part_condition === 'functional' ? 'Funcional' : 'Repuesto';
       return {
-        id: item.id, title: item.title, subtitle: condition,
+        id: item.id, title: item.title, subtitle: condition, brandLabel: item.brand || undefined,
+        referencePriceLabel: item.item_type === 'spare_part' && item.metadata?.reference_price_minor ? new Intl.NumberFormat('es-UY', { style: 'currency', currency: item.metadata.reference_currency || item.currency_code || 'UYU' }).format(item.metadata.reference_price_minor / 100) : undefined,
+        originalLabel: item.item_type === 'spare_part' && item.metadata?.is_original ? 'Original' : undefined,
         priceLabel: new Intl.NumberFormat('es-UY', { style: 'currency', currency: item.currency_code || 'UYU' }).format(item.sale_price_amount_minor / 100),
         badgeLabel: condition, href: '/store/products/' + item.id,
         compatibilityLabel: [item.brand, item.model].filter(Boolean).join(' ') || 'Consultar compatibilidad',
