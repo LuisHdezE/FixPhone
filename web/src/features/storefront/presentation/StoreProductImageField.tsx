@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { uploadProductImage } from '../infrastructure/campaignImageUpload';
 
-export function StoreProductImageField({ value, onChange, disabled, onUploadingChange, productLabel }: {
+export function StoreProductImageField({ value, onChange, disabled, onUploadingChange, productLabel, uploadImage = uploadProductImage, savedMessage = 'Imagen subida a R2. Guardá la ficha para mostrarla en la tienda.' }: {
   value: string | null; onChange: (url: string | null) => void;
   disabled: boolean; onUploadingChange: (uploading: boolean) => void; productLabel: string;
+  uploadImage?: (file: File) => Promise<string>; savedMessage?: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -13,9 +14,9 @@ export function StoreProductImageField({ value, onChange, disabled, onUploadingC
   async function upload(file: File) {
     setUploading(true); onUploadingChange(true); setError(''); setNotice('');
     try {
-      const url = await uploadProductImage(file);
+      const url = await uploadImage(file);
       onChange(url);
-      setNotice('Imagen subida a R2. Guardá la ficha para mostrarla en la tienda.');
+      setNotice(savedMessage);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudo subir la imagen.');
     } finally { setUploading(false); onUploadingChange(false); }

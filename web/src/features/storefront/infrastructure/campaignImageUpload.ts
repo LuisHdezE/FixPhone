@@ -20,7 +20,7 @@ export async function prepareCampaignImage(source: File): Promise<Blob> {
     return blob;
   } finally { image.close(); }
 }
-async function uploadStoreImage(source: File, path: 'campaigns' | 'products'): Promise<string> {
+async function uploadStoreImage(source: File, path: 'campaigns' | 'products' | 'models'): Promise<string> {
   const image = await prepareCampaignImage(source);
   const form = new FormData(); form.append('image', image, 'store-image.webp');
   const response = await adminFetch('/api/v1/admin/store/' + path + '/images', { method: 'POST', body: form });
@@ -30,3 +30,4 @@ async function uploadStoreImage(source: File, path: 'campaigns' | 'products'): P
 }
 export function uploadCampaignImage(source: File): Promise<string> { return uploadStoreImage(source, 'campaigns'); }
 export function uploadProductImage(source: File): Promise<string> { return uploadStoreImage(source, 'products'); }
+export function uploadModelImage(source: File): Promise<string> { return uploadStoreImage(source, 'models'); }

@@ -13,6 +13,7 @@ export interface MasterDataDeviceModelDto {
   name: string;
   slug: string;
   modelCode: string | null;
+  imageUrl?: string | null;
   active: boolean;
   sortOrder: number;
 }
