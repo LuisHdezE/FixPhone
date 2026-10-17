@@ -50,7 +50,7 @@ export function StorefrontCatalogPage({ provider, routeKey }: StorefrontCatalogP
           <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
             <label className="flex items-center gap-2 text-xs text-slate-600">
               <span className="hidden sm:inline">Ordenar por</span>
-              <select className="h-8 min-w-[132px] border-0 border-b border-slate-300 bg-transparent px-1 text-xs font-semibold text-slate-800 outline-none focus:border-[var(--storefront-primary)]" aria-label="Ordenar productos" value={sortId} onChange={(event) => setSortId(event.target.value)}>
+              <select className="h-8 min-w-[132px] appearance-none border-0 border-b border-slate-300 bg-transparent px-1 text-xs font-semibold text-slate-800 outline-none ring-0 focus:border-slate-400 focus:bg-transparent focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" aria-label="Ordenar productos" value={sortId} onChange={(event) => setSortId(event.target.value)}>
                 <option value="recommended">Recomendados</option>
                 <option value="price_asc">Precio menor</option>
                 <option value="price_desc">Precio mayor</option>
@@ -58,7 +58,7 @@ export function StorefrontCatalogPage({ provider, routeKey }: StorefrontCatalogP
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-600">
               <span className="hidden sm:inline">Marca</span>
-              <select className="h-8 min-w-[112px] border-0 border-b border-slate-300 bg-transparent px-1 text-xs font-semibold text-slate-800 outline-none focus:border-[var(--storefront-primary)]" aria-label="Filtrar por marca" value={brandId} onChange={(event) => setBrandId(event.target.value)}>
+              <select className="h-8 min-w-[112px] appearance-none border-0 border-b border-slate-300 bg-transparent px-1 text-xs font-semibold text-slate-800 outline-none ring-0 focus:border-slate-400 focus:bg-transparent focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" aria-label="Filtrar por marca" value={brandId} onChange={(event) => setBrandId(event.target.value)}>
                 <option value="all">Todas</option>
                 {brands.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
               </select>
