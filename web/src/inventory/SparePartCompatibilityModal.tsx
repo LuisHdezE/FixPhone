@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { ModalShell } from '@/components/layout/ModalShell';
 
-type ModelEntry = { id: string; name: string; brandId?: string; active: boolean };
+type ModelEntry = { id: string; name: string; brandId: string; active: boolean };
 type BrandEntry = { id: string; name: string; active: boolean };
 type Compatibility = { sku: string; title: string; device_model_ids: string[]; legacy_model_id: string | null; locked_identity: boolean };
 export function SparePartCompatibilityModal({ id, onClose, onSaved }: {
