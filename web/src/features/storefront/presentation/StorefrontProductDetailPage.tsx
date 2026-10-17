@@ -124,7 +124,7 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
           <dl className="mt-3 grid gap-2">
             {product.specs.map((spec) => (
               <div key={spec.label} className="flex items-start justify-between gap-3 rounded-xl bg-[#f7f2ea] p-2.5">
-                <dt className="text-xs font-bold text-slate-500">{spec.label}</dt>
+                <dt className="text-xs font-normal text-slate-500">{spec.label}</dt>
                 <dd className="text-right text-xs font-black text-slate-950">{spec.value}</dd>
               </div>
             ))}
