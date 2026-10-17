@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { ModalShell } from '@/components/layout/ModalShell';
+import { StoreProductImageField } from '@/features/storefront/presentation/StoreProductImageField';
 
 type Publication = { title: string; description: string | null; variant: string; sku: string; condition: string; price_minor: number | null; reference_price_minor: number | null; reference_currency: string; is_original: boolean; currency: string; image_url: string | null; published: boolean; stock_quantity: number };
 
@@ -8,6 +9,8 @@ export function SparePartPublicationModal({ id, onClose, onSaved }: { id: string
   const [data, setData] = useState<Publication | null>(null);
   const [price, setPrice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const locked = busy || uploading;
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const url = '/api/v1/admin/inventory/spare-parts/' + encodeURIComponent(id) + '/publication';
@@ -23,7 +26,7 @@ export function SparePartPublicationModal({ id, onClose, onSaved }: { id: string
   }, [url, reload]);
 
   async function submit(event: FormEvent) {
-    event.preventDefault(); if (busy || !data) return;
+    event.preventDefault(); if (locked || !data) return;
     setBusy(true); setError(null);
     try {
       const minor = price.trim() ? Math.round(Number(price.replace(',', '.')) * 100) : null;
@@ -35,7 +38,7 @@ export function SparePartPublicationModal({ id, onClose, onSaved }: { id: string
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar.'); }
     finally { setBusy(false); }
   }
-  return <ModalShell title="Publicación de repuesto" onClose={onClose} disabled={busy} density="compact" hideCloseButton>
+  return <ModalShell title="Publicación de repuesto" onClose={onClose} disabled={locked} density="compact" hideCloseButton>
     <form className="grid gap-2 p-3 text-xs" onSubmit={event => void submit(event)}>
       {data ? <>
         <p className="font-medium">{data.sku} · {data.title}</p>
@@ -45,12 +48,12 @@ export function SparePartPublicationModal({ id, onClose, onSaved }: { id: string
         <label className="grid gap-1">Descripción<textarea className="rounded border border-slate-200 px-2 py-1" rows={2} maxLength={2000} value={data.description ?? ''} disabled={busy} onChange={event => setData({ ...data, description: event.target.value })} /></label>
         <label className="grid gap-1">Condición<select className="h-7 rounded border border-slate-200 px-2" value={data.condition} disabled={busy} onChange={event => setData({ ...data, condition: event.target.value, published: false })}><option value="untested">Sin probar</option><option value="functional">Funcional</option><option value="faulty">Con fallas</option></select></label>
         <div className="grid grid-cols-2 gap-2"><label className="grid gap-1">Precio FixPhone<input className="h-7 rounded border border-slate-200 px-2" inputMode="decimal" value={price} disabled={busy} onChange={event => setPrice(event.target.value)} /></label><label className="grid gap-1">Precio nuevo de referencia<input className="h-7 rounded border border-slate-200 px-2" inputMode="decimal" value={data.reference_price_minor === null ? '' : String(data.reference_price_minor / 100)} disabled={busy} onChange={event => setData({ ...data, reference_price_minor: event.target.value.trim() ? Math.round(Number(event.target.value.replace(',', '.')) * 100) : null })} /></label></div><div className="grid grid-cols-[1fr_6rem] gap-2"><label className="grid gap-1">Moneda<select className="h-7 rounded border border-slate-200 px-2" value={data.currency} disabled={busy} onChange={event => setData({ ...data, currency: event.target.value })}><option>UYU</option><option>USD</option></select></label></div>
-        <label className="grid gap-1">URL de imagen (opcional)<input className="h-7 rounded border border-slate-200 px-2" type="url" placeholder="https://…" value={data.image_url ?? ''} disabled={busy} onChange={event => setData({ ...data, image_url: event.target.value })} /></label>
+        <StoreProductImageField value={data.image_url} onChange={image_url => setData(current => current ? { ...current, image_url } : current)} disabled={busy} onUploadingChange={setUploading} productLabel={data.title} />
         <label className="flex items-center gap-2 py-1"><input type="checkbox" checked={data.is_original} disabled={busy} onChange={event => setData({ ...data, is_original: event.target.checked })} />Repuesto original</label><label className="flex items-center gap-2 py-1"><input type="checkbox" checked={data.published} disabled={busy} onChange={event => setData({ ...data, published: event.target.checked })} />Publicar en el showroom</label>
         <p className="text-[11px] text-slate-500">Para publicar: condición funcional, precio y al menos una unidad disponible.</p>
       </> : !error ? <p role="status">Cargando…</p> : null}
       {error ? <div role="alert" className="rounded bg-red-50 p-2 text-red-700">{error}{!data ? <button type="button" className="ml-2 underline" onClick={() => setReload(value => value + 1)}>Reintentar</button> : null}</div> : null}
-      <div className="flex justify-end gap-2 border-t border-slate-100 pt-2"><button type="button" disabled={busy} className="h-7 rounded border border-slate-200 px-3" onClick={onClose}>Cancelar</button><button type="submit" disabled={busy || !data} className="h-7 rounded bg-brand-600 px-3 text-white disabled:opacity-40">Guardar</button></div>
+      <div className="flex justify-end gap-2 border-t border-slate-100 pt-2"><button type="button" disabled={locked} className="h-7 rounded border border-slate-200 px-3" onClick={onClose}>Cancelar</button><button type="submit" disabled={locked || !data} className="h-7 rounded bg-brand-600 px-3 text-white disabled:opacity-40">{uploading ? 'Subiendo imagen…' : busy ? 'Guardando…' : 'Guardar'}</button></div>
     </form>
   </ModalShell>;
 }

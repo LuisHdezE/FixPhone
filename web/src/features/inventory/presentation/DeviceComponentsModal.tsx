@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState, type FormEvent } from 'react';
 import { adminFetch } from '@/auth/adminApiSession';
 import { ModalShell } from '@/components/layout/ModalShell';
+import { StoreProductImageField } from '@/features/storefront/presentation/StoreProductImageField';
 import type { InventoryDeviceListItemDto } from '../application/devices.dto';
 
 import { recoveredPartCopy } from './recoveredPartCopy';
@@ -24,6 +25,8 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
   const [currency, setCurrency] = useState('UYU');
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const locked = busy || uploading;
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
 
@@ -59,7 +62,7 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
   }
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (busy || selected.length === 0 || sheet?.exhausted) return;
+    if (locked || selected.length === 0 || sheet?.exhausted) return;
     setBusy(true); setError(null);
     try {
       const components = selected.map(([type_id, row]) => {
@@ -80,7 +83,7 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
     finally { setBusy(false); }
   }
 
-  return <ModalShell title={'Extraer componentes · ' + device.id} onClose={onClose} density="compact" width="medium" hideCloseButton disabled={busy}>
+  return <ModalShell title={'Extraer componentes · ' + device.id} onClose={onClose} density="compact" width="medium" hideCloseButton disabled={locked}>
     <form onSubmit={event => void submit(event)} className="grid gap-2 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-medium">{sheet ? sheet.brand + ' ' + sheet.model : device.manufacturer + ' ' + device.model}</p>
@@ -109,7 +112,7 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
                 <label className="grid gap-1">Variante / características<input aria-label={'Variante de ' + type.name} className="h-7 rounded border border-slate-200 px-2" placeholder="Ej.: negro, con marco, flex completo" maxLength={120} disabled={busy} value={row.variant} onChange={event => change(type.id, { variant: event.target.value })} /></label>
                 <label className="grid gap-1">Título<input aria-label={'Título de ' + type.name} className="h-7 rounded border border-slate-200 px-2" maxLength={255} required disabled={busy} value={row.title ?? copy.title} onChange={event => change(type.id, { title: event.target.value })} /></label>
                 <label className="grid gap-1 sm:col-span-2">Descripción<textarea aria-label={'Descripción de ' + type.name} className="rounded border border-slate-200 px-2 py-1" rows={2} maxLength={2000} disabled={busy} value={row.description ?? copy.description} onChange={event => change(type.id, { description: event.target.value })} /></label>
-                <label className="grid gap-1">Imagen (URL opcional)<input aria-label={'Imagen de ' + type.name} type="url" placeholder="https://…" className="h-7 rounded border border-slate-200 px-2" disabled={busy} value={row.image} onChange={event => change(type.id, { image: event.target.value })} /></label>
+                <StoreProductImageField value={row.image} onChange={image => change(type.id, { image: image ?? '' })} disabled={locked} onUploadingChange={setUploading} productLabel={type.name} />
                 <button type="button" className="justify-self-start text-slate-600 underline" disabled={busy} onClick={() => change(type.id, { title: null, description: null })}>Restaurar textos automáticos</button>
               </div>
             </td></tr> : null}</Fragment>;
@@ -117,7 +120,7 @@ export function DeviceComponentsModal({ device, canPublish, onClose, onSaved }: 
         </tbody></table>
       </div> : null}
       {error ? <div role="alert" className="rounded bg-red-50 p-2 text-xs text-red-700">{error}{!sheet ? <button className="ml-2 underline" type="button" onClick={() => setReload(value => value + 1)}>Reintentar</button> : null}</div> : null}
-      <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs"><span>{selected.length} piezas · +{selected.length} unidades</span><div className="flex gap-2"><button className="h-7 rounded border border-slate-200 px-3" type="button" disabled={busy} onClick={onClose}>Cancelar</button><button className="h-7 rounded bg-brand-600 px-3 text-white disabled:opacity-40" type="submit" disabled={busy || !sheet || sheet.exhausted || selected.length === 0} aria-busy={busy}>Guardar</button></div></div>
+      <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs"><span>{selected.length} piezas · +{selected.length} unidades</span><div className="flex gap-2"><button className="h-7 rounded border border-slate-200 px-3" type="button" disabled={locked} onClick={onClose}>Cancelar</button><button className="h-7 rounded bg-brand-600 px-3 text-white disabled:opacity-40" type="submit" disabled={locked || !sheet || sheet.exhausted || selected.length === 0} aria-busy={locked}>{uploading ? 'Subiendo imagen…' : 'Guardar'}</button></div></div>
     </form>
   </ModalShell>;
 }

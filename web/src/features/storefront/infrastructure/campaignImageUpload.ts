@@ -20,11 +20,13 @@ export async function prepareCampaignImage(source: File): Promise<Blob> {
     return blob;
   } finally { image.close(); }
 }
-export async function uploadCampaignImage(source: File): Promise<string> {
+async function uploadStoreImage(source: File, path: 'campaigns' | 'products'): Promise<string> {
   const image = await prepareCampaignImage(source);
-  const form = new FormData(); form.append('image', image, 'campaign.webp');
-  const response = await adminFetch('/api/v1/admin/store/campaigns/images', { method: 'POST', body: form });
+  const form = new FormData(); form.append('image', image, 'store-image.webp');
+  const response = await adminFetch('/api/v1/admin/store/' + path + '/images', { method: 'POST', body: form });
   const body = await response.json() as { data?: { url: string }; errors?: Record<string, string[]>; detail?: string };
   if (!response.ok || !body.data?.url) throw new Error(body.errors ? Object.values(body.errors).flat().join(' ') : body.detail || 'No se pudo subir la imagen.');
   return body.data.url;
 }
+export function uploadCampaignImage(source: File): Promise<string> { return uploadStoreImage(source, 'campaigns'); }
+export function uploadProductImage(source: File): Promise<string> { return uploadStoreImage(source, 'products'); }
