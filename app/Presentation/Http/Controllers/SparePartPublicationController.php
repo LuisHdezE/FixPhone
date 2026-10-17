@@ -37,8 +37,8 @@ final class SparePartPublicationController extends Controller
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'condition' => ['required', 'in:untested,functional,faulty'],
             'price_minor' => ['nullable', 'integer', 'min:1', 'max:2147483647'],
-            'reference_price_minor' => ['nullable', 'integer', 'min:1', 'max:2147483647'],
-            'reference_currency' => ['required', 'in:UYU,USD'], 'is_original' => ['required', 'boolean'],
+            'reference_price_minor' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:2147483647'],
+            'reference_currency' => ['sometimes', 'nullable', 'in:UYU,USD'], 'is_original' => ['sometimes', 'boolean'],
             'currency' => ['required', 'in:UYU,USD'], 'image_url' => ['nullable', 'url:https', 'max:2048'],
             'published' => ['required', 'boolean'],
         ]);
@@ -57,9 +57,9 @@ final class SparePartPublicationController extends Controller
                 $item->forceFill(['component_identity_key' => $key]);
             }
             $meta['part_condition'] = $data['condition'];
-            $meta['reference_price_minor'] = $data['reference_price_minor'] ?? null;
-            $meta['reference_currency'] = $data['reference_currency'];
-            $meta['is_original'] = $data['is_original'];
+            $meta['reference_price_minor'] = $data['reference_price_minor'] ?? ($meta['reference_price_minor'] ?? null);
+            $meta['reference_currency'] = $data['reference_currency'] ?? ($meta['reference_currency'] ?? $data['currency']);
+            $meta['is_original'] = $data['is_original'] ?? ($meta['is_original'] ?? false);
             $item->fill(['title' => $data['title'] ?? $item->title, 'description' => array_key_exists('description', $data) ? $data['description'] : $item->description, 'metadata' => $meta, 'sale_price_amount_minor' => $data['price_minor'] ?? null,
                 'currency_code' => $data['currency'], 'main_image_url' => $data['image_url'] ?? null,
                 'publication_status' => $data['published'] ? 'publicado' : 'no_publicable',
