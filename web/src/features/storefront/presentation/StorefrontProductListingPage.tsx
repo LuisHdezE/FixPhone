@@ -53,7 +53,7 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
             <span className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">Orden</span>
             <select
               aria-label="Ordenar productos"
-              className="h-10 rounded-xl border border-black/10 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-[var(--storefront-primary)] focus:ring-4 focus:ring-[var(--storefront-primary-soft)]"
+              className="h-10 rounded-xl border border-black/10 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-slate-300 focus:outline-none focus:ring-0"
               data-storefront-discovery-sort
               onChange={(event) => setSortId(event.target.value)}
               value={sortId}
@@ -74,7 +74,7 @@ export function StorefrontProductListingPage({ provider }: { provider: Storefron
               {filter.id === 'brand' ? (
                 <select
                   aria-label="Filtrar por marca"
-                  className="h-9 w-full rounded-lg border border-black/10 bg-white px-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-[var(--storefront-primary)] focus:ring-2 focus:ring-[var(--storefront-primary-soft)]"
+                  className="h-9 w-full rounded-lg border border-black/10 bg-white px-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-300 focus:outline-none focus:ring-0"
                   data-storefront-discovery-brand
                   onChange={(event) => setFilterSelections((current) => ({
                     ...current,
