@@ -65,6 +65,7 @@ export interface StorefrontProductCardDto {
   priceLabel: string;
   compareLabel?: string;
   badgeLabel: string;
+  brandLabel?: string;
   href: string;
   compatibilityLabel: string;
   stockLabel: string;

@@ -21,7 +21,7 @@ export class ApiStorefrontProvider extends JsonStorefrontProvider {
       const recovered = item.metadata?.origin === 'recovered';
       const condition = phone ? (item.operational_status === 'reparado' ? 'Reacondicionado' : 'Usado') : recovered ? 'Usado recuperado' : item.metadata?.part_condition === 'functional' ? 'Funcional' : 'Repuesto';
       return {
-        id: item.id, title: item.title, subtitle: condition,
+        id: item.id, title: item.title, subtitle: condition, brandLabel: item.brand || undefined,
         priceLabel: new Intl.NumberFormat('es-UY', { style: 'currency', currency: item.currency_code || 'UYU' }).format(item.sale_price_amount_minor / 100),
         badgeLabel: condition, href: '/store/products/' + item.id,
         compatibilityLabel: [item.brand, item.model].filter(Boolean).join(' ') || 'Consultar compatibilidad',
