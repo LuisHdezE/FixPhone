@@ -9,6 +9,7 @@ import { InlineFeedback } from '@/components/feedback/InlineFeedback';
 import { SearchField } from '@/components/forms/SearchField';
 import { SelectField, type SelectFieldOption } from '@/components/forms/SelectField';
 import { SparePartPublicationModal } from './SparePartPublicationModal';
+import { SparePartCompatibilityModal } from './SparePartCompatibilityModal';
 import { apiInventoryRepository } from './apiInventoryRepository';
 import { buildInventoryEdit, initialCatalogSelection, type CatalogItem } from './inventoryEdit';
 import type {
@@ -46,7 +47,7 @@ type Selection = { item: InventoryItem; action: Action };
 const adjustableTypes = new Set(['spare_part', 'accessory', 'service_part']);
 
 function IconAction({ icon, label, disabled = false, onClick }: {
-  icon: 'search' | 'edit' | 'package' | 'document' | 'store';
+  icon: 'search' | 'edit' | 'package' | 'document' | 'store' | 'components';
   label: string;
   disabled?: boolean;
   onClick: () => void;
@@ -63,6 +64,7 @@ function IconAction({ icon, label, disabled = false, onClick }: {
 
 export function InventoryView({ repository = apiInventoryRepository }: { repository?: InventoryRepository }) {
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [compatibilityId, setCompatibilityId] = useState<string | null>(null);
   const [filter, setFilter] = useState(initialFilter);
   const [state, setState] = useState<InventoryDataState>({ status: 'loading' });
   const [refreshToken, setRefreshToken] = useState(0);
@@ -224,6 +226,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
           ? <IconAction icon="package" label={'Ajustar existencias de ' + item.sku} onClick={() => open(item, 'adjust')} />
           : null}
         <IconAction icon="document" label={'Historial de ajustes de ' + item.sku} onClick={() => open(item, 'history')} />
+        {canEdit && item.itemType === 'spare_part' ? <IconAction icon="components" label={'Modelos compatibles de ' + item.sku} onClick={() => setCompatibilityId(item.id)} /> : null}
         {canEdit && item.itemType === 'spare_part' ? <IconAction icon="store" label={'Publicación de ' + item.sku} onClick={() => setPublishingId(item.id)} /> : null}
       </div> },
   ];
@@ -232,6 +235,7 @@ export function InventoryView({ repository = apiInventoryRepository }: { reposit
   const item = selection?.item;
 
   return <div className="grid gap-3">
+    {compatibilityId ? <SparePartCompatibilityModal id={compatibilityId} onClose={() => setCompatibilityId(null)} onSaved={() => { setCompatibilityId(null); setMessage('Compatibilidades actualizadas.'); setRefreshToken(x => x + 1); }} /> : null}
     {publishingId ? <SparePartPublicationModal id={publishingId} onClose={() => setPublishingId(null)} onSaved={() => { setPublishingId(null); setMessage('Publicación del repuesto actualizada.'); setRefreshToken(value => value + 1); }} /> : null}
     <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
