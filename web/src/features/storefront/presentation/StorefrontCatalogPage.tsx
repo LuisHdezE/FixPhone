@@ -19,11 +19,11 @@ function FilterMenu({ label, value, options, onChange, open, onToggle }: {
 }) {
   const selected = options.find((option) => option.id === value)?.label ?? value;
   return <div className="relative">
-    <button type="button" className="flex h-8 items-center gap-2 border-b border-slate-300 bg-transparent px-1 text-[10px] font-medium text-slate-800 outline-none transition-colors hover:border-slate-500 focus:border-slate-400 focus:outline-none focus:ring-0" aria-haspopup="listbox" aria-expanded={open} onClick={onToggle}>
+    <button type="button" className="flex h-8 items-center gap-2 border-b border-slate-300 bg-transparent px-1 text-[10px] font-medium text-slate-800 outline-none transition-colors hover:border-slate-500 focus:border-slate-400 focus:outline-none focus:ring-0" aria-haspopup="listbox" aria-expanded={open} onClick={onToggle} style={{ fontSize: '10px', lineHeight: '14px' }}>
       <span className="text-slate-500">{label}</span><span>{selected}</span><span aria-hidden="true" className="text-[10px]">⌄</span>
     </button>
     {open ? <div className="absolute right-0 z-20 mt-1 min-w-[150px] rounded-lg border border-slate-200 bg-white p-1 shadow-lg" role="listbox" aria-label={label}>
-      {options.map((option) => <button key={option.id} type="button" role="option" aria-selected={option.id === value} className={`block w-full rounded-md px-3 py-2 text-left text-[10px] transition-colors ${option.id === value ? 'bg-red-50 font-bold text-[var(--storefront-primary-strong)]' : 'text-slate-700 hover:bg-slate-50'}`} onClick={() => { onChange(option.id); onToggle(); }}>{option.label}</button>)}
+      {options.map((option) => <button key={option.id} type="button" role="option" aria-selected={option.id === value} className={`block w-full rounded-md px-3 py-2 text-left text-[10px] transition-colors ${option.id === value ? 'bg-red-50 font-bold text-[var(--storefront-primary-strong)]' : 'text-slate-700 hover:bg-slate-50'}`} style={{ fontSize: '10px', lineHeight: '14px' }} onClick={() => { onChange(option.id); onToggle(); }}>{option.label}</button>)}
     </div> : null}
   </div>;
 }
