@@ -55,6 +55,7 @@ export function lifecycleLabel(status: string): string {
 export interface InventoryDeviceEditDto {
   brandId: string;
   deviceModelId: string;
+  deviceModelVariantId?: string | null;
   storageCapacityId: string | null;
   colorId: string | null;
   conditionId: string | null;
@@ -73,6 +74,7 @@ export interface InventoryDeviceEditDto {
 export interface InventoryDeviceListItemDto {
   brandId: string | null;
   deviceModelId: string | null;
+  deviceModelVariantId: string | null;
   storageCapacityId: string | null;
   colorId: string | null;
   conditionId: string | null;
@@ -104,9 +106,26 @@ export interface InventoryDeviceListItemDto {
   destinationTone: StatusBadgeTone;
 }
 
+export interface DeviceModelVariantOptionDto {
+  id: string;
+  name: string;
+  variant_key: string;
+}
+
+export interface DeviceResolvedSpecsDto {
+  model_id: string;
+  model_name: string;
+  brand_id: string;
+  brand_name: string;
+  variant_id: string | null;
+  variant_name: string | null;
+  inherited_specs: Record<string, unknown>;
+  effective_specs: Record<string, unknown>;
+}
+
 // Static presentation reference data is not a persisted inventory record.
 export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
-  'operationalStatus' | 'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'phoneListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'storageCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
+  'operationalStatus' | 'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'phoneListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'deviceModelVariantId' | 'storageCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
 
 export interface InventoryFilterOptionDto {
   value: string;

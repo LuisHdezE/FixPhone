@@ -19,6 +19,8 @@ type ApiInventoryItem = {
   item_type: string;
   brand?: string | null;
   model?: string | null;
+  device_model_id?: string | null;
+  device_model_variant_id?: string | null;
   operational_status: string;
   inventory_purpose: string;
   dismantling_status?: string | null;
@@ -113,7 +115,8 @@ function mapDevice(item: ApiInventoryItem): InventoryDeviceListItemDto {
 
   return {
     brandId: stringMeta(item.metadata, 'brand_id'),
-    deviceModelId: stringMeta(item.metadata, 'device_model_id'),
+    deviceModelId: stringMeta(item.metadata, 'device_model_id') || (typeof item.device_model_id === 'string' ? item.device_model_id : null),
+    deviceModelVariantId: stringMeta(item.metadata, 'device_model_variant_id') || (typeof item.device_model_variant_id === 'string' ? item.device_model_variant_id : null),
     storageCapacityId: stringMeta(item.metadata, 'storage_capacity_id'),
     colorId: stringMeta(item.metadata, 'color_id'),
     conditionId: stringMeta(item.metadata, 'condition_id'),
@@ -208,6 +211,7 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
       body: JSON.stringify({
         brand_id: fields.brandId,
         device_model_id: fields.deviceModelId,
+        device_model_variant_id: fields.deviceModelVariantId || null,
         storage_capacity_id: fields.storageCapacityId,
         color_id: fields.colorId,
         condition_id: fields.conditionId,
@@ -236,6 +240,7 @@ export class ApiInventoryDevicesGateway implements InventoryDevicesGateway {
       throw new Error('El cambio pudo guardarse, pero falló la comprobación. Recargá antes de volver a intentarlo.');
     }
     if (!saved || saved.brandId !== fields.brandId || saved.deviceModelId !== fields.deviceModelId ||
+        (fields.deviceModelVariantId !== undefined && (saved.deviceModelVariantId ?? null) !== (fields.deviceModelVariantId || null)) ||
         (fields.storageCapacityId !== null && saved.storageCapacityId !== fields.storageCapacityId) ||
         (fields.colorId !== null && saved.colorId !== fields.colorId) ||
         (fields.conditionId !== null && saved.conditionId !== fields.conditionId) || saved.serialOrImei !== (fields.serialOrImei || '—') ||
