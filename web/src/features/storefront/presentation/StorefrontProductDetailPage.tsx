@@ -26,6 +26,13 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
   }
   const detail = provider.getProductDetailView();
   const product = provider.getProductDetailBySlug(slug);
+  const images = product ? (product.images?.length ? product.images : product.image ? [product.image] : []) : [];
+  const [activeImage, setActiveImage] = useState(0);
+  const selectedImage = images[activeImage] ?? images[0];
+  function moveImage(delta: number) {
+    if (images.length < 2) return;
+    setActiveImage((current) => (current + delta + images.length) % images.length);
+  }
 
   if (!product) {
     return (
@@ -46,17 +53,27 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(18rem,.9fr)_20rem] lg:items-start">
         <div className="grid gap-3">
-          <div className="grid min-h-[20rem] place-items-center rounded-xl bg-transparent p-0 lg:col-start-1">
-            {product.image ? <img src={product.image.src} alt={product.image.alt} className="max-h-[24rem] w-full object-contain" /> : <div className="grid aspect-[4/3] w-full place-items-center rounded-xl bg-slate-50 text-xs text-slate-500">Sin imagen disponible</div>}
+          <div className="grid gap-2 lg:col-start-1">
+            <div className="relative grid min-h-[20rem] place-items-center rounded-xl bg-transparent p-0">
+              {selectedImage ? <img src={selectedImage.src} alt={selectedImage.alt} className="max-h-[24rem] w-full object-contain" /> : <div className="grid aspect-[4/3] w-full place-items-center rounded-xl bg-slate-50 text-xs text-slate-500">Sin imagen disponible</div>}
+              {images.length > 1 ? <>
+                <button type="button" aria-label="Foto anterior" onClick={() => moveImage(-1)} className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full border border-black/10 bg-white/90 px-3 py-2 text-lg shadow-sm hover:bg-white">‹</button>
+                <button type="button" aria-label="Foto siguiente" onClick={() => moveImage(1)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-black/10 bg-white/90 px-3 py-2 text-lg shadow-sm hover:bg-white">›</button>
+                <span className="absolute bottom-2 right-2 rounded-full bg-slate-950/75 px-2 py-1 text-[10px] font-bold text-white">{activeImage + 1} / {images.length}</span>
+              </> : null}
+            </div>
+            {images.length > 1 ? <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Fotos del producto">
+              {images.map((image, index) => <button key={image.src} type="button" aria-label={`Ver foto ${index + 1}`} aria-current={index === activeImage ? 'true' : undefined} onClick={() => setActiveImage(index)} className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-white p-1 ${index === activeImage ? 'border-slate-950 ring-1 ring-slate-950' : 'border-slate-200'}`}><img src={image.src} alt="" className="h-full w-full object-contain" /></button>)}
+            </div> : null}
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3 lg:col-start-1" aria-label="Galería del producto">
+          {product.gallery.length > 0 ? <div className="grid gap-2 sm:grid-cols-3 lg:col-start-1" aria-label="Galería del producto">
             {product.gallery.map((item) => (
               <div key={item.id} className={`rounded-xl border border-black/10 p-3 text-xs font-black shadow-sm ${galleryClassName(item.tone)}`}>
                 {item.label}
               </div>
             ))}
-          </div>
+          </div> : null}
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:col-start-2">
