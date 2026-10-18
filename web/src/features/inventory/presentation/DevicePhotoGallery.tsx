@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DevicePhoto } from '../application/devicePhotos.types';
-import type { PromotionalAsset } from '../application/promotionalAssets.types';
+import type { PromotionalAsset, PromotionalAssetsSummary } from '../application/promotionalAssets.types';
 import { DevicePhotosGateway } from '../infrastructure/DevicePhotosGateway';
 import { PromotionalAssetsGateway } from '../infrastructure/PromotionalAssetsGateway';
 import { PreparePromotionModal } from './PreparePromotionModal';
@@ -11,6 +11,10 @@ const promoGateway = new PromotionalAssetsGateway();
 export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
   const [photos, setPhotos] = useState<DevicePhoto[]>([]);
   const [promoAssets, setPromoAssets] = useState<PromotionalAsset[]>([]);
+  const [promoSummary, setPromoSummary] = useState<PromotionalAssetsSummary | null>(null);
+  const [cleaningEmpty, setCleaningEmpty] = useState(false);
+  const [confirmCleanOpen, setConfirmCleanOpen] = useState(false);
+  const [cleanMessage, setCleanMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -19,12 +23,16 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
 
   const load = useCallback(async () => {
     try {
-      const [devicePhotos, ads] = await Promise.all([
+      const [devicePhotos, promoRes] = await Promise.all([
         gateway.list(inventoryId),
-        promoGateway.list(inventoryId).catch(() => []),
+        promoGateway.list(inventoryId).catch(() => ({
+          data: [],
+          summary: { total: 0, prepared: 0, uploaded: 0, approved: 0, discarded: 0, empty_prepared: 0 },
+        })),
       ]);
       setPhotos(devicePhotos);
-      setPromoAssets(ads);
+      setPromoAssets(promoRes.data || []);
+      setPromoSummary(promoRes.summary || null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cargar la galería.');
     }
@@ -108,6 +116,22 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
   const handleAssetUpdated = useCallback((_updated: PromotionalAsset) => {
     void load();
   }, [load]);
+
+  const handleCleanEmptyPrepared = useCallback(async () => {
+    setCleaningEmpty(true);
+    setError('');
+    setCleanMessage('');
+    try {
+      const res = await promoGateway.deleteEmptyPrepared(inventoryId);
+      setConfirmCleanOpen(false);
+      setCleanMessage(`${res.deleted_count} preparaciones vacías eliminadas.`);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudieron eliminar las preparaciones vacías.');
+    } finally {
+      setCleaningEmpty(false);
+    }
+  }, [inventoryId, load]);
 
   return (
     <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2" data-device-photo-gallery>
@@ -207,11 +231,75 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
       )}
 
       {/* Promotional assets section if any exist */}
-      {promoAssets.length > 0 && (
+      {(promoAssets.length > 0 || (promoSummary && promoSummary.total > 0)) && (
         <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2" data-promotional-assets-section>
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
-            Publicidades IA generadas ({promoAssets.length})
-          </p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-1.5">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-700">
+                Publicidades IA generadas
+              </p>
+              {promoSummary && (
+                <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[9px] text-slate-500" data-promo-summary-counters>
+                  <span className="font-semibold text-slate-700">Total: {promoSummary.total}</span>
+                  {promoSummary.approved > 0 && (
+                    <span className="rounded bg-emerald-100 px-1 font-semibold text-emerald-800">
+                      {promoSummary.approved} aprobada{promoSummary.approved === 1 ? '' : 's'}
+                    </span>
+                  )}
+                  {promoSummary.uploaded > 0 && (
+                    <span className="rounded bg-amber-100 px-1 font-semibold text-amber-800">
+                      {promoSummary.uploaded} cargada{promoSummary.uploaded === 1 ? '' : 's'}
+                    </span>
+                  )}
+                  {promoSummary.prepared > 0 && (
+                    <span className="rounded bg-slate-200 px-1 font-medium text-slate-700">
+                      {promoSummary.prepared} preparada{promoSummary.prepared === 1 ? '' : 's'}
+                    </span>
+                  )}
+                  {promoSummary.discarded > 0 && (
+                    <span className="rounded bg-rose-100 px-1 font-medium text-rose-800">
+                      {promoSummary.discarded} descartada{promoSummary.discarded === 1 ? '' : 's'}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Clean empty preparations button if any empty prepared exists */}
+            {promoSummary && promoSummary.empty_prepared > 0 && (
+              <button
+                type="button"
+                className="rounded border border-red-200 bg-white px-2 py-1 text-[10px] font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-400"
+                onClick={() => setConfirmCleanOpen(true)}
+                data-clean-empty-promotions-button
+              >
+                🗑 Eliminar preparaciones vacías ({promoSummary.empty_prepared})
+              </button>
+            )}
+          </div>
+
+          {cleanMessage && (
+            <div
+              className="mb-2 flex items-center justify-between rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] text-emerald-800"
+              data-clean-empty-feedback
+            >
+              <span>{cleanMessage}</span>
+              <button
+                type="button"
+                className="ml-2 text-emerald-600 hover:text-emerald-900"
+                onClick={() => setCleanMessage('')}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {promoSummary && promoSummary.total > promoAssets.length && (
+            <p className="mb-2 text-[9px] italic text-slate-500">
+              Mostrando las {promoAssets.length} publicidades principales priorizadas de {promoSummary.total}.
+            </p>
+          )}
+
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {promoAssets.map((asset) => (
               <div
@@ -283,6 +371,46 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
             alt="Vista ampliada"
             className="max-h-[90vh] max-w-[90vw] rounded bg-white object-contain"
           />
+        </div>
+      )}
+
+      {confirmCleanOpen && promoSummary && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[80] grid place-items-center bg-black/60 p-4"
+          data-confirm-clean-modal
+        >
+          <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
+            <h3 className="text-sm font-semibold text-slate-900">
+              ¿Eliminar preparaciones vacías?
+            </h3>
+            <p className="mt-2 text-xs text-slate-600">
+              Se eliminarán <strong>{promoSummary.empty_prepared}</strong> preparaciones sin imagen de este dispositivo.
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Las publicidades cargadas o aprobadas no serán afectadas.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                onClick={() => setConfirmCleanOpen(false)}
+                disabled={cleaningEmpty}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                onClick={() => void handleCleanEmptyPrepared()}
+                disabled={cleaningEmpty}
+                data-confirm-clean-submit-button
+              >
+                {cleaningEmpty ? 'Eliminando...' : 'Eliminar preparaciones vacías'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

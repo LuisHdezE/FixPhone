@@ -84,6 +84,8 @@ test('PromotionalAssetsGateway routes adhere strictly to API conventions', () =>
   assert.match(gatewaySource, /\/confirm/);
   assert.match(gatewaySource, /\/approve/);
   assert.match(gatewaySource, /\/discard/);
+  assert.match(gatewaySource, /\/prepared-empty/);
+  assert.match(gatewaySource, /async deleteEmptyPrepared\(/);
 });
 
 test('PreparePromotionModal and DevicePhotoGallery prevent infinite prepare loop and stabilize callbacks', () => {
@@ -243,4 +245,91 @@ test('PreparePromotionModal lifecycle regression: prepare runs exactly once per 
 
   assert.equal(prepareCallCount, 3, 'Closing and reopening modal allows a new preparation session');
 });
+
+test('DevicePhotoGallery renders promotional assets summary, limits display, and handles bulk empty clean safely', async () => {
+  const gallerySource = read('../src/features/inventory/presentation/DevicePhotoGallery.tsx');
+
+  // 1. Static verifications
+  assert.match(gallerySource, /data-promo-summary-counters/);
+  assert.match(gallerySource, /promoSummary\.total/);
+  assert.match(gallerySource, /promoSummary\.approved/);
+  assert.match(gallerySource, /promoSummary\.uploaded/);
+  assert.match(gallerySource, /promoSummary\.prepared/);
+  assert.match(gallerySource, /promoSummary\.discarded/);
+  assert.match(gallerySource, /data-clean-empty-promotions-button/);
+  assert.match(gallerySource, /promoSummary\.empty_prepared > 0/);
+  assert.match(gallerySource, /data-confirm-clean-modal/);
+  assert.match(gallerySource, /Las publicidades cargadas o aprobadas no serán afectadas/);
+  assert.match(gallerySource, /data-confirm-clean-submit-button/);
+  assert.match(gallerySource, /data-clean-empty-feedback/);
+  assert.match(gallerySource, /handleCleanEmptyPrepared/);
+
+  // 2. Runtime behavioral simulation of bulk delete workflow
+  let deleteCalls = 0;
+  let listCalls = 0;
+  let currentSummary = {
+    total: 2715,
+    prepared: 2713,
+    uploaded: 1,
+    approved: 1,
+    discarded: 0,
+    empty_prepared: 2713,
+  };
+  let currentAssets = [
+    { id: 'appr-1', status: 'approved', image_url: 'https://cdn.test/appr.webp', prompt_code: 'PROMPT-0001' },
+    { id: 'up-1', status: 'uploaded', image_url: 'https://cdn.test/up.webp', prompt_code: 'PROMPT-0001' },
+    { id: 'prep-1', status: 'prepared', image_url: null, prompt_code: 'PROMPT-0001' },
+  ];
+
+  const mockPromoGateway = {
+    async list(invId) {
+      listCalls++;
+      return {
+        data: currentAssets,
+        summary: currentSummary,
+      };
+    },
+    async deleteEmptyPrepared(invId) {
+      deleteCalls++;
+      const deleted = currentSummary.empty_prepared;
+      currentSummary = {
+        total: currentSummary.total - deleted,
+        prepared: 0,
+        uploaded: currentSummary.uploaded,
+        approved: currentSummary.approved,
+        discarded: currentSummary.discarded,
+        empty_prepared: 0,
+      };
+      currentAssets = currentAssets.filter((a) => a.status !== 'prepared');
+      return {
+        deleted_count: deleted,
+        remaining_count: currentSummary.total,
+        message: `${deleted} preparaciones vacías eliminadas.`,
+      };
+    },
+  };
+
+  // Initial load
+  let res = await mockPromoGateway.list('FXP-0009');
+  assert.equal(listCalls, 1);
+  assert.equal(res.summary.empty_prepared, 2713);
+  assert.equal(res.summary.approved, 1);
+  assert.equal(res.summary.uploaded, 1);
+  assert.equal(res.data.length, 3);
+
+  // Execute bulk delete
+  const delRes = await mockPromoGateway.deleteEmptyPrepared('FXP-0009');
+  assert.equal(deleteCalls, 1, 'Bulk deletion must execute in exactly 1 call, never 2713 calls');
+  assert.equal(delRes.deleted_count, 2713);
+
+  // Subsequent load
+  res = await mockPromoGateway.list('FXP-0009');
+  assert.equal(listCalls, 2);
+  assert.equal(res.summary.empty_prepared, 0);
+  assert.equal(res.summary.total, 2);
+  assert.equal(res.data.length, 2);
+  assert.equal(res.data[0].status, 'approved');
+  assert.equal(res.data[1].status, 'uploaded');
+});
+
 

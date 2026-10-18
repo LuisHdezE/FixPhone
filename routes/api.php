@@ -232,6 +232,7 @@ Route::prefix('v1')->group(function (): void {
   Route::put('/admin/inventory/{id}/photos/order',[InventoryItemPhotosController::class,'order'])->middleware('permission:catalog.manage');
   Route::delete('/admin/inventory/{id}/photos/{photoId}',[InventoryItemPhotosController::class,'destroy'])->middleware('permission:catalog.manage');
   Route::get('/admin/inventory/{id}/promotional-assets', [InventoryItemPromotionalAssetsController::class, 'index'])->middleware('permission:inventory.view');
+  Route::delete('/admin/inventory/{id}/promotional-assets/prepared-empty', [InventoryItemPromotionalAssetsController::class, 'destroyEmptyPrepared'])->middleware('permission:catalog.manage');
   Route::post('/admin/inventory/{id}/promotional-assets/prepare', [InventoryItemPromotionalAssetsController::class, 'prepare'])->middleware('permission:catalog.manage');
   Route::post('/admin/inventory/{id}/promotional-assets/{assetId}/presign', [InventoryItemPromotionalAssetsController::class, 'presign'])->middleware(['permission:catalog.manage', 'throttle:20,1']);
   Route::post('/admin/inventory/{id}/promotional-assets/{assetId}/confirm', [InventoryItemPromotionalAssetsController::class, 'confirm'])->middleware(['permission:catalog.manage', 'throttle:20,1']);

@@ -1,6 +1,8 @@
 import { adminFetch } from '@/auth/adminApiSession';
 import type {
   PromotionalAsset,
+  PromotionalAssetsListResponse,
+  BulkDeleteEmptyPreparedResponse,
   PreparePromotionalAssetResponse,
   PromotionalAssetUploadGrant,
 } from '../application/promotionalAssets.types';
@@ -20,9 +22,17 @@ export class PromotionalAssetsGateway {
     return `/api/v1/admin/inventory/${encodeURIComponent(inventoryId)}/promotional-assets`;
   }
 
-  async list(inventoryId: string): Promise<PromotionalAsset[]> {
+  async list(inventoryId: string): Promise<PromotionalAssetsListResponse> {
     const res = await adminFetch(this.base(inventoryId));
-    return (await json<{ data: PromotionalAsset[] }>(res)).data;
+    return json<PromotionalAssetsListResponse>(res);
+  }
+
+  async deleteEmptyPrepared(inventoryId: string, exceptAssetId?: string): Promise<BulkDeleteEmptyPreparedResponse> {
+    const query = exceptAssetId ? `?except_asset_id=${encodeURIComponent(exceptAssetId)}` : '';
+    const res = await adminFetch(`${this.base(inventoryId)}/prepared-empty${query}`, {
+      method: 'DELETE',
+    });
+    return json<BulkDeleteEmptyPreparedResponse>(res);
   }
 
   async prepare(inventoryId: string, sourcePhotoId: string): Promise<PreparePromotionalAssetResponse> {

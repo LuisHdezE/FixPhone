@@ -44,3 +44,24 @@ export interface PromotionalAssetUploadGrant {
   upload_url: string;
   content_type: string;
 }
+
+export interface PromotionalAssetsSummary {
+  total: number;
+  prepared: number;
+  uploaded: number;
+  approved: number;
+  discarded: number;
+  empty_prepared: number;
+}
+
+export interface PromotionalAssetsListResponse {
+  data: PromotionalAsset[];
+  summary: PromotionalAssetsSummary;
+}
+
+export interface BulkDeleteEmptyPreparedResponse {
+  deleted_count: number;
+  remaining_count: number;
+  message: string;
+}
+

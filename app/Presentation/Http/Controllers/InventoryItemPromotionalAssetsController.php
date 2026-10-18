@@ -38,15 +38,82 @@ final class InventoryItemPromotionalAssetsController extends Controller
     {
         $this->item($id);
 
+        $counts = DB::table('inventory_item_promotional_assets')
+            ->where('inventory_item_id', $id)
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'prepared' THEN 1 ELSE 0 END) as prepared_count,
+                SUM(CASE WHEN status = 'uploaded' THEN 1 ELSE 0 END) as uploaded_count,
+                SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_count,
+                SUM(CASE WHEN status = 'discarded' THEN 1 ELSE 0 END) as discarded_count,
+                SUM(CASE WHEN status = 'prepared' 
+                    AND object_key IS NULL 
+                    AND image_url IS NULL 
+                    AND media_storage_profile_id IS NULL 
+                    AND mime_type IS NULL 
+                    AND size_bytes IS NULL THEN 1 ELSE 0 END) as empty_prepared_count
+            ")
+            ->first();
+
+        $statusPriority = "CASE status 
+            WHEN 'approved' THEN 1 
+            WHEN 'uploaded' THEN 2 
+            WHEN 'prepared' THEN 3 
+            WHEN 'discarded' THEN 4 
+            ELSE 5 
+        END";
+
         $assets = InventoryItemPromotionalAsset::query()
             ->with(['sourcePhoto'])
             ->where('inventory_item_id', $id)
+            ->orderByRaw($statusPriority)
             ->orderByDesc('created_at')
+            ->limit(30)
             ->get();
 
         return response()->json([
             'data' => $assets->map(fn (InventoryItemPromotionalAsset $asset) => $asset->publicData()),
+            'summary' => [
+                'total' => (int) ($counts->total ?? 0),
+                'prepared' => (int) ($counts->prepared_count ?? 0),
+                'uploaded' => (int) ($counts->uploaded_count ?? 0),
+                'approved' => (int) ($counts->approved_count ?? 0),
+                'discarded' => (int) ($counts->discarded_count ?? 0),
+                'empty_prepared' => (int) ($counts->empty_prepared_count ?? 0),
+            ],
         ]);
+    }
+
+    public function destroyEmptyPrepared(Request $request, string $id): JsonResponse
+    {
+        $this->item($id);
+
+        $exceptAssetId = $request->query('except_asset_id') ?: $request->input('except_asset_id');
+
+        $query = InventoryItemPromotionalAsset::query()
+            ->where('inventory_item_id', $id)
+            ->where('status', 'prepared')
+            ->whereNull('object_key')
+            ->whereNull('image_url')
+            ->whereNull('media_storage_profile_id')
+            ->whereNull('mime_type')
+            ->whereNull('size_bytes');
+
+        if ($exceptAssetId && is_string($exceptAssetId)) {
+            $query->where('id', '!=', $exceptAssetId);
+        }
+
+        $deletedCount = $query->delete();
+
+        $remainingCount = InventoryItemPromotionalAsset::query()
+            ->where('inventory_item_id', $id)
+            ->count();
+
+        return response()->json([
+            'deleted_count' => $deletedCount,
+            'remaining_count' => $remainingCount,
+            'message' => "{$deletedCount} preparaciones vacías eliminadas.",
+        ], 200);
     }
 
     public function prepare(Request $request, string $id, DevicePromptVariableResolver $resolver): JsonResponse
