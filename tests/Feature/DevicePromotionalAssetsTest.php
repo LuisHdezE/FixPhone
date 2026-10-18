@@ -286,6 +286,151 @@ final class DevicePromotionalAssetsTest extends TestCase
         $this->assertContains('Memoria RAM ausente en el registro físico del dispositivo.', $warnings);
     }
 
+    public function test_absent_currency_never_produces_usd_and_omits_commercial_block(): void
+    {
+        $this->auth('owner');
+        $this->ensurePrompt();
+
+        // Device has price 350.00 but NO currency_code (empty string)
+        $device = $this->device([
+            'sale_price_amount_minor' => 35000,
+            'currency_code' => '',
+            'metadata' => [
+                'storage' => '128 GB',
+                'ram' => '6 GB',
+                'color' => 'Azul',
+                'condition_name' => 'Excelente',
+            ],
+        ]);
+        $photo = $this->photo($device->id);
+
+        $res = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo->id,
+        ])->assertCreated();
+
+        $snapshot = $res->json('data.prompt_snapshot');
+        $warnings = $res->json('warnings');
+        $summary = $res->json('device_summary');
+
+        // Explicit assertion: absent currency NEVER produces "USD"
+        $this->assertStringNotContainsString('USD', $snapshot);
+        $this->assertNull($summary['moneda']);
+        $this->assertEquals('350', $summary['precio']);
+
+        // Explicit warning must be generated
+        $this->assertContains('Moneda no especificada para el precio del dispositivo.', $warnings);
+
+        // Commercial price line is omitted safely from the prompt so no false currency is attributed
+        $this->assertStringNotContainsString('Precio:', $snapshot);
+
+        // Also test directly on resolver with null currency_code
+        $resolver = new \App\Application\PromotionalAssets\DevicePromptVariableResolver();
+        $itemWithNull = new InventoryItem(['sale_price_amount_minor' => 20000, 'currency_code' => null]);
+        $resolved = $resolver->resolve($itemWithNull);
+        $this->assertNull($resolved['variables']['moneda']);
+        $this->assertNull($resolved['summary']['moneda']);
+        $this->assertContains('Moneda no especificada para el precio del dispositivo.', $resolved['warnings']);
+    }
+
+    public function test_representative_real_prompt_preserves_instructions_while_omitting_empty_data(): void
+    {
+        $this->auth('owner');
+
+        $representativePrompt = <<<'PROMPT_TEXT'
+# Contexto
+Eres un especialista en diseño publicitario y marketing para FixPhone.
+
+# Datos disponibles:
+- Dispositivo: {{modelo}} ({{codigo_fxp}})
+RAM: {{ram}}
+Almacenamiento: {{almacenamiento}}
+Color: {{color}}
+Condición física: {{condicion}}
+Precio: {{precio}} {{moneda}}
+Garantía: {{garantia}}
+Defectos: {{defectos}}
+
+# Reglas obligatorias de fidelidad y seguridad:
+Si un dato está vacío, omítelo. No lo inventes ni intentes deducirlo de la fotografía.
+Si existen defectos importantes proporcionados en {{defectos}}, no deben ocultarse ni contradecirse visualmente.
+Genera una publicidad de impacto comercial con iluminación de estudio y fondo profesional.
+PROMPT_TEXT;
+
+        $existing = DB::table('ai_prompts')->where('code', 'PROMPT-0001')->first();
+        if ($existing) {
+            DB::table('ai_prompts')->where('code', 'PROMPT-0001')->update([
+                'content' => $representativePrompt,
+                'version' => '1.0',
+                'archived_at' => null,
+                'updated_at' => now(),
+            ]);
+        } else {
+            DB::table('ai_prompts')->insert([
+                'id' => (string) Str::ulid(),
+                'code' => 'PROMPT-0001',
+                'description' => 'Publicidad de dispositivo FixPhone',
+                'version' => '1.0',
+                'lock_version' => 1,
+                'content' => $representativePrompt,
+                'archived_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Device without RAM, and without defects
+        $device = $this->device([
+            'sku' => 'FXP-0010',
+            'title' => 'iPhone 12 Pro',
+            'sale_price_amount_minor' => 45000,
+            'currency_code' => 'USD',
+            'metadata' => [
+                'storage' => '256 GB',
+                // No ram
+                'color' => 'Grafito',
+                'condition_name' => 'Excelente',
+                'warranty' => '6 meses FixPhone',
+                // No defects
+            ],
+        ]);
+        $photo = $this->photo($device->id);
+
+        $res = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo->id,
+        ])->assertCreated();
+
+        $snapshot = $res->json('data.prompt_snapshot');
+
+        // 1. No se inventa RAM (data line omitted)
+        $this->assertStringNotContainsString('RAM:', $snapshot);
+        $this->assertStringNotContainsString('8 GB', $snapshot);
+        $this->assertStringNotContainsString('desconocida', $snapshot);
+
+        // 2. No quedan placeholders comerciales incorrectos
+        $this->assertStringNotContainsString('{{ram}}', $snapshot);
+        $this->assertStringNotContainsString('{{almacenamiento}}', $snapshot);
+        $this->assertStringNotContainsString('{{defectos}}', $snapshot);
+        $this->assertStringNotContainsString('{{precio}}', $snapshot);
+        $this->assertStringNotContainsString('{{moneda}}', $snapshot);
+        $this->assertStringNotContainsString('{{', $snapshot);
+
+        // 3. NO desaparecen las instrucciones de seguridad/fidelidad
+        $this->assertStringContainsString('Si un dato está vacío, omítelo. No lo inventes ni intentes deducirlo de la fotografía.', $snapshot);
+        $this->assertStringContainsString('Si existen defectos importantes proporcionados en (ninguno declarado), no deben ocultarse ni contradecirse visualmente.', $snapshot);
+        $this->assertStringContainsString('Genera una publicidad de impacto comercial con iluminación de estudio y fondo profesional.', $snapshot);
+
+        // 4. Present data is properly resolved
+        $this->assertStringContainsString('Almacenamiento: 256 GB', $snapshot);
+        $this->assertStringContainsString('Color: Grafito', $snapshot);
+        $this->assertStringContainsString('Precio: 450 USD', $snapshot);
+        $this->assertStringContainsString('Garantía: 6 meses FixPhone', $snapshot);
+
+        // 5. El snapshot continúa siendo utilizable como prompt completo
+        $this->assertStringContainsString('# Contexto', $snapshot);
+        $this->assertStringContainsString('# Datos disponibles:', $snapshot);
+        $this->assertStringContainsString('# Reglas obligatorias de fidelidad y seguridad:', $snapshot);
+    }
+
     public function test_snapshot_remains_immutable_even_if_prompt_changes_later(): void
     {
         $this->auth('owner');

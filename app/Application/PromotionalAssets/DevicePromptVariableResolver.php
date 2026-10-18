@@ -71,13 +71,22 @@ final class DevicePromptVariableResolver
         // 7. precio & 8. moneda
         $precio = null;
         $moneda = null;
+        $missingCurrencyForPrice = false;
+
         if ($item->sale_price_amount_minor !== null && (int) $item->sale_price_amount_minor > 0) {
             $minor = (int) $item->sale_price_amount_minor;
             $val = $minor / 100;
             $precio = ($minor % 100 === 0)
                 ? number_format($val, 0, ',', '.')
                 : number_format($val, 2, ',', '.');
-            $moneda = filled($item->currency_code) ? trim((string) $item->currency_code) : 'USD';
+
+            // Strictly use existing currency code; never assume or default to USD
+            if (filled($item->currency_code)) {
+                $moneda = trim((string) $item->currency_code);
+            } else {
+                $moneda = null;
+                $missingCurrencyForPrice = true;
+            }
         }
 
         // 9. defectos (Authoritative only, never deduced)
@@ -111,6 +120,11 @@ final class DevicePromptVariableResolver
         }
         $caracteristicas = filled($caracteristicas) ? trim((string) $caracteristicas) : null;
 
+        // If price exists but currency is missing, omit the commercial block for prompt variables
+        // so that no false currency is attributed to the advertisement.
+        $promptPrecio = ($precio !== null && $moneda !== null) ? $precio : null;
+        $promptMoneda = ($precio !== null && $moneda !== null) ? $moneda : null;
+
         $variables = [
             'codigo_fxp' => $codigoFxp,
             'modelo' => $modelo,
@@ -118,8 +132,8 @@ final class DevicePromptVariableResolver
             'almacenamiento' => $almacenamiento,
             'color' => $color,
             'condicion' => $condicion,
-            'precio' => $precio,
-            'moneda' => $moneda,
+            'precio' => $promptPrecio,
+            'moneda' => $promptMoneda,
             'defectos' => $defectos,
             'garantia' => $garantia,
             'caracteristicas_destacadas' => $caracteristicas,
@@ -128,7 +142,10 @@ final class DevicePromptVariableResolver
         $warnings = [];
         if ($precio === null) {
             $warnings[] = 'No hay precio publicado o configurado para el dispositivo.';
+        } elseif ($missingCurrencyForPrice) {
+            $warnings[] = 'Moneda no especificada para el precio del dispositivo.';
         }
+
         if ($ram === null) {
             $warnings[] = 'Memoria RAM ausente en el registro físico del dispositivo.';
         }
@@ -163,7 +180,8 @@ final class DevicePromptVariableResolver
 
     /**
      * Replaces variables into the template in a deterministic and clean way.
-     * Prunes lines whose variable is absent without leaving empty placeholders or dangling prompts.
+     * Prunes dynamic data lines whose variable is absent without leaving empty placeholders.
+     * Preserves all instruction, fidelity, safety, and rule lines intact without accidental deletion.
      */
     public function applyTemplate(string $template, array $variables): string
     {
@@ -171,62 +189,125 @@ final class DevicePromptVariableResolver
         $resultLines = [];
 
         foreach ($lines as $line) {
-            $modified = $line;
+            $isDataField = $this->isDynamicDataFieldLine($line);
 
-            // Handle combined pairs like "- Dispositivo: {{modelo}} ({{codigo_fxp}})"
-            if (str_contains($modified, '{{modelo}}') && str_contains($modified, '{{codigo_fxp}}')) {
-                if (!empty($variables['modelo']) && !empty($variables['codigo_fxp'])) {
-                    $modified = str_replace(['{{modelo}}', '{{codigo_fxp}}'], [$variables['modelo'], $variables['codigo_fxp']], $modified);
-                } elseif (!empty($variables['modelo'])) {
-                    $modified = preg_replace('/\s*\(\{\{codigo_fxp\}\}\)/', '', $modified);
-                    $modified = str_replace('{{modelo}}', $variables['modelo'], $modified);
-                } elseif (!empty($variables['codigo_fxp'])) {
-                    $modified = preg_replace('/\{\{modelo\}\}\s*\(/', '', $modified);
-                    $modified = str_replace(['{{codigo_fxp}}', ')'], [$variables['codigo_fxp'], ''], $modified);
-                } else {
-                    continue;
-                }
-            }
+            if ($isDataField) {
+                // Dynamic data field lines (e.g. "RAM: {{ram}}", "- Precio: {{precio}} {{moneda}}")
+                $modified = $line;
 
-            // Handle combined price and currency: "- Precio: {{precio}} {{moneda}}"
-            if (str_contains($modified, '{{precio}}') && str_contains($modified, '{{moneda}}')) {
-                if (!empty($variables['precio'])) {
-                    $modified = str_replace('{{precio}}', $variables['precio'], $modified);
-                    $modified = str_replace('{{moneda}}', $variables['moneda'] ?? '', $modified);
-                    $modified = trim($modified);
-                } else {
-                    continue;
-                }
-            }
-
-            // Replace remaining variables
-            foreach ($variables as $key => $val) {
-                $tag = '{{' . $key . '}}';
-                if (str_contains($modified, $tag)) {
-                    if ($val !== null && trim((string) $val) !== '') {
-                        $modified = str_replace($tag, trim((string) $val), $modified);
+                // Handle combined pairs like "- Dispositivo: {{modelo}} ({{codigo_fxp}})"
+                if (str_contains($modified, '{{modelo}}') && str_contains($modified, '{{codigo_fxp}}')) {
+                    if (!empty($variables['modelo']) && !empty($variables['codigo_fxp'])) {
+                        $modified = str_replace(['{{modelo}}', '{{codigo_fxp}}'], [$variables['modelo'], $variables['codigo_fxp']], $modified);
+                    } elseif (!empty($variables['modelo'])) {
+                        $modified = preg_replace('/\s*\(\{\{codigo_fxp\}\}\)/', '', $modified);
+                        $modified = str_replace('{{modelo}}', $variables['modelo'], $modified);
+                    } elseif (!empty($variables['codigo_fxp'])) {
+                        $modified = preg_replace('/\{\{modelo\}\}\s*\(/', '', $modified);
+                        $modified = str_replace(['{{codigo_fxp}}', ')'], [$variables['codigo_fxp'], ''], $modified);
                     } else {
-                        // Empty variable in this line -> omit the line
-                        $modified = null;
-                        break;
+                        continue;
                     }
                 }
-            }
 
-            if ($modified === null) {
-                continue;
-            }
+                // Handle combined price and currency: "- Precio: {{precio}} {{moneda}}"
+                if (str_contains($modified, '{{precio}}') || str_contains($modified, '{{moneda}}')) {
+                    if (!empty($variables['precio']) && !empty($variables['moneda'])) {
+                        $modified = str_replace('{{precio}}', $variables['precio'], $modified);
+                        $modified = str_replace('{{moneda}}', $variables['moneda'], $modified);
+                        $modified = trim($modified);
+                    } else {
+                        // If either price or currency is missing, omit the commercial line
+                        continue;
+                    }
+                }
 
-            // If line still contains any unresolved {{variable}}, skip it
-            if (preg_match('/\{\{[a-zA-Z0-9_\-]+\}\}/', $modified)) {
-                continue;
-            }
+                // Replace remaining variables on data field line
+                $omitLine = false;
+                foreach ($variables as $key => $val) {
+                    $tag = '{{' . $key . '}}';
+                    if (str_contains($modified, $tag)) {
+                        if ($val !== null && trim((string) $val) !== '') {
+                            $modified = str_replace($tag, trim((string) $val), $modified);
+                        } else {
+                            // Missing dynamic data value -> omit line
+                            $omitLine = true;
+                            break;
+                        }
+                    }
+                }
 
-            $resultLines[] = $modified;
+                if ($omitLine) {
+                    continue;
+                }
+
+                // If line still contains any unresolved {{variable}}, skip it
+                if (preg_match('/\{\{[a-zA-Z0-9_\-]+\}\}/', $modified)) {
+                    continue;
+                }
+
+                $resultLines[] = $modified;
+            } else {
+                // Rule, safety, instruction, and descriptive prose lines (MUST BE PRESERVED)
+                $modified = $line;
+
+                foreach ($variables as $key => $val) {
+                    $tag = '{{' . $key . '}}';
+                    if (str_contains($modified, $tag)) {
+                        if ($val !== null && trim((string) $val) !== '') {
+                            $modified = str_replace($tag, trim((string) $val), $modified);
+                        } else {
+                            // In instruction/rule lines, replace with non-fabricating representation
+                            $fallback = $this->ruleFallbackFor($key);
+                            $modified = str_replace($tag, $fallback, $modified);
+                        }
+                    }
+                }
+
+                // Clean up any double spaces that might occur from empty replacements
+                $modified = preg_replace('/[ \t]{2,}/', ' ', $modified);
+
+                $resultLines[] = $modified;
+            }
         }
 
         $result = implode("\n", $resultLines);
         return preg_replace("/\n{3,}/", "\n\n", trim($result));
+    }
+
+    /**
+     * Determines whether a line is a pure dynamic key-value data field line.
+     * (e.g. "RAM: {{ram}}", "- RAM: {{ram}}", "Precio: {{precio}} {{moneda}}", etc.)
+     */
+    private function isDynamicDataFieldLine(string $line): bool
+    {
+        $trimmed = trim($line);
+        if ($trimmed === '') {
+            return false;
+        }
+
+        return (bool) preg_match('/^[-*•]?\s*[^:\n]+:\s*(\{\{[a-zA-Z0-9_\-]+\}\}|\(\{\{[a-zA-Z0-9_\-]+\}\}\)|\{\{[a-zA-Z0-9_\-]+\}\}\s*\{\{[a-zA-Z0-9_\-]+\}\}|\{\{[a-zA-Z0-9_\-]+\}\}\s*\(\{\{[a-zA-Z0-9_\-]+\}\}\))\s*$/u', $trimmed);
+    }
+
+    /**
+     * Non-fabricating fallback for placeholders appearing inside instruction or rule sentences.
+     */
+    private function ruleFallbackFor(string $variable): string
+    {
+        return match ($variable) {
+            'defectos' => '(ninguno declarado)',
+            'caracteristicas_destacadas' => '(ninguna declarada)',
+            'garantia' => '(no especificada)',
+            'ram' => '(no especificada)',
+            'almacenamiento' => '(no especificado)',
+            'color' => '(no especificado)',
+            'condicion' => '(no especificada)',
+            'precio' => '(no especificado)',
+            'moneda' => '',
+            'codigo_fxp' => '(sin código)',
+            'modelo' => 'el dispositivo',
+            default => '',
+        };
     }
 
     private function masterDataLabel(?string $id): ?string
