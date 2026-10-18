@@ -56,6 +56,15 @@ export async function createAiPrompt(data: AiPromptInput): Promise<AiPromptDetai
     method: 'POST', headers: json(), body: JSON.stringify(data),
   }))).data;
 }
+export async function createAiPromptVersion(
+  code: string,
+  data: { description: string; content: string; version: string },
+  expectedVersion: number,
+): Promise<AiPromptDetail> {
+  return (await decode<{ data: AiPromptDetail }>(await adminFetch(path(code) + '/versions', {
+    method: 'POST', headers: json(), body: JSON.stringify({ ...data, expected_version: expectedVersion }),
+  }))).data;
+}
 export async function updateAiPrompt(
   code: string,
   data: Pick<AiPromptInput, 'description' | 'content'> & { version?: string },

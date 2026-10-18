@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 final class AiPromptCatalogController extends Controller
 {
@@ -83,6 +84,70 @@ final class AiPromptCatalogController extends Controller
         return response()->json(['data' => $prompt], 201);
     }
 
+    public function storeVersion(Request $request, string $code): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['prohibited'],
+            'description' => ['required', 'string', 'max:255'],
+            'content' => ['required', 'string', 'max:100000'],
+            'version' => ['required', 'string', 'max:20', 'regex:/^v?[0-9]+(\.[0-9]+)*$/'],
+            'expected_version' => ['required', 'integer', 'min:1'],
+        ], [
+            'code.prohibited' => 'El código no puede modificarse en una nueva versión.',
+            'version.required' => 'La nueva versión es obligatoria.',
+            'version.regex' => 'El formato de versión no es válido (ejemplo: 2.0).',
+        ]);
+
+        if (trim($data['description']) === '' || trim($data['content']) === '') {
+            abort(422, 'La descripción y el contenido no pueden estar vacíos.');
+        }
+
+        $newVersion = ltrim(trim((string) $data['version']), 'vV');
+
+        $prompt = DB::transaction(function () use ($request, $code, $data, $newVersion) {
+            $original = DB::table('ai_prompts')->where('code', $code)->lockForUpdate()->first();
+            abort_if($original === null, 404, 'No existe un prompt con ese código.');
+
+            if ($original->archived_at !== null) {
+                abort(409, 'No se puede crear una nueva versión de un prompt archivado.');
+            }
+
+            if ((int) $original->lock_version !== (int) $data['expected_version']) {
+                abort(409, 'Este prompt cambió mientras lo editabas. Actualizá y volvé a intentarlo.');
+            }
+
+            $currentVersion = (string) $original->version;
+            if (!version_compare($newVersion, $currentVersion, '>')) {
+                throw ValidationException::withMessages([
+                    'version' => 'La nueva versión (' . $newVersion . ') debe ser estrictamente superior a la versión actual (' . $currentVersion . ').',
+                ]);
+            }
+
+            $newLockVersion = (int) $original->lock_version + 1;
+            $affected = DB::table('ai_prompts')
+                ->where('id', $original->id)
+                ->where('lock_version', $original->lock_version)
+                ->update([
+                    'description' => trim($data['description']),
+                    'content' => $data['content'],
+                    'version' => $newVersion,
+                    'lock_version' => $newLockVersion,
+                    'updated_at' => now(),
+                ]);
+
+            if ($affected !== 1) {
+                abort(409, 'Conflicto de actualización. Volvé a cargar los datos.');
+            }
+
+            $updated = (array) DB::table('ai_prompts')->where('id', $original->id)->first();
+            $this->recordChange($updated, 'new_version', $request);
+
+            return $this->findPrompt($code);
+        });
+
+        return response()->json(['data' => $prompt]);
+    }
+
     public function update(Request $request, string $code): JsonResponse
     {
         $data = $request->validate([
@@ -99,17 +164,18 @@ final class AiPromptCatalogController extends Controller
             abort(422, 'La descripción y el contenido no pueden estar vacíos.');
         }
 
-        $newVersion = isset($data['version']) && trim((string) $data['version']) !== ''
+        $submittedVersion = isset($data['version']) && trim((string) $data['version']) !== ''
             ? ltrim(trim((string) $data['version']), 'vV')
             : null;
 
-        return $this->change($request, $code, (int) $data['expected_version'], function ($prompt) use ($data, $newVersion) {
+        return $this->change($request, $code, (int) $data['expected_version'], function ($prompt) use ($data, $submittedVersion) {
             if ($prompt->archived_at !== null) abort(409, 'Restaurá este prompt antes de editarlo.');
-            $delta = ['description' => trim($data['description']), 'content' => $data['content']];
-            if ($newVersion !== null) {
-                $delta['version'] = $newVersion;
+            if ($submittedVersion !== null && $submittedVersion !== (string) $prompt->version) {
+                throw ValidationException::withMessages([
+                    'version' => 'La versión no puede modificarse mediante edición. Usá la acción "Nueva versión".',
+                ]);
             }
-            return $delta;
+            return ['description' => trim($data['description']), 'content' => $data['content']];
         }, 'updated');
     }
 
