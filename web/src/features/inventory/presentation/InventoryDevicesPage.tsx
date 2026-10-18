@@ -18,7 +18,11 @@ import { DeviceComponentsModal } from './DeviceComponentsModal';
 import { DeviceDestinationModal } from './DeviceDestinationModal';
 import { DeviceRepairCostsModal } from './DeviceRepairCostsModal';
 import { PhonePublicationModal } from './PhonePublicationModal';
-import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
+import type {
+  DeviceInventorySpecsResponseDto,
+  DismantlingStatus,
+  InventoryDeviceListItemDto,
+} from '../application/devices.dto';
 
 const dismantlingNames: Record<DismantlingStatus, string> = {
   unknown: 'Sin verificar',
@@ -38,38 +42,35 @@ function optionLabel(options: readonly { value: string; label: string }[], value
   return options.find((option) => option.value === value)?.label ?? value;
 }
 function DeviceSpecificationsDetail({ inventoryId }: { inventoryId: string }) {
-  const [data, setData] = useState<{
-    catalog?: {
-      model_name?: string;
-      variant_name?: string | null;
-      inherited_specs?: Record<string, unknown>;
-      effective_specs?: Record<string, unknown>;
-    };
-    unit?: {
-      storage?: string | null;
-      color?: string | null;
-      imei?: string | null;
-      condition?: string | null;
-    };
-    contradictions?: { field: string; message: string; unit_value: unknown; catalog_value: unknown }[];
-  } | null>(null);
+  const [payload, setPayload] = useState<DeviceInventorySpecsResponseDto['data'] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
+    setLoading(true);
+    setLoadError(null);
     adminFetch(`/api/v1/admin/inventory/${encodeURIComponent(inventoryId)}/specifications`, {
       headers: { Accept: 'application/json' },
       cache: 'no-store',
     })
       .then(async (res) => {
-        if (!res.ok) return null;
-        return res.json() as Promise<{ data: typeof data }>;
+        if (!res.ok) {
+          const body = await res.json().catch(() => null) as { message?: string } | null;
+          throw new Error(body?.message || `Error al consultar especificaciones (${res.status})`);
+        }
+        return res.json() as Promise<DeviceInventorySpecsResponseDto>;
       })
-      .then((payload) => {
-        if (!alive || !payload) return;
-        setData(payload.data);
+      .then((response) => {
+        if (!alive) return;
+        setPayload(response.data);
+        setLoadError(null);
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (!alive) return;
+        setLoadError(err instanceof Error ? err.message : 'No se pudo consultar la ficha técnica local.');
+        setPayload(null);
+      })
       .finally(() => {
         if (alive) setLoading(false);
       });
@@ -83,21 +84,31 @@ function DeviceSpecificationsDetail({ inventoryId }: { inventoryId: string }) {
     return <p className="text-[11px] text-slate-400">Consultando ficha técnica local…</p>;
   }
 
-  if (!data?.catalog) {
+  if (loadError) {
     return (
-      <div className="rounded border border-slate-100 bg-slate-50 p-2 text-[11px] text-slate-500">
-        Dispositivo histórico o sin ficha técnica de catálogo asociada.
+      <div role="alert" className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+        <span className="font-semibold">Aviso:</span> {loadError}
       </div>
     );
   }
 
-  const specs = data.catalog.effective_specs ?? data.catalog.inherited_specs ?? {};
+  if (!payload?.inherited) {
+    return (
+      <div className="mt-2 rounded border border-slate-100 bg-slate-50 p-2 text-[11px] text-slate-500">
+        Dispositivo histórico sin modelo comercial asignado en el catálogo local.
+      </div>
+    );
+  }
+
+  const inherited = payload.inherited;
+  const specs = inherited.effective_specs ?? inherited.effective ?? inherited.model_specs ?? {};
+  const variantLabel = inherited.variant ? `${inherited.variant.name} (${inherited.variant.variant_key})` : 'Modelo base (sin variante)';
 
   return (
     <div className="mt-2 space-y-2 border-t border-slate-100 pt-2 text-xs">
       <div className="flex items-center justify-between text-[11px]">
-        <span className="font-semibold text-slate-700">Ficha técnica heredada ({data.catalog.model_name})</span>
-        <span className="text-slate-500">{data.catalog.variant_name ? `Variante: ${data.catalog.variant_name}` : 'Modelo base (sin variante)'}</span>
+        <span className="font-semibold text-slate-700">Ficha técnica heredada</span>
+        <span className="text-slate-500">{variantLabel}</span>
       </div>
       {Object.keys(specs).length > 0 ? (
         <div className="grid grid-cols-2 gap-2 rounded bg-slate-50 p-2 text-[11px] text-slate-600 sm:grid-cols-3">
@@ -111,11 +122,11 @@ function DeviceSpecificationsDetail({ inventoryId }: { inventoryId: string }) {
       ) : (
         <p className="text-[11px] text-slate-400">Sin especificaciones técnicas adicionales en el catálogo local.</p>
       )}
-      {data.contradictions && data.contradictions.length > 0 ? (
+      {payload.consistency && payload.consistency.length > 0 ? (
         <div className="rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
           <p className="font-semibold">Aviso de discrepancia con catálogo:</p>
           <ul className="mt-1 list-disc pl-4 space-y-0.5">
-            {data.contradictions.map((c, i) => (
+            {payload.consistency.map((c, i) => (
               <li key={i}>{c.message}</li>
             ))}
           </ul>

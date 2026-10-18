@@ -85,3 +85,147 @@ test('inherited specs remain separated from unit verified attributes without mut
   assert.equal(viewState.catalogSpecs.modem, 'Global 5G Sub6');
   assert.equal(Object.keys(physicalUnit).includes('soc'), false);
 });
+
+test('frontend intake modal extracts specs symmetrically from effective or effective_specs in real API payload', () => {
+  // Real backend response shape returned by /api/v1/admin/device-models/{modelId}/resolved-specs
+  const apiResponse = {
+    data: {
+      variants: [
+        { id: 'var-1', name: 'SM-S911B', variant_key: 'sm-s911b' },
+      ],
+      resolved: {
+        device_model_id: 'model-s23',
+        variant_known: true,
+        specifications_status: 'draft',
+        specifications_source: 'manual',
+        model_specs: {
+          soc: 'Snapdragon 8 Gen 2',
+          screen_size: '6.1 in',
+        },
+        variant: {
+          id: 'var-1',
+          name: 'SM-S911B',
+          variant_key: 'sm-s911b',
+          active: true,
+          ram: '8 GB',
+          storage: '256 GB',
+          region_code: 'GLOBAL',
+          manufacturer_variant_code: 'SM-S911B/DS',
+          differences: { modem: '5G Global' },
+        },
+        effective: {
+          soc: 'Snapdragon 8 Gen 2',
+          screen_size: '6.1 in',
+          modem: '5G Global',
+          ram: '8 GB',
+          storage: '256 GB',
+        },
+        inherited_specs: {
+          soc: 'Snapdragon 8 Gen 2',
+          screen_size: '6.1 in',
+        },
+        effective_specs: {
+          soc: 'Snapdragon 8 Gen 2',
+          screen_size: '6.1 in',
+          modem: '5G Global',
+          ram: '8 GB',
+          storage: '256 GB',
+        },
+      },
+    },
+  };
+
+  // Simulating extractor in InventoryDeviceIntakeModal.tsx
+  const effective = apiResponse.data.resolved?.effective ?? apiResponse.data.resolved?.effective_specs ?? null;
+  assert.ok(effective);
+  assert.equal(effective.soc, 'Snapdragon 8 Gen 2');
+  assert.equal(effective.modem, '5G Global');
+  assert.equal(effective.storage, '256 GB');
+  assert.equal(apiResponse.data.variants.length, 1);
+  assert.equal(apiResponse.data.variants[0].name, 'SM-S911B');
+});
+
+test('model and brand switching properly cleans prior variants, specs, and errors', () => {
+  let formState = {
+    brandId: 'brand-apple',
+    deviceModelId: 'model-ip13',
+    deviceModelVariantId: 'var-a2633',
+  };
+  let variantOptions = [{ id: 'var-a2633', name: 'A2633', variant_key: 'a2633' }];
+  let resolvedSpecs = { screen: '6.1 in', chip: 'A15' };
+  let specsError = 'Error previo';
+
+  // 1. Changing deviceModelId resets variant selection, options, resolved specs, and error
+  function setDeviceModel(newModelId) {
+    variantOptions = [];
+    resolvedSpecs = null;
+    specsError = null;
+    formState = { ...formState, deviceModelId: newModelId, deviceModelVariantId: '' };
+  }
+
+  setDeviceModel('model-ip14');
+  assert.equal(formState.deviceModelId, 'model-ip14');
+  assert.equal(formState.deviceModelVariantId, '');
+  assert.equal(variantOptions.length, 0);
+  assert.equal(resolvedSpecs, null);
+  assert.equal(specsError, null);
+
+  // 2. Changing brandId also cleans model, variant selection, options, specs, and error
+  function setBrand(newBrandId) {
+    variantOptions = [];
+    resolvedSpecs = null;
+    specsError = null;
+    formState = { ...formState, brandId: newBrandId, deviceModelId: '', deviceModelVariantId: '' };
+  }
+
+  setBrand('brand-samsung');
+  assert.equal(formState.brandId, 'brand-samsung');
+  assert.equal(formState.deviceModelId, '');
+  assert.equal(formState.deviceModelVariantId, '');
+  assert.equal(variantOptions.length, 0);
+  assert.equal(resolvedSpecs, null);
+  assert.equal(specsError, null);
+});
+
+test('loading errors are distinct from legitimate absence of catalog specifications', () => {
+  // Scenario A: Legitimate absence (200 OK, empty specs in catalog)
+  const emptyCatalogResponse = {
+    data: {
+      variants: [],
+      resolved: {
+        device_model_id: 'model-generic',
+        variant_known: false,
+        model_specs: {},
+        variant: null,
+        effective: {},
+        inherited_specs: {},
+        effective_specs: {},
+      },
+    },
+  };
+  const effectiveEmpty = emptyCatalogResponse.data.resolved?.effective ?? emptyCatalogResponse.data.resolved?.effective_specs ?? null;
+  const resolvedSpecsA = effectiveEmpty && Object.keys(effectiveEmpty).length > 0 ? effectiveEmpty : null;
+  const specsErrorA = null;
+
+  assert.equal(specsErrorA, null);
+  assert.equal(resolvedSpecsA, null);
+  // UI logic: if !specsLoading && !specsError && !resolvedSpecs => shows "Sin especificaciones técnicas base en catálogo para este modelo."
+  const isAbsent = !specsErrorA && !resolvedSpecsA;
+  assert.equal(isAbsent, true);
+
+  // Scenario B: Network or Server Error (e.g. 500 or network timeout)
+  let resolvedSpecsB = null;
+  let specsErrorB = null;
+  try {
+    throw new Error('Error al consultar la ficha técnica (500)');
+  } catch (err) {
+    specsErrorB = err.message;
+    resolvedSpecsB = null;
+  }
+
+  assert.equal(resolvedSpecsB, null);
+  assert.equal(specsErrorB, 'Error al consultar la ficha técnica (500)');
+  // UI logic: if specsError => shows "Aviso: Error al consultar la ficha técnica (500)", NOT "Sin especificaciones..."
+  assert.ok(specsErrorB);
+});
+

@@ -112,15 +112,54 @@ export interface DeviceModelVariantOptionDto {
   variant_key: string;
 }
 
-export interface DeviceResolvedSpecsDto {
-  model_id: string;
-  model_name: string;
-  brand_id: string;
-  brand_name: string;
-  variant_id: string | null;
-  variant_name: string | null;
+export interface DeviceModelVariantDetailDto {
+  id: string;
+  name: string;
+  variant_key: string;
+  active: boolean;
+  ram: string | null;
+  storage: string | null;
+  region_code: string | null;
+  manufacturer_variant_code: string | null;
+  differences: Record<string, unknown>;
+}
+
+export interface ModelResolvedSpecsDto {
+  device_model_id: string;
+  variant_known: boolean;
+  specifications_status?: string | null;
+  specifications_source?: string | null;
+  model_specs: Record<string, unknown>;
+  variant: DeviceModelVariantDetailDto | null;
+  effective: Record<string, unknown>;
   inherited_specs: Record<string, unknown>;
   effective_specs: Record<string, unknown>;
+}
+
+export interface DeviceModelResolvedSpecsResponseDto {
+  data: {
+    variants: readonly DeviceModelVariantOptionDto[];
+    resolved: ModelResolvedSpecsDto;
+  };
+}
+
+export interface DeviceInventorySpecsResponseDto {
+  data: {
+    identity_source: 'catalog' | 'legacy_text';
+    legacy: { brand?: string | null; model?: string | null };
+    inherited: ModelResolvedSpecsDto | null;
+    physical: {
+      serial_or_imei: string | null;
+      storage_capacity_id: string | null;
+      storage: string | null;
+      color: string | null;
+      condition_name: string | null;
+      physical_condition: string | null;
+      powers_on: string | null;
+      account_lock: string | null;
+    };
+    consistency: readonly { field: string; message: string }[];
+  };
 }
 
 // Static presentation reference data is not a persisted inventory record.

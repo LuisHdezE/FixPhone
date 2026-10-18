@@ -61,6 +61,8 @@ final class DeviceSpecificationResolver
             'model_specs' => $modelSpecs,
             'variant' => $variantData,
             'effective' => $effective,
+            'inherited_specs' => $modelSpecs,
+            'effective_specs' => $effective,
         ];
     }
 

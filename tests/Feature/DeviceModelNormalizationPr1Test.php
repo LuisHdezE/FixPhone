@@ -136,7 +136,11 @@ final class DeviceModelNormalizationPr1Test extends TestCase
             ->assertJsonPath('data.inherited.variant_known', false)
             ->assertJsonPath('data.inherited.variant', null)
             ->assertJsonPath('data.inherited.effective.display', '6.1"')
+            ->assertJsonPath('data.inherited.effective_specs.display', '6.1"')
+            ->assertJsonPath('data.inherited.model_specs.display', '6.1"')
+            ->assertJsonPath('data.inherited.inherited_specs.display', '6.1"')
             ->assertJsonMissingPath('data.inherited.effective.storage')
+            ->assertJsonMissingPath('data.inherited.effective_specs.storage')
             ->assertJsonPath('data.physical.storage', '128 GB');
         $this->assertNull($item->fresh()->device_model_variant_id);
     }
@@ -190,6 +194,19 @@ final class DeviceModelNormalizationPr1Test extends TestCase
 
         $this->signIn('intake_operator');
         $response = $this->getJson('/api/v1/admin/device-models/'.$fx['model'].'/resolved-specs')->assertOk();
+        $response->assertJsonStructure([
+            'data' => [
+                'variants' => [['id', 'name', 'variant_key']],
+                'resolved' => [
+                    'device_model_id',
+                    'variant_known',
+                    'model_specs',
+                    'effective',
+                    'inherited_specs',
+                    'effective_specs',
+                ],
+            ],
+        ]);
         $this->assertSame([$active->id], array_column($response->json('data.variants'), 'id'));
         $this->getJson('/api/v1/admin/device-models/'.$fx['model'].'/resolved-specs?variant_id='.$foreign->id)->assertStatus(422);
     }

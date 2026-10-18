@@ -8,8 +8,15 @@ import { TextField } from '@/components/forms/TextField';
 import { ModalShell } from '@/components/layout/ModalShell';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
-import type { DeviceModelVariantOptionDto, InventoryDeviceListItemDto } from '../application/devices.dto';
-import type { DeviceAccountLock, DeviceDestination, DevicePhysicalCondition, DevicePowerState } from '../application/devices.dto';
+import type {
+  DeviceAccountLock,
+  DeviceDestination,
+  DeviceModelResolvedSpecsResponseDto,
+  DeviceModelVariantOptionDto,
+  DevicePhysicalCondition,
+  DevicePowerState,
+  InventoryDeviceListItemDto,
+} from '../application/devices.dto';
 
 type IntakeFormState = {
   brandId: string;
@@ -228,40 +235,40 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const [variantOptions, setVariantOptions] = useState<readonly DeviceModelVariantOptionDto[]>([]);
   const [resolvedSpecs, setResolvedSpecs] = useState<Record<string, unknown> | null>(null);
   const [specsLoading, setSpecsLoading] = useState(false);
+  const [specsError, setSpecsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!form.deviceModelId) {
       setVariantOptions([]);
       setResolvedSpecs(null);
+      setSpecsError(null);
       return;
     }
     let alive = true;
     setSpecsLoading(true);
+    setSpecsError(null);
     const query = form.deviceModelVariantId ? `?variant_id=${encodeURIComponent(form.deviceModelVariantId)}` : '';
     adminFetch(`/api/v1/admin/device-models/${encodeURIComponent(form.deviceModelId)}/resolved-specs${query}`, {
       headers: { Accept: 'application/json' },
       cache: 'no-store',
     })
       .then(async (res) => {
-        if (!res.ok) throw new Error('No se pudo cargar la ficha técnica');
-        return res.json() as Promise<{
-          data: {
-            variants: DeviceModelVariantOptionDto[];
-            resolved: {
-              inherited_specs?: Record<string, unknown>;
-              effective_specs?: Record<string, unknown>;
-            };
-          };
-        }>;
+        if (!res.ok) {
+          const errPayload = await res.json().catch(() => null) as { message?: string } | null;
+          throw new Error(errPayload?.message || `Error al consultar la ficha técnica (${res.status})`);
+        }
+        return res.json() as Promise<DeviceModelResolvedSpecsResponseDto>;
       })
       .then((payload) => {
         if (!alive) return;
         setVariantOptions(payload.data.variants || []);
-        const specs = payload.data.resolved?.effective_specs || payload.data.resolved?.inherited_specs || null;
-        setResolvedSpecs(specs && Object.keys(specs).length > 0 ? specs : null);
+        const effective = payload.data.resolved?.effective ?? payload.data.resolved?.effective_specs ?? null;
+        setResolvedSpecs(effective && Object.keys(effective).length > 0 ? effective : null);
+        setSpecsError(null);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!alive) return;
+        setSpecsError(err instanceof Error ? err.message : 'No se pudo cargar la ficha técnica del catálogo.');
         setResolvedSpecs(null);
       })
       .finally(() => {
@@ -282,12 +289,18 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   function setBrand(brandId: string) {
     setCreatedId(null);
     setError(null);
+    setVariantOptions([]);
+    setResolvedSpecs(null);
+    setSpecsError(null);
     setForm((current) => ({ ...current, brandId, deviceModelId: '', deviceModelVariantId: '' }));
   }
 
   function setDeviceModel(deviceModelId: string) {
     setCreatedId(null);
     setError(null);
+    setVariantOptions([]);
+    setResolvedSpecs(null);
+    setSpecsError(null);
     setForm((current) => ({ ...current, deviceModelId, deviceModelVariantId: '' }));
   }
 
@@ -446,7 +459,11 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
               </span>
               {specsLoading && <span className="text-[10px] text-slate-500">Cargando…</span>}
             </div>
-            {resolvedSpecs && Object.keys(resolvedSpecs).length > 0 ? (
+            {specsError ? (
+              <p role="alert" className="mt-1 text-[11px] text-amber-700">
+                Aviso: {specsError}
+              </p>
+            ) : resolvedSpecs && Object.keys(resolvedSpecs).length > 0 ? (
               <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-slate-600 sm:grid-cols-3">
                 {Object.entries(resolvedSpecs).slice(0, 6).map(([key, val]) => (
                   <div key={key} className="truncate">
@@ -457,7 +474,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
               </div>
             ) : !specsLoading ? (
               <p className="mt-1 text-[11px] text-slate-500">
-                Sin especificaciones técnicas base en catálogo. Los atributos particulares de la unidad física se definen abajo.
+                Sin especificaciones técnicas base en catálogo para este modelo. Los atributos particulares de la unidad física se definen abajo.
               </p>
             ) : null}
           </div>
