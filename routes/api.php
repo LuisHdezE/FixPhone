@@ -311,6 +311,7 @@ Route::prefix('v1')->group(function (): void {
   Route::get('/admin/ai-prompts/{code}', [AiPromptCatalogController::class, 'show'])->middleware('permission:integrations.manage')->name('api.v1.admin.ai-prompts.show');
   Route::get('/admin/ai-prompts/{code}/history', [AiPromptCatalogController::class, 'history'])->middleware('permission:integrations.manage')->name('api.v1.admin.ai-prompts.history');
   Route::post('/admin/ai-prompts', [AiPromptCatalogController::class, 'store'])->middleware('permission:ai_prompts.manage')->name('api.v1.admin.ai-prompts.store');
+  Route::post('/admin/ai-prompts/{code}/versions', [AiPromptCatalogController::class, 'storeVersion'])->middleware('permission:ai_prompts.manage')->name('api.v1.admin.ai-prompts.versions.store');
   Route::patch('/admin/ai-prompts/{code}', [AiPromptCatalogController::class, 'update'])->middleware('permission:ai_prompts.manage')->name('api.v1.admin.ai-prompts.update');
   Route::delete('/admin/ai-prompts/{code}', [AiPromptCatalogController::class, 'destroy'])->middleware('permission:ai_prompts.manage')->name('api.v1.admin.ai-prompts.archive');
   Route::post('/admin/ai-prompts/{code}/reactivate', [AiPromptCatalogController::class, 'reactivate'])->middleware('permission:ai_prompts.manage')->name('api.v1.admin.ai-prompts.reactivate');

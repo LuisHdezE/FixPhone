@@ -4,14 +4,14 @@ import { AppIcon, type AppIconName } from '@/components/AppIcon';
 import { PageShell } from '@/shell/PageShell';
 import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import {
-  archiveAiPrompt, createAiPrompt, getAiPrompt, getAiPromptHistory,
+  archiveAiPrompt, createAiPrompt, createAiPromptVersion, getAiPrompt, getAiPromptHistory,
   listAiPrompts, reactivateAiPrompt, restoreAiPromptRevision, updateAiPrompt,
   type AiPromptDetail, type AiPromptRevision, type AiPromptSummary,
 } from '../infrastructure/aiPromptCatalogGateway';
 
 type Modal =
   | { kind: 'create' }
-  | { kind: 'edit' | 'view' | 'archive' | 'reactivate' | 'history'; prompt: AiPromptDetail };
+  | { kind: 'edit' | 'new_version' | 'view' | 'archive' | 'reactivate' | 'history'; prompt: AiPromptDetail };
 
 type FormState = {
   description: string;
@@ -95,7 +95,7 @@ export function AiPromptCatalogPage() {
     setForm(emptyForm); setError(''); setNotice(''); setModal({ kind: 'create' });
   }
 
-  async function selectPrompt(code: string, kind: 'view' | 'edit' | 'archive' | 'reactivate' | 'history' | 'copy') {
+  async function selectPrompt(code: string, kind: 'view' | 'edit' | 'new_version' | 'archive' | 'reactivate' | 'history' | 'copy') {
     const token = ++requestRef.current;
     setBusyCode(code); setError(''); setNotice('');
     try {
@@ -107,6 +107,7 @@ export function AiPromptCatalogPage() {
         return;
       }
       if (kind === 'edit') setForm({ description: prompt.description, version: prompt.version || '1.0', content: prompt.content });
+      if (kind === 'new_version') setForm({ description: prompt.description, version: '', content: prompt.content });
       if (kind === 'history') {
         const revisions = await getAiPromptHistory(code);
         if (token !== requestRef.current) return;
@@ -132,23 +133,40 @@ export function AiPromptCatalogPage() {
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || !modal || (modal.kind !== 'create' && modal.kind !== 'edit')) return;
+    if (busy || !modal || (modal.kind !== 'create' && modal.kind !== 'edit' && modal.kind !== 'new_version')) return;
     setBusy(true); setError('');
     try {
       const description = form.description.trim();
       const content = form.content.trim();
-      const version = form.version.trim() || '1.0';
       if (!description || !content) throw new Error('Completá la descripción y el contenido.');
-      const result = modal.kind === 'create'
-        ? await createAiPrompt({ description, content: form.content, version })
-        : await updateAiPrompt(
-            modal.prompt.code,
-            { description, content: form.content, version },
-            modal.prompt.lock_version,
-          );
+      let result: AiPromptDetail;
+      if (modal.kind === 'create') {
+        const version = form.version.trim() || '1.0';
+        result = await createAiPrompt({ description, content: form.content, version });
+      } else if (modal.kind === 'new_version') {
+        const version = form.version.trim();
+        if (!version) throw new Error('Ingresá el número de la nueva versión.');
+        result = await createAiPromptVersion(
+          modal.prompt.code,
+          { description, content: form.content, version },
+          modal.prompt.lock_version,
+        );
+      } else {
+        result = await updateAiPrompt(
+          modal.prompt.code,
+          { description, content: form.content },
+          modal.prompt.lock_version,
+        );
+      }
       await refresh();
       setModal(null);
-      setNotice('Prompt ' + result.code + (modal.kind === 'create' ? ' creado (v' + result.version + ').' : ' actualizado (v' + result.version + ').'));
+      setNotice(
+        modal.kind === 'create'
+          ? 'Prompt ' + result.code + ' creado (v' + result.version + ').'
+          : modal.kind === 'new_version'
+          ? 'Nueva versión v' + result.version + ' creada para ' + result.code + '.'
+          : 'Prompt ' + result.code + ' actualizado (v' + result.version + ').'
+      );
     } catch (reason) { setError(explanation(reason)); }
     finally { setBusy(false); }
   }
@@ -178,7 +196,8 @@ export function AiPromptCatalogPage() {
   }
 
   const editing = modal?.kind === 'edit';
-  const formOpen = modal?.kind === 'create' || editing;
+  const isNewVersion = modal?.kind === 'new_version';
+  const formOpen = modal?.kind === 'create' || editing || isNewVersion;
 
   return <PageShell title="Biblioteca de prompts"
     description="Catálogo de instrucciones reutilizables, con copia rápida, edición y versiones."
@@ -231,6 +250,8 @@ export function AiPromptCatalogPage() {
                     disabled={busyCode !== null || busy} onClick={() => void selectPrompt(prompt.code, 'copy')} /> : null}
                   {canManage ? <>
                     {!prompt.archived_at ? <>
+                      <ActionButton icon="tag" name={'Nueva versión de ' + prompt.code} disabled={busyCode !== null || busy}
+                        onClick={() => void selectPrompt(prompt.code, 'new_version')} />
                       <ActionButton icon="edit" name={'Editar ' + prompt.code} disabled={busyCode !== null || busy}
                         onClick={() => void selectPrompt(prompt.code, 'edit')} />
                       <ActionButton icon="trash" name={'Archivar ' + prompt.code} disabled={busyCode !== null || busy}
@@ -256,6 +277,7 @@ export function AiPromptCatalogPage() {
         <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
           <h2 className="text-sm font-bold">
             {modal.kind === 'create' ? 'Nuevo prompt' :
+              modal.kind === 'new_version' ? 'Nueva versión de ' + modal.prompt.code :
               modal.kind === 'edit' ? 'Editar prompt' :
               modal.kind === 'view' ? 'Contenido del prompt' :
               modal.kind === 'history' ? 'Historial de versiones' :
@@ -268,7 +290,31 @@ export function AiPromptCatalogPage() {
         {error ? <p role="alert" className="mb-2 rounded border border-rose-200 bg-rose-50 p-2 text-xs text-rose-800">{error}</p> : null}
         <SuccessToast message={notice} />
         {formOpen ? <form onSubmit={(e) => void save(e)} className="grid gap-2">
-          {editing ? (
+          {isNewVersion ? (
+            <div className="grid gap-2">
+              <div className="rounded-md border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs text-sky-800">
+                Se conservará la versión actual (v{modal.prompt.version}) en el historial. La nueva versión debe ser numéricamente superior (ej. 2.0).
+              </div>
+              <div className="grid gap-2 sm:grid-cols-[120px_100px_100px]">
+                <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Código
+                  <input className={field + ' font-mono bg-slate-100 text-slate-500 cursor-not-allowed'}
+                    disabled value={modal.prompt.code} readOnly title="El código es inmutable" />
+                </label>
+                <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Versión actual
+                  <input className={field + ' font-mono bg-slate-100 text-slate-500 cursor-not-allowed'}
+                    disabled value={'v' + modal.prompt.version} readOnly title="Versión actualmente vigente" />
+                </label>
+                <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Nueva versión
+                  <input className={field} required maxLength={20} value={form.version} placeholder="Ej. 2.0"
+                    onChange={(e) => setForm((p) => ({ ...p, version: e.target.value }))} autoFocus />
+                </label>
+              </div>
+              <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Descripción
+                <input className={field} required maxLength={255} value={form.description}
+                  onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
+              </label>
+            </div>
+          ) : editing ? (
             <div className="grid gap-2 sm:grid-cols-[140px_1fr_100px]">
               <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Código
                 <input className={field + ' font-mono bg-slate-100 text-slate-500 cursor-not-allowed'}
@@ -279,8 +325,8 @@ export function AiPromptCatalogPage() {
                   onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
               </label>
               <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Versión
-                <input className={field} required maxLength={20} value={form.version} placeholder="1.0"
-                  onChange={(e) => setForm((p) => ({ ...p, version: e.target.value }))} />
+                <input className={field + ' font-mono bg-slate-100 text-slate-500 cursor-not-allowed'}
+                  disabled value={'v' + modal.prompt.version} readOnly title="La versión no se modifica al editar. Usá 'Nueva versión'." />
               </label>
             </div>
           ) : (
@@ -310,8 +356,8 @@ export function AiPromptCatalogPage() {
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
             <button className={smallButton} type="button" onClick={closeModal}>Cancelar</button>
             <button className="h-8 rounded-md bg-[var(--theme-primary)] px-3 text-xs font-semibold text-white disabled:opacity-50"
-              type="submit" disabled={busy || !form.description.trim() || !form.content.trim()}>
-              {busy ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear prompt'}
+              type="submit" disabled={busy || !form.description.trim() || !form.content.trim() || (isNewVersion && !form.version.trim())}>
+              {busy ? 'Guardando…' : isNewVersion ? 'Guardar nueva versión' : editing ? 'Guardar cambios' : 'Crear prompt'}
             </button>
           </div>
         </form> : null}
