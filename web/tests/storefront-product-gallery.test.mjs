@@ -138,6 +138,147 @@ test('storefront product detail gallery correctly reflects image priority, multi
     assert.doesNotMatch(html1, /aria-label="Foto siguiente"/);
     assert.doesNotMatch(html1, /data-storefront-gallery-counter/);
     assert.doesNotMatch(html1, /aria-label="Fotos del producto"/);
+
+    // Scenario 4: Device with 1 real photo and 1 approved AI promotional asset
+    const providerWithPhotoAndAd = new ApiStorefrontProvider([
+      {
+        id: 'phone-photo-and-ad',
+        title: 'Samsung Galaxy A22 5G',
+        item_type: 'used_phone',
+        operational_status: 'disponible',
+        sale_price_amount_minor: 1250000,
+        currency_code: 'UYU',
+        stock_quantity: 1,
+        brand: 'Samsung',
+        model: 'Galaxy A22 5G',
+        main_image_url: 'https://r2.fixphone.test/generic-model-fallback.webp',
+        photos: [
+          { id: 'real-1', url: 'https://r2.fixphone.test/real-confirmed.webp', is_primary: true, type: 'real_photo' },
+        ],
+        promotional_assets: [
+          { id: 'ad-1', url: 'https://r2.fixphone.test/approved-ai-ad.webp', is_primary: false, type: 'advertisement', prompt_code: 'PROMPT-0001' },
+        ],
+      },
+    ]);
+
+    const view4 = providerWithPhotoAndAd.getStorefrontView();
+    const product4 = view4.productDetail.products.find(p => p.slug === 'phone-photo-and-ad');
+    const card4 = view4.productListing.products.find(c => c.id === 'phone-photo-and-ad');
+
+    // 1. Mapper contract verifications:
+    assert.ok(product4);
+    assert.equal(product4.images.length, 2);
+    // Order: real photo first, approved advertisement second
+    assert.equal(product4.images[0].src, 'https://r2.fixphone.test/real-confirmed.webp');
+    assert.equal(product4.images[0].type, 'real_photo');
+    assert.equal(product4.images[1].src, 'https://r2.fixphone.test/approved-ai-ad.webp');
+    assert.equal(product4.images[1].type, 'advertisement');
+    // Card main image must NEVER be advertisement
+    assert.equal(card4.image.src, 'https://r2.fixphone.test/real-confirmed.webp');
+    assert.equal(card4.image.type, 'real_photo');
+
+    const htmlPhotoAndAd = renderToString(
+      createElement(MemoryRouter, { initialEntries: ['/store/products/phone-photo-and-ad'] },
+        createElement(StorefrontSessionContext.Provider, { value },
+          createElement(Routes, null,
+            createElement(Route, { path: '/store/products/:slug', element: createElement(StorefrontProductDetailPage, { provider: providerWithPhotoAndAd }) }),
+          ),
+        ),
+      ),
+    );
+
+    // Initial render shows first image (real photo):
+    assert.match(htmlPhotoAndAd, /src="https:\/\/r2\.fixphone\.test\/real-confirmed\.webp"/);
+    // Counter shows 1 / 2:
+    assert.match(htmlPhotoAndAd, /1 \/ 2/);
+    // Badges: "Foto real" visible on real photo
+    assert.match(htmlPhotoAndAd, /data-storefront-gallery-real-badge/);
+    assert.match(htmlPhotoAndAd, /Foto real/);
+    // Thumbnails strip rendered with 2 buttons
+    assert.match(htmlPhotoAndAd, /data-storefront-gallery-thumbnails/);
+    assert.match(htmlPhotoAndAd, /aria-label="Ver foto 1"/);
+    // Ad thumbnail has explicit ad tag and label
+    assert.match(htmlPhotoAndAd, /aria-label="Ver publicidad 2"/);
+    assert.match(htmlPhotoAndAd, /data-storefront-thumbnail-ad-tag="true"/);
+    assert.match(htmlPhotoAndAd, /data-storefront-thumbnail-ad-label/);
+
+    // Scenario 5: Direct render when advertisement is the selected image
+    // Verifies data-storefront-gallery-ad-badge and text "Publicidad"
+    const providerAdSelected = new ApiStorefrontProvider([
+      {
+        id: 'phone-ad-first',
+        title: 'Samsung Galaxy A22 5G Solo Ad',
+        item_type: 'used_phone',
+        operational_status: 'disponible',
+        sale_price_amount_minor: 1250000,
+        currency_code: 'UYU',
+        stock_quantity: 1,
+        brand: 'Samsung',
+        model: 'Galaxy A22 5G',
+        main_image_url: 'https://r2.fixphone.test/generic-model-fallback.webp',
+        photos: [],
+        promotional_assets: [
+          { id: 'ad-single', url: 'https://r2.fixphone.test/approved-ai-ad.webp', is_primary: false, type: 'advertisement', prompt_code: 'PROMPT-0001' },
+        ],
+      },
+    ]);
+
+    const viewAdSelected = providerAdSelected.getStorefrontView();
+    const productAdOnly = viewAdSelected.productDetail.products.find(p => p.slug === 'phone-ad-first');
+    const cardAdOnly = viewAdSelected.productListing.products.find(c => c.id === 'phone-ad-first');
+
+    // 1. In device without real photos, card.image uses generic model fallback, NEVER advertisement!
+    assert.equal(cardAdOnly.image.src, 'https://r2.fixphone.test/generic-model-fallback.webp');
+    // 2. In detail gallery, generic fallback comes first, advertisement comes second!
+    assert.equal(productAdOnly.images.length, 2);
+    assert.equal(productAdOnly.images[0].src, 'https://r2.fixphone.test/generic-model-fallback.webp');
+    assert.equal(productAdOnly.images[1].src, 'https://r2.fixphone.test/approved-ai-ad.webp');
+    assert.equal(productAdOnly.images[1].type, 'advertisement');
+
+    // Test detail page with mock provider where active image is advertisement:
+    const mockProviderWithAdActive = {
+      getProductDetailView: () => ({
+        eyebrow: 'Detalle',
+        backLabel: 'Volver',
+        backHref: '/store/catalog',
+        notFound: { title: 'No encontrado', description: '', actionLabel: '', actionHref: '' },
+      }),
+      getProductDetailBySlug: () => ({
+        slug: 'mock-ad-item',
+        title: 'Dispositivo con Ad Activo',
+        subtitle: 'Usado',
+        badgeLabel: 'Usado',
+        priceLabel: '$ 12.500',
+        stockLabel: '1 unidad disponible',
+        compatibilityLabel: 'Samsung A22',
+        conditionLabel: 'Usado',
+        warrantyLabel: '30 días',
+        description: 'Mock',
+        highlights: [],
+        specs: [],
+        gallery: [],
+        notices: [],
+        relatedProductSlugs: [],
+        images: [
+          { src: 'https://r2.fixphone.test/approved-ai-ad.webp', alt: 'Publicidad', type: 'advertisement' },
+        ],
+      }),
+    };
+
+    const htmlAdActive = renderToString(
+      createElement(MemoryRouter, { initialEntries: ['/store/products/mock-ad-item'] },
+        createElement(StorefrontSessionContext.Provider, { value },
+          createElement(Routes, null,
+            createElement(Route, { path: '/store/products/:slug', element: createElement(StorefrontProductDetailPage, { provider: mockProviderWithAdActive }) }),
+          ),
+        ),
+      ),
+    );
+
+    // Advertisement badge "Publicidad" MUST be rendered when an advertisement is displayed
+    assert.match(htmlAdActive, /data-storefront-gallery-ad-badge/);
+    assert.match(htmlAdActive, /Publicidad/);
+    assert.doesNotMatch(htmlAdActive, /data-storefront-gallery-real-badge/);
   } finally {
     await server.close();
   }

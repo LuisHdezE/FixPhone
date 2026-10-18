@@ -14,6 +14,7 @@ use Illuminate\Validation\ValidationException;
 use App\Infrastructure\MasterData\DeviceModelReferenceGuard;
 use App\Infrastructure\MasterData\MasterDataEntry;
 use App\Infrastructure\Media\InventoryItemPhoto;
+use App\Infrastructure\Media\InventoryItemPromotionalAsset;
 
 class InventoryController extends Controller
 {
@@ -149,16 +150,37 @@ class InventoryController extends Controller
     public function showroomList()
     {
         $items = \App\Infrastructure\Inventory\StorefrontCatalog::query()->get();
+        $itemIds = $items->pluck('id');
+
         $photos = InventoryItemPhoto::query()
-            ->whereIn('inventory_item_id', $items->pluck('id'))
+            ->whereIn('inventory_item_id', $itemIds)
             ->where('status', 'confirmed')
             ->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id')
             ->get()->groupBy('inventory_item_id');
 
-        return response()->json($items->map(function ($item) use ($photos): array {
+        $promotions = InventoryItemPromotionalAsset::query()
+            ->whereIn('inventory_item_id', $itemIds)
+            ->where('status', 'approved')
+            ->whereNotNull('image_url')
+            ->orderBy('created_at')->orderBy('id')
+            ->get()->groupBy('inventory_item_id');
+
+        return response()->json($items->map(function ($item) use ($photos, $promotions): array {
             $realPhotos = ($photos->get($item->id) ?? collect())
                 ->map(fn (InventoryItemPhoto $photo): array => [
-                    'id' => $photo->id, 'url' => $photo->public_url, 'is_primary' => $photo->is_primary,
+                    'id' => $photo->id,
+                    'url' => $photo->public_url,
+                    'is_primary' => (bool) $photo->is_primary,
+                    'type' => 'real_photo',
+                ])->values()->all();
+
+            $approvedAds = ($promotions->get($item->id) ?? collect())
+                ->map(fn (InventoryItemPromotionalAsset $ad): array => [
+                    'id' => $ad->id,
+                    'url' => $ad->image_url,
+                    'is_primary' => false,
+                    'type' => 'advertisement',
+                    'prompt_code' => $ad->prompt_code,
                 ])->values()->all();
 
             $primaryPhoto = collect($realPhotos)->firstWhere('is_primary', true) ?? ($realPhotos[0] ?? null);
@@ -171,14 +193,29 @@ class InventoryController extends Controller
                     $imageUrl = $model?->payload['imageUrl'] ?? null;
                 }
             }
+
             return [
-                'id' => $item->id, 'title' => $item->title, 'description' => $item->description,
-                'item_type' => $item->item_type, 'brand' => $item->brand, 'model' => $item->model,
-                'operational_status' => $item->operational_status, 'stock_quantity' => $item->stock_quantity,
-                'sale_price_amount_minor' => $item->sale_price_amount_minor, 'currency_code' => $item->currency_code,
+                'id' => $item->id,
+                'title' => $item->title,
+                'description' => $item->description,
+                'item_type' => $item->item_type,
+                'brand' => $item->brand,
+                'model' => $item->model,
+                'operational_status' => $item->operational_status,
+                'stock_quantity' => $item->stock_quantity,
+                'sale_price_amount_minor' => $item->sale_price_amount_minor,
+                'currency_code' => $item->currency_code,
                 'main_image_url' => $imageUrl,
                 'photos' => $realPhotos,
-                'metadata' => ['origin' => $item->metadata['origin'] ?? null, 'part_condition' => $item->metadata['part_condition'] ?? null, 'reference_price_minor' => $item->metadata['reference_price_minor'] ?? null, 'reference_currency' => $item->metadata['reference_currency'] ?? null, 'is_original' => (bool) ($item->metadata['is_original'] ?? false)],
+                'promotional_assets' => $approvedAds,
+                'gallery' => array_merge($realPhotos, $approvedAds),
+                'metadata' => [
+                    'origin' => $item->metadata['origin'] ?? null,
+                    'part_condition' => $item->metadata['part_condition'] ?? null,
+                    'reference_price_minor' => $item->metadata['reference_price_minor'] ?? null,
+                    'reference_currency' => $item->metadata['reference_currency'] ?? null,
+                    'is_original' => (bool) ($item->metadata['is_original'] ?? false),
+                ],
             ];
         }));
     }

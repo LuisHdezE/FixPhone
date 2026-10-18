@@ -14,7 +14,9 @@ export interface StorefrontThemeDto {
 export interface StorefrontMediaDto {
   src: string;
   alt: string;
-  objectPosition?: string;
+  objectPosition?: string | undefined;
+  type?: 'real_photo' | 'advertisement' | undefined;
+  is_primary?: boolean | undefined;
 }
 
 export interface StorefrontHeroBannerDto {
