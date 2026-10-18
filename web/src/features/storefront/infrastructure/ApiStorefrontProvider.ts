@@ -29,7 +29,7 @@ export class ApiStorefrontProvider extends JsonStorefrontProvider {
         badgeLabel: condition, href: '/store/products/' + item.id,
         compatibilityLabel: [item.brand, item.model].filter(Boolean).join(' ') || 'Consultar compatibilidad',
         stockLabel: item.stock_quantity + (item.stock_quantity === 1 ? ' unidad disponible' : ' unidades disponibles'),
-        image: { src: item.main_image_url || '/images/part-placeholder.svg', alt: item.title },
+        image: { src: item.photos?.[0]?.url || item.main_image_url || '/images/part-placeholder.svg', alt: item.title },
         discoveryFacets: { brand: item.brand?.toLowerCase() || 'other', category: phone ? 'phones' : 'parts', condition: recovered ? 'recovered' : phone ? 'used' : 'unspecified' },
         discoverySortRanks: { recommended: index, price_asc: item.sale_price_amount_minor, price_desc: -item.sale_price_amount_minor, newest: index },
       };
