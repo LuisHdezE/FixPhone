@@ -181,6 +181,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   };
 
   const [form, setForm] = useState<IntakeFormState>(initialForm);
+  const initialEditForm = useMemo(() => editDevice ? initialForm() : null, [editDevice]);
   const [saving, setSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
@@ -311,6 +312,8 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const selectedColor = colors.find((color) => color.id === form.colorId);
   const selectedCondition = conditions.find((condition) => condition.id === form.conditionId);
 
+  const hasFormChanges = !editDevice || !initialEditForm || JSON.stringify(form) !== JSON.stringify(initialEditForm);
+
   const canSubmit = Boolean(
     selectedBrand && selectedModel && selectedModel.brandId === form.brandId && Boolean(form.destination) && !saving
       && (form.ownershipType === 'owned' || (!consignorsLoading && !consignorsError && consignors.some(item => item.id === form.consignorId))),
@@ -329,6 +332,10 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       const { amountMinor, currencyCode } = parseAcquisitionCost(form.acquisitionCost);
       if (editDevice) {
         if (!gateway || !onSaved) throw new Error('No se pudo iniciar la edición del dispositivo.');
+        if (!hasFormChanges) {
+          onClose();
+          return;
+        }
         if (amountMinor !== null && amountMinor > 2147483647) throw new Error('El costo supera el importe máximo permitido.');
         await gateway.updateDevice(editDevice.inventoryId, {
           brandId: selectedBrand.id,
@@ -514,12 +521,12 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         </div>
       </fieldset>
       <TextAreaField id="device-notes" rows={2} label={view.fields.notes} onChange={(value) => setField('notes', value)} placeholder={view.placeholders.notes} value={form.notes} />
-      {editDevice ? <DevicePhotoGallery inventoryId={editDevice.inventoryId} /> : null}
+      {editDevice ? <div className="grid gap-1"><DevicePhotoGallery inventoryId={editDevice.inventoryId} /><p className="text-[10px] text-emerald-700">Las fotos se guardan automáticamente. No necesitás pulsar Guardar después de añadir, ordenar o eliminar imágenes.</p></div> : null}
       {error ? <InlineFeedback title={editDevice ? 'No se pudo editar el dispositivo' : 'No se pudo registrar el dispositivo'} message={error} tone="error" /> : null}
       {!editDevice && createdId ? <p role="status" className="text-xs text-emerald-800">Dispositivo registrado: {createdCode ?? createdId}.</p> : null}
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
         <button className="h-7 rounded-md border border-slate-200 px-3 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-50" onClick={onClose} disabled={saving} type="button">Cancelar</button>
-        <button className="h-7 rounded-md bg-[var(--theme-primary)] px-3 text-xs font-medium text-white hover:brightness-95 disabled:opacity-50" disabled={!canSubmit} aria-busy={saving} type="submit">Guardar</button>
+        <button className="h-7 rounded-md bg-[var(--theme-primary)] px-3 text-xs font-medium text-white hover:brightness-95 disabled:opacity-50" disabled={!canSubmit} aria-busy={saving} type="submit">{editDevice && !hasFormChanges ? 'Cerrar' : 'Guardar'}</button>
       </div>
     </form>
   </ModalShell>;
