@@ -13,6 +13,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Infrastructure\MasterData\DeviceModelReferenceGuard;
 use App\Infrastructure\MasterData\MasterDataEntry;
+use App\Infrastructure\Media\InventoryItemPhoto;
 
 class InventoryController extends Controller
 {
@@ -148,7 +149,13 @@ class InventoryController extends Controller
     public function showroomList()
     {
         $items = \App\Infrastructure\Inventory\StorefrontCatalog::query()->get();
-        return response()->json($items->map(function ($item): array {
+        $photos = InventoryItemPhoto::query()
+            ->whereIn('inventory_item_id', $items->pluck('id'))
+            ->where('status', 'confirmed')
+            ->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id')
+            ->get()->groupBy('inventory_item_id');
+
+        return response()->json($items->map(function ($item) use ($photos): array {
             $imageUrl = $item->main_image_url;
             if (!$imageUrl && $item->item_type === 'used_phone') {
                 $modelId = $item->device_model_id ?? ($item->metadata['device_model_id'] ?? null);
@@ -158,12 +165,17 @@ class InventoryController extends Controller
                     $imageUrl = $model?->payload['imageUrl'] ?? null;
                 }
             }
+            $realPhotos = ($photos->get($item->id) ?? collect())
+                ->map(fn (InventoryItemPhoto $photo): array => [
+                    'id' => $photo->id, 'url' => $photo->public_url, 'is_primary' => $photo->is_primary,
+                ])->values()->all();
             return [
                 'id' => $item->id, 'title' => $item->title, 'description' => $item->description,
                 'item_type' => $item->item_type, 'brand' => $item->brand, 'model' => $item->model,
                 'operational_status' => $item->operational_status, 'stock_quantity' => $item->stock_quantity,
                 'sale_price_amount_minor' => $item->sale_price_amount_minor, 'currency_code' => $item->currency_code,
                 'main_image_url' => $imageUrl,
+                'photos' => $realPhotos,
                 'metadata' => ['origin' => $item->metadata['origin'] ?? null, 'part_condition' => $item->metadata['part_condition'] ?? null, 'reference_price_minor' => $item->metadata['reference_price_minor'] ?? null, 'reference_currency' => $item->metadata['reference_currency'] ?? null, 'is_original' => (bool) ($item->metadata['is_original'] ?? false)],
             ];
         }));
