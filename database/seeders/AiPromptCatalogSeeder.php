@@ -76,6 +76,8 @@ FIXPHONE_PROMPT;
                 'code' => 'PRICE_REF_001',
                 'description' => 'Actualizar precios de reparación Apple y MundoMac (CSV FixPhone)',
                 'content' => $content,
+                'version' => '1.0',
+                'lock_version' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -84,6 +86,7 @@ FIXPHONE_PROMPT;
                     'id' => (string) Str::ulid(),
                     'ai_prompt_id' => $id,
                     'version' => 1,
+                    'prompt_version' => '1.0',
                     'description' => 'Actualizar precios de reparación Apple y MundoMac (CSV FixPhone)',
                     'content' => $content,
                     'action' => 'seeded',

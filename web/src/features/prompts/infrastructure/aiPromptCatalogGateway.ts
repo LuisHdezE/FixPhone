@@ -3,20 +3,22 @@ import { adminFetch } from '@/auth/adminApiSession';
 export type AiPromptSummary = {
   code: string;
   description: string;
-  version: number;
+  version: string;
+  lock_version: number;
   archived_at: string | null;
   updated_at: string;
 };
 export type AiPromptDetail = AiPromptSummary & { content: string; id: string };
 export type AiPromptRevision = {
   version: number;
+  prompt_version?: string;
   description: string;
   action: string;
   actor_id: string | null;
   created_at: string;
 };
 export type AiPromptList = { data: AiPromptSummary[]; can_manage: boolean };
-export type AiPromptInput = { code: string; description: string; content: string };
+export type AiPromptInput = { description: string; content: string; version?: string };
 
 async function decode<T>(response: Response): Promise<T> {
   const payload: unknown = await response.json().catch(() => null);
@@ -54,7 +56,11 @@ export async function createAiPrompt(data: AiPromptInput): Promise<AiPromptDetai
     method: 'POST', headers: json(), body: JSON.stringify(data),
   }))).data;
 }
-export async function updateAiPrompt(code: string, data: Pick<AiPromptInput, 'description' | 'content'>, expectedVersion: number): Promise<AiPromptDetail> {
+export async function updateAiPrompt(
+  code: string,
+  data: Pick<AiPromptInput, 'description' | 'content'> & { version?: string },
+  expectedVersion: number,
+): Promise<AiPromptDetail> {
   return (await decode<{ data: AiPromptDetail }>(await adminFetch(path(code), {
     method: 'PATCH', headers: json(), body: JSON.stringify({ ...data, expected_version: expectedVersion }),
   }))).data;

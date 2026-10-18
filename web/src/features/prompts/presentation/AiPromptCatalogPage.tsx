@@ -6,13 +6,20 @@ import { SurfaceCard } from '@/components/layout/SurfaceCard';
 import {
   archiveAiPrompt, createAiPrompt, getAiPrompt, getAiPromptHistory,
   listAiPrompts, reactivateAiPrompt, restoreAiPromptRevision, updateAiPrompt,
-  type AiPromptDetail, type AiPromptInput, type AiPromptRevision, type AiPromptSummary,
+  type AiPromptDetail, type AiPromptRevision, type AiPromptSummary,
 } from '../infrastructure/aiPromptCatalogGateway';
 
 type Modal =
   | { kind: 'create' }
   | { kind: 'edit' | 'view' | 'archive' | 'reactivate' | 'history'; prompt: AiPromptDetail };
-const emptyForm: AiPromptInput = { code: '', description: '', content: '' };
+
+type FormState = {
+  description: string;
+  version: string;
+  content: string;
+};
+
+const emptyForm: FormState = { description: '', version: '1.0', content: '' };
 const field = 'h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs outline-none focus:border-[var(--theme-primary)]';
 const smallButton = 'inline-flex h-7 items-center justify-center rounded-md border border-slate-200 px-2 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50';
 const action = 'grid size-7 place-items-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40';
@@ -23,6 +30,7 @@ function ActionButton({ name, icon, onClick, disabled = false }: {
   return <button type="button" aria-label={name} title={name} disabled={disabled}
     className={action} onClick={onClick}><AppIcon className="size-3.5" name={icon} /></button>;
 }
+
 function explanation(error: unknown) {
   return error instanceof Error ? error.message : 'No se pudo completar la operación.';
 }
@@ -33,7 +41,7 @@ export function AiPromptCatalogPage() {
   const [search, setSearch] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [modal, setModal] = useState<Modal | null>(null);
-  const [form, setForm] = useState<AiPromptInput>(emptyForm);
+  const [form, setForm] = useState<FormState>(emptyForm);
   const [history, setHistory] = useState<AiPromptRevision[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -48,7 +56,8 @@ export function AiPromptCatalogPage() {
     return prompts.filter((prompt) =>
       (showArchived || !prompt.archived_at) &&
       (prompt.code.toLocaleLowerCase('es').includes(needle) ||
-        prompt.description.toLocaleLowerCase('es').includes(needle)),
+        prompt.description.toLocaleLowerCase('es').includes(needle) ||
+        prompt.version.toLocaleLowerCase('es').includes(needle)),
     );
   }, [prompts, search, showArchived]);
 
@@ -57,6 +66,7 @@ export function AiPromptCatalogPage() {
     setPrompts(result.data);
     setCanManage(result.can_manage);
   }
+
   useEffect(() => {
     let live = true;
     listAiPrompts().then((result) => {
@@ -80,9 +90,11 @@ export function AiPromptCatalogPage() {
     setHistory([]);
     setError('');
   }
+
   function startCreate() {
     setForm(emptyForm); setError(''); setNotice(''); setModal({ kind: 'create' });
   }
+
   async function selectPrompt(code: string, kind: 'view' | 'edit' | 'archive' | 'reactivate' | 'history' | 'copy') {
     const token = ++requestRef.current;
     setBusyCode(code); setError(''); setNotice('');
@@ -94,7 +106,7 @@ export function AiPromptCatalogPage() {
         await copyPrompt(prompt.content, code);
         return;
       }
-      if (kind === 'edit') setForm({ code: prompt.code, description: prompt.description, content: prompt.content });
+      if (kind === 'edit') setForm({ description: prompt.description, version: prompt.version || '1.0', content: prompt.content });
       if (kind === 'history') {
         const revisions = await getAiPromptHistory(code);
         if (token !== requestRef.current) return;
@@ -107,6 +119,7 @@ export function AiPromptCatalogPage() {
       if (token === requestRef.current) setBusyCode(null);
     }
   }
+
   async function copyPrompt(content: string, code: string) {
     try {
       await navigator.clipboard.writeText(content);
@@ -116,39 +129,48 @@ export function AiPromptCatalogPage() {
       setError('No se pudo copiar automáticamente. Abrí el contenido y seleccionalo manualmente.');
     }
   }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy || !modal || (modal.kind !== 'create' && modal.kind !== 'edit')) return;
     setBusy(true); setError('');
     try {
       const description = form.description.trim();
-      if (!description || !form.content.trim()) throw new Error('Completá la descripción y el contenido.');
+      const content = form.content.trim();
+      const version = form.version.trim() || '1.0';
+      if (!description || !content) throw new Error('Completá la descripción y el contenido.');
       const result = modal.kind === 'create'
-        ? await createAiPrompt({ ...form, code: form.code.trim().toUpperCase(), description })
-        : await updateAiPrompt(modal.prompt.code, { description, content: form.content }, modal.prompt.version);
+        ? await createAiPrompt({ description, content: form.content, version })
+        : await updateAiPrompt(
+            modal.prompt.code,
+            { description, content: form.content, version },
+            modal.prompt.lock_version,
+          );
       await refresh();
       setModal(null);
-      setNotice('Prompt ' + result.code + (result.version === 1 ? ' creado.' : ' actualizado.'));
+      setNotice('Prompt ' + result.code + (modal.kind === 'create' ? ' creado (v' + result.version + ').' : ' actualizado (v' + result.version + ').'));
     } catch (reason) { setError(explanation(reason)); }
     finally { setBusy(false); }
   }
+
   async function confirmStateChange() {
     if (!modal || busy || (modal.kind !== 'archive' && modal.kind !== 'reactivate')) return;
     setBusy(true); setError('');
     try {
       const result = modal.kind === 'archive'
-        ? await archiveAiPrompt(modal.prompt.code, modal.prompt.version)
-        : await reactivateAiPrompt(modal.prompt.code, modal.prompt.version);
+        ? await archiveAiPrompt(modal.prompt.code, modal.prompt.lock_version)
+        : await reactivateAiPrompt(modal.prompt.code, modal.prompt.lock_version);
       await refresh(); setModal(null);
       setNotice('Prompt ' + result.code + (modal.kind === 'archive' ? ' archivado sin perder el historial.' : ' reactivado.'));
     } catch (reason) { setError(explanation(reason)); }
     finally { setBusy(false); }
   }
+
   async function restoreRevision(version: number) {
     if (!modal || modal.kind !== 'history' || busy) return;
     setBusy(true); setError('');
     try {
-      const result = await restoreAiPromptRevision(modal.prompt.code, version, modal.prompt.version);
+      const result = await restoreAiPromptRevision(modal.prompt.code, version, modal.prompt.lock_version);
       await refresh(); setModal(null);
       setNotice('Recuperada la versión ' + version + ' de ' + result.code + '. La recuperación quedó registrada como una nueva versión.');
     } catch (reason) { setError(explanation(reason)); }
@@ -178,19 +200,29 @@ export function AiPromptCatalogPage() {
         {loading ? <p className="mt-2 text-xs text-slate-500">Cargando…</p> : null}
         {!loading && filtered.length === 0 ? <p className="mt-2 text-xs text-slate-500">No hay prompts para mostrar.</p> : null}
         {filtered.length > 0 ? <div className="mt-2 overflow-x-auto">
-          <table className="w-full min-w-[420px] text-left text-xs">
+          <table className="w-full min-w-[460px] text-left text-xs">
             <thead><tr className="border-b text-slate-500">
-              <th className="px-2 py-1.5">Código</th>
-              <th className="px-2 py-1.5">Descripción</th>
-              <th className="px-2 py-1.5">Versión</th>
-              <th className="px-2 py-1.5 text-right">Acciones</th>
+              <th className="px-2 py-1.5 font-medium">Código</th>
+              <th className="px-2 py-1.5 font-medium">Descripción</th>
+              <th className="px-2 py-1.5 font-medium">Versión</th>
+              <th className="px-2 py-1.5 font-medium">Estado</th>
+              <th className="px-2 py-1.5 text-right font-medium">Acciones</th>
             </tr></thead>
-            <tbody>{filtered.map((prompt) => <tr key={prompt.code} className="border-b border-slate-100">
-              <td className="whitespace-nowrap px-2 py-1.5 font-mono text-[11px]">{prompt.code}</td>
-              <td className="px-2 py-1.5">{prompt.description}
-                {prompt.archived_at ? <span className="ml-1 rounded bg-slate-100 px-1 text-[10px] text-slate-500">Archivado</span> : null}
+            <tbody>{filtered.map((prompt) => <tr key={prompt.code} className="border-b border-slate-100 hover:bg-slate-50/50">
+              <td className="whitespace-nowrap px-2 py-1.5 font-mono text-[11px] font-semibold text-slate-700">{prompt.code}</td>
+              <td className="px-2 py-1.5 text-slate-800">{prompt.description}</td>
+              <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-600">v{prompt.version}</td>
+              <td className="whitespace-nowrap px-2 py-1.5">
+                {prompt.archived_at ? (
+                  <span className="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                    Archivado
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded border border-emerald-200/60 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                    Activo
+                  </span>
+                )}
               </td>
-              <td className="px-2 py-1.5 tabular-nums">v{prompt.version}</td>
               <td className="px-2 py-1">
                 <div className="flex justify-end gap-1">
                   <ActionButton icon="search" name={'Ver ' + prompt.code} disabled={busyCode !== null || busy}
@@ -214,7 +246,7 @@ export function AiPromptCatalogPage() {
           </table>
         </div> : null}
       </SurfaceCard>
-      <p className="text-[11px] text-slate-500">Archivar no borra contenido ni versiones. Los cambios se registran en auditoría. El código no se modifica después del alta.</p>
+      <p className="text-[11px] text-slate-500">Los códigos se generan automáticamente (PROMPT-xxxx). Archivar no borra contenido ni versiones. Los cambios se registran en auditoría.</p>
     </div>
     <dialog ref={dialogRef} onCancel={(e) => { if (busy) e.preventDefault(); else closeModal(); }}
       onClose={() => { if (!busy) setModal(null); }}
@@ -236,18 +268,41 @@ export function AiPromptCatalogPage() {
         {error ? <p role="alert" className="mb-2 rounded border border-rose-200 bg-rose-50 p-2 text-xs text-rose-800">{error}</p> : null}
         <SuccessToast message={notice} />
         {formOpen ? <form onSubmit={(e) => void save(e)} className="grid gap-2">
-          <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
-            <label className="grid gap-0.5 text-[11px] font-semibold">Código
-              <input className={field + ' font-mono'} required maxLength={80}
-                pattern="[A-Z][A-Z0-9_]{2,79}" disabled={editing} value={form.code}
-                onChange={(e) => setForm((previous) => ({ ...previous, code: e.target.value.toUpperCase() }))} />
-            </label>
-            <label className="grid gap-0.5 text-[11px] font-semibold">Descripción
-              <input className={field} required maxLength={255} value={form.description}
-                onChange={(e) => setForm((previous) => ({ ...previous, description: e.target.value }))} />
-            </label>
-          </div>
-          <label className="grid gap-0.5 text-[11px] font-semibold">Contenido del prompt
+          {editing ? (
+            <div className="grid gap-2 sm:grid-cols-[140px_1fr_100px]">
+              <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Código
+                <input className={field + ' font-mono bg-slate-100 text-slate-500 cursor-not-allowed'}
+                  disabled value={modal.prompt.code} readOnly title="El código es inmutable" />
+              </label>
+              <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Descripción
+                <input className={field} required maxLength={255} value={form.description}
+                  onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
+              </label>
+              <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Versión
+                <input className={field} required maxLength={20} value={form.version} placeholder="1.0"
+                  onChange={(e) => setForm((p) => ({ ...p, version: e.target.value }))} />
+              </label>
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs">
+                <span className="font-semibold text-slate-700">Código</span>
+                <span className="font-mono text-[11px] text-slate-500">Se generará automáticamente (PROMPT-xxxx)</span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-[1fr_100px]">
+                <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Descripción
+                  <input className={field} required maxLength={255} placeholder="Ej. Publicidad de dispositivo FixPhone"
+                    value={form.description}
+                    onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
+                </label>
+                <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Versión
+                  <input className={field} required maxLength={20} value={form.version} placeholder="1.0"
+                    onChange={(e) => setForm((p) => ({ ...p, version: e.target.value }))} />
+                </label>
+              </div>
+            </div>
+          )}
+          <label className="grid gap-0.5 text-[11px] font-semibold text-slate-700">Contenido del prompt
             <textarea required maxLength={100000} value={form.content}
               onChange={(e) => setForm((previous) => ({ ...previous, content: e.target.value }))}
               className="h-[min(38dvh,340px)] min-h-40 w-full resize-y rounded-md border border-slate-200 p-2 font-mono text-xs leading-5 outline-none focus:border-[var(--theme-primary)]" />
@@ -255,13 +310,16 @@ export function AiPromptCatalogPage() {
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
             <button className={smallButton} type="button" onClick={closeModal}>Cancelar</button>
             <button className="h-8 rounded-md bg-[var(--theme-primary)] px-3 text-xs font-semibold text-white disabled:opacity-50"
-              type="submit" disabled={busy || !form.description.trim() || !form.content.trim() || !form.code.trim()}>
+              type="submit" disabled={busy || !form.description.trim() || !form.content.trim()}>
               {busy ? 'Guardando…' : editing ? 'Guardar cambios' : 'Crear prompt'}
             </button>
           </div>
         </form> : null}
         {modal.kind === 'view' ? <div className="grid gap-2">
-          <p className="text-xs font-semibold">{modal.prompt.code} · {modal.prompt.description}</p>
+          <div className="flex flex-wrap items-center justify-between gap-1">
+            <p className="text-xs font-semibold">{modal.prompt.code} · {modal.prompt.description}</p>
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600">v{modal.prompt.version}</span>
+          </div>
           <textarea readOnly aria-label="Contenido completo del prompt" onFocus={(e) => e.currentTarget.select()}
             value={modal.prompt.content}
             className="h-[min(52dvh,480px)] min-h-40 w-full resize-y rounded-md border border-slate-200 bg-slate-50 p-2 font-mono text-xs leading-5" />
@@ -286,12 +344,14 @@ export function AiPromptCatalogPage() {
           <p className="text-xs font-semibold">{modal.prompt.code} · versión actual v{modal.prompt.version}</p>
           <div className="max-h-[52dvh] overflow-y-auto">
             <table className="w-full text-left text-xs">
-              <thead><tr className="border-b text-slate-500"><th className="p-1.5">Versión</th><th className="p-1.5">Acción</th>
+              <thead><tr className="border-b text-slate-500"><th className="p-1.5">Revisión</th><th className="p-1.5">Versión</th><th className="p-1.5">Acción</th>
                 <th className="p-1.5">Fecha</th><th className="p-1.5 text-right">Acción</th></tr></thead>
               <tbody>{history.map((revision) => <tr key={revision.version} className="border-b border-slate-100">
-                <td className="p-1.5">v{revision.version}</td><td className="p-1.5">{revision.action}</td>
+                <td className="p-1.5">rev #{revision.version}</td>
+                <td className="p-1.5 font-mono">{revision.prompt_version ? 'v' + revision.prompt_version : '—'}</td>
+                <td className="p-1.5">{revision.action}</td>
                 <td className="p-1.5">{revision.created_at?.slice(0, 19).replace('T', ' ')}</td>
-                <td className="p-1.5 text-right">{revision.version !== modal.prompt.version && !modal.prompt.archived_at ?
+                <td className="p-1.5 text-right">{revision.version !== modal.prompt.lock_version && !modal.prompt.archived_at ?
                   <button className={smallButton} type="button" disabled={busy}
                     onClick={() => void restoreRevision(revision.version)}>Recuperar</button> : null}</td>
               </tr>)}</tbody>
