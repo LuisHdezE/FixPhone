@@ -38,20 +38,66 @@ Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $reque
     if (!$token || !hash_equals($token, (string) $request->header('X-Deploy-Token'))) {
         abort(401, 'Unauthorized');
     }
-    $migrationStatus = \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-    if ($migrationStatus !== 0) {
-        return response()->json(['message' => 'Migrations failed.'], 500);
+
+    $stage = 'migrations';
+    try {
+        $migrationStatus = \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        if ($migrationStatus !== 0) {
+            \Illuminate\Support\Facades\Log::error('Post-deploy migrations failed', [
+                'stage' => 'migrations',
+                'exit_code' => $migrationStatus,
+                'output' => \Illuminate\Support\Str::limit(\Illuminate\Support\Facades\Artisan::output(), 1000),
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'stage' => 'migrations',
+                'message' => 'Migrations execution failed.',
+                'code' => 'migration_failed',
+            ], 500);
+        }
+
+        $stage = 'ai_prompt_catalog_seed';
+        $seedStatus = \Illuminate\Support\Facades\Artisan::call('db:seed', [
+            '--class' => \Database\Seeders\AiPromptCatalogSeeder::class,
+            '--force' => true,
+        ]);
+        if ($seedStatus !== 0) {
+            \Illuminate\Support\Facades\Log::error('Post-deploy AI prompt catalog seed failed', [
+                'stage' => 'ai_prompt_catalog_seed',
+                'exit_code' => $seedStatus,
+                'output' => \Illuminate\Support\Str::limit(\Illuminate\Support\Facades\Artisan::output(), 1000),
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'stage' => 'ai_prompt_catalog_seed',
+                'message' => 'AI prompt catalog seed failed.',
+                'code' => 'seed_failed',
+            ], 500);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Migrations and AI prompt catalog seed completed.',
+        ]);
+    } catch (\Throwable $e) {
+        $sanitizedMessage = (string) preg_replace('/(password|pwd|token|secret|key)=[^\s;&]+/i', '$1=***', $e->getMessage());
+        $sanitizedMessage = (string) preg_replace('/:[^:@\s]+@/i', ':***@', $sanitizedMessage);
+
+        \Illuminate\Support\Facades\Log::error('Post-deploy execution exception', [
+            'stage' => $stage,
+            'exception' => get_class($e),
+            'message' => $sanitizedMessage,
+            'code' => $e->getCode(),
+        ]);
+
+        return response()->json([
+            'status' => 'error',
+            'stage' => $stage,
+            'message' => 'Post-deploy execution encountered an error during ' . $stage . '.',
+            'code' => 'post_deploy_error',
+            'error_summary' => \Illuminate\Support\Str::limit($sanitizedMessage, 200),
+        ], 500);
     }
-    // Production deploy normally only runs migrations. Seed this
-    // non-destructive prompt without touching demo data.
-    $seedStatus = \Illuminate\Support\Facades\Artisan::call('db:seed', [
-        '--class' => \Database\Seeders\AiPromptCatalogSeeder::class,
-        '--force' => true,
-    ]);
-    if ($seedStatus !== 0) {
-        return response()->json(['message' => 'AI prompt catalog seed failed.'], 500);
-    }
-    return response()->json(['message' => 'Migrations and AI prompt catalog seed completed.']);
 });
 
 Route::post('/_deploy/mvp-action', function (\Illuminate\Http\Request $request) {
