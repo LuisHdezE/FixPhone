@@ -148,13 +148,24 @@ class InventoryController extends Controller
     public function showroomList()
     {
         $items = \App\Infrastructure\Inventory\StorefrontCatalog::query()->get();
-        return response()->json($items->map(fn ($item) => [
-            'id' => $item->id, 'title' => $item->title, 'description' => $item->description,
-            'item_type' => $item->item_type, 'brand' => $item->brand, 'model' => $item->model,
-            'operational_status' => $item->operational_status, 'stock_quantity' => $item->stock_quantity,
-            'sale_price_amount_minor' => $item->sale_price_amount_minor, 'currency_code' => $item->currency_code,
-            'main_image_url' => $item->main_image_url,
-            'metadata' => ['origin' => $item->metadata['origin'] ?? null, 'part_condition' => $item->metadata['part_condition'] ?? null, 'reference_price_minor' => $item->metadata['reference_price_minor'] ?? null, 'reference_currency' => $item->metadata['reference_currency'] ?? null, 'is_original' => (bool) ($item->metadata['is_original'] ?? false)],
-        ]));
+        return response()->json($items->map(function ($item): array {
+            $imageUrl = $item->main_image_url;
+            if (!$imageUrl && $item->item_type === 'used_phone') {
+                $modelId = $item->device_model_id ?? ($item->metadata['device_model_id'] ?? null);
+                if ($modelId) {
+                    $model = \App\Infrastructure\MasterData\MasterDataEntry::query()
+                        ->where('kind', 'deviceModels')->find($modelId);
+                    $imageUrl = $model?->payload['imageUrl'] ?? null;
+                }
+            }
+            return [
+                'id' => $item->id, 'title' => $item->title, 'description' => $item->description,
+                'item_type' => $item->item_type, 'brand' => $item->brand, 'model' => $item->model,
+                'operational_status' => $item->operational_status, 'stock_quantity' => $item->stock_quantity,
+                'sale_price_amount_minor' => $item->sale_price_amount_minor, 'currency_code' => $item->currency_code,
+                'main_image_url' => $imageUrl,
+                'metadata' => ['origin' => $item->metadata['origin'] ?? null, 'part_condition' => $item->metadata['part_condition'] ?? null, 'reference_price_minor' => $item->metadata['reference_price_minor'] ?? null, 'reference_currency' => $item->metadata['reference_currency'] ?? null, 'is_original' => (bool) ($item->metadata['is_original'] ?? false)],
+            ];
+        }));
     }
 }

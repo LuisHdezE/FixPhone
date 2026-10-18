@@ -1,0 +1,2 @@
+export type DevicePhoto={id:string;url:string;content_type:string;byte_size:number;sort_order:number;is_primary:boolean};
+export type DevicePhotoUploadGrant={id:string;upload_url:string;content_type:string};
