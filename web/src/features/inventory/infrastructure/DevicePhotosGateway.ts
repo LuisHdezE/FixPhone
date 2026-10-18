@@ -1,0 +1,11 @@
+import { adminFetch } from '@/auth/adminApiSession';
+import type { DevicePhoto,DevicePhotoUploadGrant } from '../application/devicePhotos.types';
+async function json<T>(r:Response):Promise<T>{const b=await r.json().catch(()=>null) as (T&{message?:string;errors?:Record<string,string[]>})|null;if(!r.ok){const e=b?.errors?Object.values(b.errors).flat().join(' '):'';throw new Error(e||b?.message||'No se pudo completar la operación ('+r.status+').');}if(!b)throw new Error('La API no devolvió datos.');return b;}
+export class DevicePhotosGateway{
+ private base(id:string){return '/api/v1/admin/inventory/'+encodeURIComponent(id)+'/photos';}
+ async list(id:string):Promise<DevicePhoto[]>{return(await json<{data:DevicePhoto[]}>(await adminFetch(this.base(id)))).data;}
+ async upload(id:string,file:File):Promise<DevicePhoto>{const base=this.base(id);const grant=(await json<{data:DevicePhotoUploadGrant}>(await adminFetch(base+'/presign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content_type:file.type,byte_size:file.size})}))).data;let put:Response;try{put=await fetch(grant.upload_url,{method:'PUT',body:file,headers:{'Content-Type':grant.content_type}});}catch{throw new Error('No se pudo conectar con Cloudflare R2. Revisá CORS o la conexión.');}if(!put.ok)throw new Error('Cloudflare R2 rechazó la carga (HTTP '+put.status+').');return(await json<{data:DevicePhoto}>(await adminFetch(base+'/'+encodeURIComponent(grant.id)+'/confirm',{method:'POST'}))).data;}
+ async primary(id:string,pid:string){await json(await adminFetch(this.base(id)+'/'+encodeURIComponent(pid)+'/primary',{method:'POST'}));}
+ async reorder(id:string,ids:string[]):Promise<DevicePhoto[]>{return(await json<{data:DevicePhoto[]}>(await adminFetch(this.base(id)+'/order',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_ids:ids})}))).data;}
+ async remove(id:string,pid:string){const r=await adminFetch(this.base(id)+'/'+encodeURIComponent(pid),{method:'DELETE'});if(!r.ok){const b=await r.json().catch(()=>null) as {message?:string;errors?:Record<string,string[]>}|null;throw new Error(b?.errors?Object.values(b.errors).flat().join(' '):b?.message||'No se pudo eliminar la foto.');}}
+}
