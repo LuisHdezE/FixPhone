@@ -6,6 +6,7 @@ import { SelectField } from '@/components/forms/SelectField';
 import { TextAreaField } from '@/components/forms/TextAreaField';
 import { TextField } from '@/components/forms/TextField';
 import { ModalShell } from '@/components/layout/ModalShell';
+import { DevicePhotoGallery } from './DevicePhotoGallery';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
 import type {
@@ -513,6 +514,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         </div>
       </fieldset>
       <TextAreaField id="device-notes" rows={2} label={view.fields.notes} onChange={(value) => setField('notes', value)} placeholder={view.placeholders.notes} value={form.notes} />
+      {editDevice ? <DevicePhotoGallery inventoryId={editDevice.inventoryId} /> : null}
       {error ? <InlineFeedback title={editDevice ? 'No se pudo editar el dispositivo' : 'No se pudo registrar el dispositivo'} message={error} tone="error" /> : null}
       {!editDevice && createdId ? <p role="status" className="text-xs text-emerald-800">Dispositivo registrado: {createdCode ?? createdId}.</p> : null}
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
