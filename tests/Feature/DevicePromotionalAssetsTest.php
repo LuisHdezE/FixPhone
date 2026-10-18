@@ -612,4 +612,133 @@ PROMPT_TEXT;
             'status' => 'discarded',
         ]);
     }
+
+    public function test_prepare_is_idempotent_and_reuses_active_prepared_asset(): void
+    {
+        $this->auth('owner');
+        $this->ensurePrompt();
+        $device = $this->device();
+        $photo = $this->photo($device->id);
+
+        // 1st request -> creates new prepared asset (201)
+        $res1 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo->id,
+        ])->assertCreated();
+
+        $assetId1 = $res1->json('data.id');
+        $this->assertNotEmpty($assetId1);
+        $this->assertEquals(1, InventoryItemPromotionalAsset::query()->where('inventory_item_id', $device->id)->count());
+
+        // 2nd consecutive identical request -> reuses existing prepared asset (200), no duplicates
+        $res2 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo->id,
+        ])->assertOk();
+
+        $assetId2 = $res2->json('data.id');
+        $this->assertEquals($assetId1, $assetId2);
+        $this->assertEquals(1, InventoryItemPromotionalAsset::query()->where('inventory_item_id', $device->id)->count());
+    }
+
+    public function test_prepare_creates_new_asset_if_source_photo_changes(): void
+    {
+        $this->auth('owner');
+        $this->ensurePrompt();
+        $device = $this->device();
+        $photo1 = $this->photo($device->id);
+        $photo2 = InventoryItemPhoto::query()->create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'media_storage_profile_id' => $photo1->media_storage_profile_id,
+            'object_key' => 'inventory/devices/' . $device->id . '/photo2.webp',
+            'public_url' => 'https://cdn.fixphone.test/inventory/devices/' . $device->id . '/photo2.webp',
+            'content_type' => 'image/webp',
+            'byte_size' => 2048,
+            'status' => 'confirmed',
+            'sort_order' => 1,
+            'is_primary' => false,
+            'upload_expires_at' => now()->addHour(),
+        ]);
+
+        $res1 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo1->id,
+        ])->assertCreated();
+
+        $res2 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo2->id,
+        ])->assertCreated();
+
+        $this->assertNotEquals($res1->json('data.id'), $res2->json('data.id'));
+        $this->assertEquals(2, InventoryItemPromotionalAsset::query()->where('inventory_item_id', $device->id)->count());
+    }
+
+    public function test_prepare_creates_new_asset_if_prompt_version_changes(): void
+    {
+        $this->auth('owner');
+        $this->ensurePrompt();
+        $device = $this->device();
+        $photo = $this->photo($device->id);
+
+        $res1 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo->id,
+        ])->assertCreated();
+        $this->assertEquals('1.0', $res1->json('data.prompt_version'));
+
+        // Update prompt version
+        DB::table('ai_prompts')->where('code', 'PROMPT-0001')->update([
+            'version' => '2.0',
+        ]);
+
+        $res2 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo->id,
+        ])->assertCreated();
+        $this->assertEquals('2.0', $res2->json('data.prompt_version'));
+
+        $this->assertNotEquals($res1->json('data.id'), $res2->json('data.id'));
+        $this->assertEquals(2, InventoryItemPromotionalAsset::query()->where('inventory_item_id', $device->id)->count());
+    }
+
+    public function test_prepare_does_not_reuse_uploaded_approved_or_discarded_assets(): void
+    {
+        $this->auth('owner');
+        $this->ensurePrompt();
+        $device = $this->device();
+        $photo = $this->photo($device->id);
+
+        // Seed an asset in uploaded status
+        $uploadedAsset = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'source_photo_id' => $photo->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Snapshot 1',
+            'status' => 'uploaded',
+        ]);
+
+        // prepare must NOT reuse uploaded asset, must create fresh prepared asset
+        $res1 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo->id,
+        ])->assertCreated();
+        $this->assertNotEquals($uploadedAsset->id, $res1->json('data.id'));
+        $this->assertEquals('prepared', $res1->json('data.status'));
+
+        // Update the new asset to approved
+        InventoryItemPromotionalAsset::where('id', $res1->json('data.id'))->update(['status' => 'approved']);
+
+        // prepare must NOT reuse approved asset
+        $res2 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo->id,
+        ])->assertCreated();
+        $this->assertNotEquals($res1->json('data.id'), $res2->json('data.id'));
+
+        // Update newest asset to discarded
+        InventoryItemPromotionalAsset::where('id', $res2->json('data.id'))->update(['status' => 'discarded']);
+
+        // prepare must NOT reuse discarded asset
+        $res3 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepare", [
+            'source_photo_id' => $photo->id,
+        ])->assertCreated();
+        $this->assertNotEquals($res2->json('data.id'), $res3->json('data.id'));
+    }
 }
+

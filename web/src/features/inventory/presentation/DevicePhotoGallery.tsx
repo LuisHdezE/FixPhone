@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DevicePhoto } from '../application/devicePhotos.types';
 import type { PromotionalAsset } from '../application/promotionalAssets.types';
 import { DevicePhotosGateway } from '../infrastructure/DevicePhotosGateway';
@@ -17,7 +17,7 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
   const [adPhoto, setAdPhoto] = useState<DevicePhoto | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const [devicePhotos, ads] = await Promise.all([
         gateway.list(inventoryId),
@@ -28,11 +28,11 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cargar la galería.');
     }
-  }
+  }, [inventoryId]);
 
   useEffect(() => {
     void load();
-  }, [inventoryId]);
+  }, [load]);
 
   async function upload(files: FileList | null) {
     if (!files?.length) return;
@@ -99,6 +99,15 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
       setBusy(false);
     }
   }
+
+  const handleClosePromotion = useCallback(() => {
+    setAdPhoto(null);
+    void load();
+  }, [load]);
+
+  const handleAssetUpdated = useCallback((_updated: PromotionalAsset) => {
+    void load();
+  }, [load]);
 
   return (
     <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2" data-device-photo-gallery>
@@ -282,13 +291,8 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
           inventoryId={inventoryId}
           sourcePhotoId={adPhoto.id}
           sourcePhotoUrl={adPhoto.url}
-          onClose={() => {
-            setAdPhoto(null);
-            void load();
-          }}
-          onAssetUpdated={() => {
-            void load();
-          }}
+          onClose={handleClosePromotion}
+          onAssetUpdated={handleAssetUpdated}
         />
       )}
     </fieldset>

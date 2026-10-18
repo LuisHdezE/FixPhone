@@ -32,7 +32,18 @@ export function PreparePromotionModal({
   const [actionMessage, setActionMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const onAssetUpdatedRef = useRef(onAssetUpdated);
+  onAssetUpdatedRef.current = onAssetUpdated;
+
+  const preparedKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
+    const currentKey = `${inventoryId}:${sourcePhotoId}`;
+    if (preparedKeyRef.current === currentKey) {
+      return;
+    }
+    preparedKeyRef.current = currentKey;
+
     let cancelled = false;
     async function init() {
       setLoading(true);
@@ -43,7 +54,7 @@ export function PreparePromotionModal({
           setAsset(res.data);
           setSummary(res.device_summary);
           setWarnings(res.warnings);
-          onAssetUpdated?.(res.data);
+          onAssetUpdatedRef.current?.(res.data);
         }
       } catch (e) {
         if (!cancelled) {
@@ -59,7 +70,7 @@ export function PreparePromotionModal({
     return () => {
       cancelled = true;
     };
-  }, [inventoryId, sourcePhotoId, gateway, onAssetUpdated]);
+  }, [inventoryId, sourcePhotoId, gateway]);
 
   async function handleCopyPrompt() {
     if (!asset?.prompt_snapshot) return;

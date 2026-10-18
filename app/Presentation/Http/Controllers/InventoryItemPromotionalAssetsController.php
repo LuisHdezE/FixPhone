@@ -94,6 +94,30 @@ final class InventoryItemPromotionalAssetsController extends Controller
 
         $resolution = $resolver->resolve($item);
         $snapshot = $resolver->applyTemplate($prompt->content, $resolution['variables']);
+        $promptVersion = $prompt->version ?? '1.0';
+
+        // Idempotency guard: reuse active 'prepared' asset for the same device, photo and prompt version
+        $existing = InventoryItemPromotionalAsset::query()
+            ->where('inventory_item_id', $id)
+            ->where('source_photo_id', $photo->id)
+            ->where('prompt_code', $prompt->code)
+            ->where('prompt_version', $promptVersion)
+            ->where('status', 'prepared')
+            ->latest('created_at')
+            ->first();
+
+        if ($existing) {
+            $existing->update([
+                'ai_prompt_id' => $prompt->id,
+                'prompt_snapshot' => $snapshot,
+            ]);
+
+            return response()->json([
+                'data' => $existing->fresh(['sourcePhoto'])->publicData(),
+                'device_summary' => $resolution['summary'],
+                'warnings' => $resolution['warnings'],
+            ], 200);
+        }
 
         $asset = InventoryItemPromotionalAsset::create([
             'id' => (string) Str::ulid(),
@@ -101,7 +125,7 @@ final class InventoryItemPromotionalAssetsController extends Controller
             'source_photo_id' => $photo->id,
             'ai_prompt_id' => $prompt->id,
             'prompt_code' => $prompt->code,
-            'prompt_version' => $prompt->version ?? '1.0',
+            'prompt_version' => $promptVersion,
             'prompt_snapshot' => $snapshot,
             'status' => 'prepared',
             'created_by' => (string) $request->user()?->getAuthIdentifier(),
