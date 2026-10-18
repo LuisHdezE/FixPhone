@@ -57,12 +57,12 @@ final class InventoryItemPhotosController extends Controller
   try{$res=Http::timeout(12)->withoutRedirecting()->head($head);}catch(\Throwable){throw ValidationException::withMessages(['image'=>'No se pudo verificar la imagen en R2.']);}
   if(!$res->successful() || filter_var($res->header('Content-Length'),FILTER_VALIDATE_INT)===false || (int)$res->header('Content-Length')!==$photo->byte_size || strtolower(trim(explode(';',$res->header('Content-Type',''))[0]))!==$photo->content_type)
    throw ValidationException::withMessages(['image'=>'La imagen no pudo verificarse en R2.']);
-  DB::transaction(function()use($photo,$id){$has=InventoryItemPhoto::query()->where('inventory_item_id',$id)->where('status','confirmed')->exists();$photo->status='confirmed';$photo->is_primary=!$has;$photo->save();});
+  DB::transaction(function()use($photo,$id){$has=InventoryItemPhoto::query()->where('inventory_item_id',$id)->where('status','confirmed')->exists();$photo->status='confirmed';$photo->is_primary=!$has;$photo->save();if(!$has){InventoryItem::query()->whereKey($id)->update(['main_image_url'=>$photo->public_url]);}});
   return response()->json(['data'=>$photo->fresh()->publicData()]);
  }
  public function primary(string $id,string $photoId): JsonResponse {
   $this->item($id); $photo=InventoryItemPhoto::query()->where('inventory_item_id',$id)->where('status','confirmed')->findOrFail($photoId);
-  DB::transaction(function()use($id,$photo){InventoryItemPhoto::query()->where('inventory_item_id',$id)->update(['is_primary'=>false]);$photo->is_primary=true;$photo->save();});
+  DB::transaction(function()use($id,$photo){InventoryItemPhoto::query()->where('inventory_item_id',$id)->update(['is_primary'=>false]);$photo->is_primary=true;$photo->save();InventoryItem::query()->whereKey($id)->update(['main_image_url'=>$photo->public_url]);});
   return response()->json(['data'=>$photo->fresh()->publicData()]);
  }
  public function order(Request $request,string $id): JsonResponse {
@@ -76,7 +76,7 @@ final class InventoryItemPhotosController extends Controller
   $this->item($id); $photo=InventoryItemPhoto::query()->where('inventory_item_id',$id)->where('status','confirmed')->findOrFail($photoId); $was=$photo->is_primary;
   $profile=MediaStorageProfile::query()->findOrFail($photo->media_storage_profile_id);
   try{$delete=$signer->signedUrl($profile->endpoint_url,$profile->bucket,$photo->object_key,Crypt::decryptString($profile->access_key_id_encrypted),Crypt::decryptString($profile->secret_access_key_encrypted),'DELETE',60);$res=Http::timeout(12)->withoutRedirecting()->delete($delete);if(!$res->successful()&&$res->status()!==404) throw new \RuntimeException();}catch(\Throwable){throw ValidationException::withMessages(['image'=>'No se pudo eliminar la imagen de R2.']);}
-  DB::transaction(function()use($photo,$id,$was){$photo->delete();if($was){$next=InventoryItemPhoto::query()->where('inventory_item_id',$id)->where('status','confirmed')->orderBy('sort_order')->first();if($next){$next->is_primary=true;$next->save();}}});
+  DB::transaction(function()use($photo,$id,$was){$photo->delete();if($was){$next=InventoryItemPhoto::query()->where('inventory_item_id',$id)->where('status','confirmed')->orderBy('sort_order')->first();if($next){$next->is_primary=true;$next->save();InventoryItem::query()->whereKey($id)->update(['main_image_url'=>$next->public_url]);}else{InventoryItem::query()->whereKey($id)->update(['main_image_url'=>null]);}}});
   return response()->json(null,204);
  }
 }
