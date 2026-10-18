@@ -740,5 +740,332 @@ PROMPT_TEXT;
         ])->assertCreated();
         $this->assertNotEquals($res2->json('data.id'), $res3->json('data.id'));
     }
+
+    public function test_index_returns_counts_summary_and_prioritizes_approved_and_uploaded_assets(): void
+    {
+        $this->auth('owner');
+        $this->ensurePrompt();
+        $device = $this->device();
+        $photo = $this->photo($device->id);
+
+        // 1. Create 1 approved asset
+        $approved = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'source_photo_id' => $photo->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Approved Snapshot',
+            'status' => 'approved',
+            'image_url' => 'https://cdn.fixphone.test/approved.webp',
+            'created_at' => now()->subDays(5),
+        ]);
+
+        // 2. Create 1 uploaded asset
+        $uploaded = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'source_photo_id' => $photo->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Uploaded Snapshot',
+            'status' => 'uploaded',
+            'image_url' => 'https://cdn.fixphone.test/uploaded.webp',
+            'created_at' => now()->subDays(4),
+        ]);
+
+        // 3. Create 33 empty prepared assets
+        for ($i = 0; $i < 33; $i++) {
+            InventoryItemPromotionalAsset::create([
+                'id' => (string) Str::ulid(),
+                'inventory_item_id' => $device->id,
+                'source_photo_id' => $photo->id,
+                'prompt_code' => 'PROMPT-0001',
+                'prompt_version' => '1.0',
+                'prompt_snapshot' => "Empty Prepared Snapshot {$i}",
+                'status' => 'prepared',
+                'created_at' => now()->subMinutes(33 - $i),
+            ]);
+        }
+
+        // 4. Create 2 prepared assets with upload in-flight (has object_key / image_url)
+        InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'source_photo_id' => $photo->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Presigned Prepared Snapshot 1',
+            'status' => 'prepared',
+            'object_key' => 'inventory/devices/' . $device->id . '/promotional/key1.webp',
+            'image_url' => 'https://cdn.fixphone.test/key1.webp',
+            'created_at' => now()->subMinutes(2),
+        ]);
+        InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'source_photo_id' => $photo->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Presigned Prepared Snapshot 2',
+            'status' => 'prepared',
+            'object_key' => 'inventory/devices/' . $device->id . '/promotional/key2.webp',
+            'created_at' => now()->subMinutes(1),
+        ]);
+
+        // 5. Create 2 discarded assets
+        InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'source_photo_id' => $photo->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Discarded Snapshot 1',
+            'status' => 'discarded',
+            'created_at' => now()->subDays(10),
+        ]);
+        InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'source_photo_id' => $photo->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Discarded Snapshot 2',
+            'status' => 'discarded',
+            'created_at' => now()->subDays(9),
+        ]);
+
+        $res = $this->getJson("/api/v1/admin/inventory/{$device->id}/promotional-assets")
+            ->assertOk();
+
+        $summary = $res->json('summary');
+        $this->assertEquals(39, $summary['total']);
+        $this->assertEquals(35, $summary['prepared']);
+        $this->assertEquals(1, $summary['uploaded']);
+        $this->assertEquals(1, $summary['approved']);
+        $this->assertEquals(2, $summary['discarded']);
+        $this->assertEquals(33, $summary['empty_prepared']);
+
+        // Data array must be limited to 30
+        $data = $res->json('data');
+        $this->assertCount(30, $data);
+
+        // Priorities: approved first, uploaded second, prepared next
+        $this->assertEquals($approved->id, $data[0]['id']);
+        $this->assertEquals('approved', $data[0]['status']);
+        $this->assertEquals($uploaded->id, $data[1]['id']);
+        $this->assertEquals('uploaded', $data[1]['status']);
+        $this->assertEquals('prepared', $data[2]['status']);
+    }
+
+    public function test_bulk_delete_empty_prepared_assets(): void
+    {
+        $deviceA = $this->device(['sku' => 'FXP-A']);
+        $deviceB = $this->device(['sku' => 'FXP-B']);
+        $photoA = $this->photo($deviceA->id);
+        $photoB = $this->photo($deviceB->id);
+        $profile = MediaStorageProfile::query()->first() ?? $this->profile();
+
+        // Device A: approved asset
+        $approvedA = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $deviceA->id,
+            'source_photo_id' => $photoA->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Approved A',
+            'status' => 'approved',
+            'image_url' => 'https://cdn.fixphone.test/approved.webp',
+        ]);
+
+        // Device A: uploaded asset
+        $uploadedA = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $deviceA->id,
+            'source_photo_id' => $photoA->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Uploaded A',
+            'status' => 'uploaded',
+            'image_url' => 'https://cdn.fixphone.test/uploaded.webp',
+        ]);
+
+        // Device A: discarded asset
+        $discardedA = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $deviceA->id,
+            'source_photo_id' => $photoA->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Discarded A',
+            'status' => 'discarded',
+        ]);
+
+        // Device A: prepared asset with object_key
+        $preparedWithKey = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $deviceA->id,
+            'source_photo_id' => $photoA->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Prepared with key',
+            'status' => 'prepared',
+            'object_key' => 'inventory/devices/' . $deviceA->id . '/promotional/test.webp',
+        ]);
+
+        // Device A: prepared asset with image_url
+        $preparedWithUrl = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $deviceA->id,
+            'source_photo_id' => $photoA->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Prepared with url',
+            'status' => 'prepared',
+            'image_url' => 'https://cdn.fixphone.test/url.webp',
+        ]);
+
+        // Device A: prepared asset with media_storage_profile_id
+        $preparedWithProfile = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $deviceA->id,
+            'source_photo_id' => $photoA->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Prepared with profile',
+            'status' => 'prepared',
+            'media_storage_profile_id' => $profile->id,
+        ]);
+
+        // Device A: 10 completely empty prepared assets
+        $emptyIdsA = [];
+        for ($i = 0; $i < 10; $i++) {
+            $empty = InventoryItemPromotionalAsset::create([
+                'id' => (string) Str::ulid(),
+                'inventory_item_id' => $deviceA->id,
+                'source_photo_id' => $photoA->id,
+                'prompt_code' => 'PROMPT-0001',
+                'prompt_version' => '1.0',
+                'prompt_snapshot' => "Empty A {$i}",
+                'status' => 'prepared',
+            ]);
+            $emptyIdsA[] = $empty->id;
+        }
+
+        // Device B: 3 completely empty prepared assets
+        $emptyIdsB = [];
+        for ($i = 0; $i < 3; $i++) {
+            $emptyB = InventoryItemPromotionalAsset::create([
+                'id' => (string) Str::ulid(),
+                'inventory_item_id' => $deviceB->id,
+                'source_photo_id' => $photoB->id,
+                'prompt_code' => 'PROMPT-0001',
+                'prompt_version' => '1.0',
+                'prompt_snapshot' => "Empty B {$i}",
+                'status' => 'prepared',
+            ]);
+            $emptyIdsB[] = $emptyB->id;
+        }
+
+        // Authorization checks
+        $this->deleteJson("/api/v1/admin/inventory/{$deviceA->id}/promotional-assets/prepared-empty")
+            ->assertUnauthorized();
+
+        $this->auth('intake_operator');
+        $this->deleteJson("/api/v1/admin/inventory/{$deviceA->id}/promotional-assets/prepared-empty")
+            ->assertForbidden();
+
+        $this->auth('owner');
+        $res = $this->deleteJson("/api/v1/admin/inventory/{$deviceA->id}/promotional-assets/prepared-empty")
+            ->assertOk();
+
+        $this->assertEquals(10, $res->json('deleted_count'));
+        $this->assertEquals(6, $res->json('remaining_count'));
+
+        // Check Device A assets
+        // All 10 empty prepared are deleted
+        foreach ($emptyIdsA as $id) {
+            $this->assertDatabaseMissing('inventory_item_promotional_assets', ['id' => $id]);
+        }
+
+        // None of the non-empty or advanced status assets were deleted
+        $this->assertDatabaseHas('inventory_item_promotional_assets', ['id' => $approvedA->id]);
+        $this->assertDatabaseHas('inventory_item_promotional_assets', ['id' => $uploadedA->id]);
+        $this->assertDatabaseHas('inventory_item_promotional_assets', ['id' => $discardedA->id]);
+        $this->assertDatabaseHas('inventory_item_promotional_assets', ['id' => $preparedWithKey->id]);
+        $this->assertDatabaseHas('inventory_item_promotional_assets', ['id' => $preparedWithUrl->id]);
+        $this->assertDatabaseHas('inventory_item_promotional_assets', ['id' => $preparedWithProfile->id]);
+
+        // Device B assets were completely untouched
+        foreach ($emptyIdsB as $id) {
+            $this->assertDatabaseHas('inventory_item_promotional_assets', ['id' => $id]);
+        }
+        $this->assertEquals(3, InventoryItemPromotionalAsset::query()->where('inventory_item_id', $deviceB->id)->count());
+    }
+
+    public function test_bulk_delete_respects_except_asset_id(): void
+    {
+        $this->auth('owner');
+        $device = $this->device();
+        $photo = $this->photo($device->id);
+
+        $activeAsset = InventoryItemPromotionalAsset::create([
+            'id' => (string) Str::ulid(),
+            'inventory_item_id' => $device->id,
+            'source_photo_id' => $photo->id,
+            'prompt_code' => 'PROMPT-0001',
+            'prompt_version' => '1.0',
+            'prompt_snapshot' => 'Active modal asset',
+            'status' => 'prepared',
+        ]);
+
+        for ($i = 0; $i < 5; $i++) {
+            InventoryItemPromotionalAsset::create([
+                'id' => (string) Str::ulid(),
+                'inventory_item_id' => $device->id,
+                'source_photo_id' => $photo->id,
+                'prompt_code' => 'PROMPT-0001',
+                'prompt_version' => '1.0',
+                'prompt_snapshot' => "Empty {$i}",
+                'status' => 'prepared',
+            ]);
+        }
+
+        $res = $this->deleteJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepared-empty?except_asset_id={$activeAsset->id}")
+            ->assertOk();
+
+        $this->assertEquals(5, $res->json('deleted_count'));
+        $this->assertEquals(1, $res->json('remaining_count'));
+        $this->assertDatabaseHas('inventory_item_promotional_assets', ['id' => $activeAsset->id]);
+    }
+
+    public function test_bulk_delete_many_records_in_single_operation(): void
+    {
+        $this->auth('owner');
+        $device = $this->device();
+        $photo = $this->photo($device->id);
+
+        for ($i = 0; $i < 100; $i++) {
+            InventoryItemPromotionalAsset::create([
+                'id' => (string) Str::ulid(),
+                'inventory_item_id' => $device->id,
+                'source_photo_id' => $photo->id,
+                'prompt_code' => 'PROMPT-0001',
+                'prompt_version' => '1.0',
+                'prompt_snapshot' => "Mass Empty {$i}",
+                'status' => 'prepared',
+            ]);
+        }
+
+        $this->assertEquals(100, InventoryItemPromotionalAsset::query()->where('inventory_item_id', $device->id)->count());
+
+        $res = $this->deleteJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/prepared-empty")
+            ->assertOk();
+
+        $this->assertEquals(100, $res->json('deleted_count'));
+        $this->assertEquals(0, $res->json('remaining_count'));
+        $this->assertEquals(0, InventoryItemPromotionalAsset::query()->where('inventory_item_id', $device->id)->count());
+    }
 }
+
 
