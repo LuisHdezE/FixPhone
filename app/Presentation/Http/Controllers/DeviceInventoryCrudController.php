@@ -53,12 +53,118 @@ final class DeviceInventoryCrudController extends Controller
         $item = DB::transaction(function () use ($request, $id, $values): InventoryItem {
             $item = InventoryItem::query()->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->assertDevice($item);
-            $this->assertNoFinancialHistory($item, 'editar', false);
+
+            // Variant is optional. Omitted => keep it while the model is unchanged, otherwise clear it.
+            $variantId = array_key_exists('device_model_variant_id', $values)
+                ? ($values['device_model_variant_id'] ?: null)
+                : ($item->device_model_id === $values['device_model_id'] ? $item->device_model_variant_id : null);
+
+            // Detect actual changes compared to current state
+            $currentBrandId = $item->metadata['brand_id'] ?? null;
+            $brandChanged = $currentBrandId !== null
+                ? ($values['brand_id'] !== $currentBrandId)
+                : ($item->brand !== null && $item->brand !== $this->masterItem('brands', $values['brand_id'], 'brand_id')['name']);
+            $modelChanged = $values['device_model_id'] !== $item->device_model_id;
+            $variantChanged = $variantId !== $item->device_model_variant_id;
+            $identityChanged = $brandChanged || $modelChanged || $variantChanged;
+
+            $currentStorageId = $item->metadata['storage_capacity_id'] ?? null;
+            $newStorageId = ($values['storage_capacity_id'] ?? null) ?: null;
+            $storageChanged = array_key_exists('storage_capacity_id', $values) && $currentStorageId !== $newStorageId;
+
+            $currentColorId = $item->metadata['color_id'] ?? null;
+            $newColorId = ($values['color_id'] ?? null) ?: null;
+            $colorChanged = array_key_exists('color_id', $values) && $currentColorId !== $newColorId;
+
+            $currentConditionId = $item->metadata['condition_id'] ?? null;
+            $newConditionId = ($values['condition_id'] ?? null) ?: null;
+            $conditionChanged = array_key_exists('condition_id', $values) && $currentConditionId !== $newConditionId;
+
+            $currentSerial = trim((string) ($item->metadata['serial_or_imei'] ?? $item->metadata['imei'] ?? $item->metadata['serial'] ?? ''));
+            $newSerial = trim((string) ($values['serial_or_imei'] ?? ''));
+            $serialChanged = array_key_exists('serial_or_imei', $values) && $currentSerial !== $newSerial;
+
+            $currentPowersOn = $item->metadata['powers_on'] ?? null;
+            $powersOnChanged = array_key_exists('powers_on', $values) && $currentPowersOn !== $values['powers_on'];
+
+            $currentAccountLock = $item->metadata['account_lock'] ?? null;
+            $accountLockChanged = array_key_exists('account_lock', $values) && $currentAccountLock !== $values['account_lock'];
+
+            $currentDesc = trim((string) ($item->description ?? ''));
+            $newDesc = trim((string) ($values['description'] ?? ''));
+            $descChanged = array_key_exists('description', $values) && $currentDesc !== $newDesc;
+
+            $currentCost = $item->cost_amount_minor !== null ? (int) $item->cost_amount_minor : null;
+            $newCost = isset($values['cost_amount_minor']) && $values['cost_amount_minor'] !== null ? (int) $values['cost_amount_minor'] : null;
+            $costChanged = array_key_exists('cost_amount_minor', $values) && $currentCost !== $newCost;
+
+            $currentCurrency = (string) $item->currency_code;
+            $currencyChanged = array_key_exists('currency_code', $values) && $currentCurrency !== (string) $values['currency_code'];
+
+            $currentAcq = trim((string) ($item->metadata['acquisition_source'] ?? $item->metadata['source'] ?? ''));
+            $newAcq = trim((string) ($values['acquisition_source'] ?? ''));
+            $sourceChanged = array_key_exists('acquisition_source', $values) && $currentAcq !== $newAcq;
+
+            $financialChanged = $costChanged || $currencyChanged || $sourceChanged;
 
             $ownershipRequested = array_key_exists('ownership_type', $values);
             $currentlyConsigned = $item->consignor_id !== null || in_array($item->inventory_purpose, ['consignation', 'consigned', 'consignacion', 'consigned_phone', 'sell_as_consigned'], true);
             $ownershipChanges = $ownershipRequested && ($currentlyConsigned !== ($values['ownership_type'] === 'consignment')
                 || ($values['ownership_type'] === 'consignment' && $item->consignor_id !== ($values['consignor_id'] ?? null)));
+
+            $hasChanges = $identityChanged
+                || $storageChanged
+                || $colorChanged
+                || $conditionChanged
+                || $serialChanged
+                || $powersOnChanged
+                || $accountLockChanged
+                || $descChanged
+                || $financialChanged
+                || $ownershipChanges;
+
+            if (!$hasChanges) {
+                return $item;
+            }
+
+            // Specific guards when Identity changes
+            if ($identityChanged) {
+                if (in_array($item->operational_status, ['vendido', 'sold'], true)
+                    || DB::table('device_sale_records')->where('inventory_item_id', $item->id)->exists()) {
+                    abort(409, 'No se puede modificar la identidad de un equipo vendido o con venta registrada.');
+                }
+                if (DB::table('device_part_extractions')->where('donor_item_id', $item->id)->exists()
+                    || in_array($item->dismantling_status, ['partial', 'exhausted'], true)) {
+                    abort(409, 'No se puede modificar la identidad de un equipo con piezas extraídas o despiece iniciado.');
+                }
+                if (DB::table('order_items')
+                    ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                    ->where('order_items.inventory_item_id', $item->id)
+                    ->whereIn('orders.status', ['pending', 'processing', 'ready'])
+                    ->exists()) {
+                    abort(409, 'No se puede modificar la identidad de un equipo reservado en un pedido comercial abierto.');
+                }
+            }
+
+            // Specific guards when Financial / Acquisition data changes
+            if ($financialChanged) {
+                if (in_array($item->operational_status, ['vendido', 'sold'], true)
+                    || DB::table('device_sale_records')->where('inventory_item_id', $item->id)->exists()) {
+                    abort(409, 'No se pueden modificar los datos financieros o de adquisición de un equipo vendido o con venta registrada.');
+                }
+                if (DB::table('order_items')
+                    ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                    ->where('order_items.inventory_item_id', $item->id)
+                    ->whereIn('orders.status', ['pending', 'processing', 'ready'])
+                    ->exists()) {
+                    abort(409, 'No se pueden modificar los datos financieros o de adquisición de un equipo reservado en un pedido comercial abierto.');
+                }
+                if (DB::table('device_part_extractions')->where('donor_item_id', $item->id)->exists()) {
+                    abort(409, 'No se pueden modificar los datos de costo y adquisición de un equipo con piezas extraídas.');
+                }
+            }
+
+            // Specific guards when Ownership changes
             if ($ownershipChanges) {
                 if (mb_strlen(trim($values['ownership_correction_reason'] ?? '')) < 10) {
                     throw ValidationException::withMessages(['ownership_correction_reason' => 'Explicá la corrección de titularidad (mínimo 10 caracteres).']);
@@ -71,6 +177,9 @@ final class DeviceInventoryCrudController extends Controller
                         ->where('order_items.inventory_item_id', $id)->exists()) {
                     abort(409, 'No se puede corregir titularidad con historial de ventas o pedidos.');
                 }
+                if (DB::table('device_part_extractions')->where('donor_item_id', $item->id)->exists()) {
+                    abort(409, 'Un equipo con piezas extraídas conserva su identidad y titularidad.');
+                }
             }
 
             $brand = $this->masterItem('brands', $values['brand_id'], 'brand_id');
@@ -82,11 +191,6 @@ final class DeviceInventoryCrudController extends Controller
             }
             $storage = $this->optionalMasterItem('storageCapacities', $values['storage_capacity_id'] ?? null, 'storage_capacity_id');
 
-            // Variant is optional. Omitted => keep it while the model is unchanged, otherwise clear it.
-            // A variant is never inferred or invented: it is only what the operator explicitly selected.
-            $variantId = array_key_exists('device_model_variant_id', $values)
-                ? ($values['device_model_variant_id'] ?: null)
-                : ($item->device_model_id === $values['device_model_id'] ? $item->device_model_variant_id : null);
             app(DeviceModelReferenceGuard::class)->assertDeviceIdentity(
                 $values['device_model_id'], $variantId, $values['brand_id'],
                 requireActiveVariant: $variantId !== $item->device_model_variant_id,
@@ -100,16 +204,16 @@ final class DeviceInventoryCrudController extends Controller
             $metadata['device_model_id'] = $values['device_model_id'];
             $metadata['device_model_variant_id'] = $variantId;
             if ($storage !== null) {
-                $metadata['storage_capacity_id'] = $values['storage_capacity_id'];
+                $metadata['storage_capacity_id'] = $values['storage_capacity_id'] ?? null;
                 $metadata['storage'] = $storage['label'];
                 $metadata['storage_capacity'] = null;
             }
             if ($color !== null) {
-                $metadata['color_id'] = $values['color_id'];
+                $metadata['color_id'] = $values['color_id'] ?? null;
                 $metadata['color'] = $color['name'];
             }
             if ($condition !== null) {
-                $metadata['condition_id'] = $values['condition_id'];
+                $metadata['condition_id'] = $values['condition_id'] ?? null;
                 $metadata['condition_name'] = $condition['name'];
                 $metadata['condition_grade'] = $condition['grade'];
                 $metadata['physical_condition'] = match ($condition['grade']) {
@@ -121,14 +225,24 @@ final class DeviceInventoryCrudController extends Controller
                 };
             }
 
-            $metadata['serial_or_imei'] = $values['serial_or_imei'] ?? null;
-            $metadata['imei'] = null;
-            $metadata['serial'] = null;
-            $metadata['powers_on'] = $values['powers_on'];
-            $metadata['account_lock'] = $values['account_lock'];
-            $metadata['acquisition_source'] = $values['acquisition_source'] ?? null;
-            $metadata['source'] = null;
-            $metadata['notes'] = $values['description'] ?? null;
+            if (array_key_exists('serial_or_imei', $values)) {
+                $metadata['serial_or_imei'] = $values['serial_or_imei'] ?: null;
+                $metadata['imei'] = null;
+                $metadata['serial'] = null;
+            }
+            if (array_key_exists('powers_on', $values)) {
+                $metadata['powers_on'] = $values['powers_on'];
+            }
+            if (array_key_exists('account_lock', $values)) {
+                $metadata['account_lock'] = $values['account_lock'];
+            }
+            if (array_key_exists('acquisition_source', $values)) {
+                $metadata['acquisition_source'] = $values['acquisition_source'] ?: null;
+                $metadata['source'] = null;
+            }
+            if (array_key_exists('description', $values)) {
+                $metadata['notes'] = $values['description'] ?: null;
+            }
             if ($ownershipChanges) {
                 $item->consignor_id = $values['ownership_type'] === 'consignment' ? $values['consignor_id'] : null;
                 $item->inventory_purpose = $values['ownership_type'] === 'consignment'
@@ -144,25 +258,26 @@ final class DeviceInventoryCrudController extends Controller
                 'model' => $model['name'],
                 'device_model_id' => $values['device_model_id'],
                 'device_model_variant_id' => $variantId,
-                'description' => $values['description'] ?? null,
-                'cost_amount_minor' => $values['cost_amount_minor'] ?? null,
-                'currency_code' => $values['currency_code'],
+                'description' => array_key_exists('description', $values) ? ($values['description'] ?: null) : $item->description,
+                'cost_amount_minor' => array_key_exists('cost_amount_minor', $values) ? $values['cost_amount_minor'] : $item->cost_amount_minor,
+                'currency_code' => $values['currency_code'] ?? $item->currency_code,
                 'metadata' => $metadata,
             ]);
-            if ($item->isDirty()) {
-                $item->save();
-                // Keep the separately stored public-facing model in sync with identity edits.
-                // Never change price, public description, photos or publication eligibility.
+            $item->save();
+
+            if ($identityChanged) {
                 $newModelName = trim($brand['name'].' '.$model['name']);
                 DeviceValuation::query()->where('inventory_item_id', $item->id)
                     ->where('model_name', '!=', $newModelName)
                     ->update(['model_name' => $newModelName]);
-                $this->audit($request, $item, 'inventory.device_updated', 'update', [
-                    'before' => $before,
-                    'after' => $item->only(array_keys($before)),
-                    'ownership_correction_reason' => $ownershipChanges ? trim($values['ownership_correction_reason']) : null,
-                ]);
             }
+
+            $this->audit($request, $item, 'inventory.device_updated', 'update', [
+                'before' => $before,
+                'after' => $item->only(array_keys($before)),
+                'ownership_correction_reason' => $ownershipChanges ? trim($values['ownership_correction_reason']) : null,
+            ]);
+
             return $item;
         });
 
