@@ -393,7 +393,8 @@ final class AiPromptCatalogTest extends TestCase
         $code = $first->json('data.code');
         $this->assertSame('PROMPT-0001', $code);
 
-        $seqBefore = DB::table('ai_prompt_sequences')->value('last_number');
+        $seqBefore = DB::table('ai_prompt_sequences')->where('id', 1)->value('next_number');
+        $this->assertSame(2, (int) $seqBefore);
 
         // Create new version of PROMPT-0001
         $this->postJson('/api/v1/admin/ai-prompts/'.$code.'/versions', [
@@ -403,7 +404,8 @@ final class AiPromptCatalogTest extends TestCase
             'expected_version' => 1,
         ])->assertOk();
 
-        $seqAfter = DB::table('ai_prompt_sequences')->value('last_number');
+        $seqAfter = DB::table('ai_prompt_sequences')->where('id', 1)->value('next_number');
+        $this->assertSame(2, (int) $seqAfter);
         $this->assertSame($seqBefore, $seqAfter, 'ai_prompt_sequences was incremented during versioning');
 
         // Next new prompt created must still be PROMPT-0002
@@ -412,6 +414,9 @@ final class AiPromptCatalogTest extends TestCase
             'content' => 'Contenido 2',
         ])->assertCreated();
         $this->assertSame('PROMPT-0002', $second->json('data.code'));
+
+        $seqFinal = DB::table('ai_prompt_sequences')->where('id', 1)->value('next_number');
+        $this->assertSame(3, (int) $seqFinal);
     }
 
     public function test_versioning_rejects_same_version(): void
