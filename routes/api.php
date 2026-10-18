@@ -30,6 +30,7 @@ use App\Presentation\Http\Controllers\ReferencePriceImportController;
 use App\Presentation\Http\Controllers\ReferencePriceComparisonController;
 use App\Presentation\Http\Controllers\StorefrontCampaignController;
 use App\Presentation\Http\Controllers\InventoryItemPhotosController;
+use App\Presentation\Http\Controllers\InventoryItemPromotionalAssetsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/_deploy/run-migrations', function (\Illuminate\Http\Request $request) {
@@ -184,6 +185,13 @@ Route::prefix('v1')->group(function (): void {
   Route::post('/admin/inventory/{id}/photos/{photoId}/primary',[InventoryItemPhotosController::class,'primary'])->middleware('permission:catalog.manage');
   Route::put('/admin/inventory/{id}/photos/order',[InventoryItemPhotosController::class,'order'])->middleware('permission:catalog.manage');
   Route::delete('/admin/inventory/{id}/photos/{photoId}',[InventoryItemPhotosController::class,'destroy'])->middleware('permission:catalog.manage');
+  Route::get('/admin/inventory/{id}/promotional-assets', [InventoryItemPromotionalAssetsController::class, 'index'])->middleware('permission:inventory.view');
+  Route::post('/admin/inventory/{id}/promotional-assets/prepare', [InventoryItemPromotionalAssetsController::class, 'prepare'])->middleware('permission:catalog.manage');
+  Route::post('/admin/inventory/{id}/promotional-assets/{assetId}/presign', [InventoryItemPromotionalAssetsController::class, 'presign'])->middleware(['permission:catalog.manage', 'throttle:20,1']);
+  Route::post('/admin/inventory/{id}/promotional-assets/{assetId}/confirm', [InventoryItemPromotionalAssetsController::class, 'confirm'])->middleware(['permission:catalog.manage', 'throttle:20,1']);
+  Route::post('/admin/inventory/{id}/promotional-assets/{assetId}/approve', [InventoryItemPromotionalAssetsController::class, 'approve'])->middleware('permission:catalog.manage');
+  Route::post('/admin/inventory/{id}/promotional-assets/{assetId}/discard', [InventoryItemPromotionalAssetsController::class, 'discard'])->middleware('permission:catalog.manage');
+  Route::delete('/admin/inventory/{id}/promotional-assets/{assetId}', [InventoryItemPromotionalAssetsController::class, 'discard'])->middleware('permission:catalog.manage');
   Route::patch('/admin/inventory/items/{id}',[OperationalInventoryController::class, 'update'])->middleware('permission:catalog.manage')->name('api.v1.admin.inventory.items.update');
   Route::get('/admin/inventory/items/{id}/adjustments',[OperationalInventoryController::class, 'adjustments'])->middleware('permission:inventory.view')->name('api.v1.admin.inventory.items.adjustments.index');
   Route::post('/admin/inventory/items/{id}/adjustments',[OperationalInventoryController::class, 'adjust'])->middleware('permission:inventory.adjust')->name('api.v1.admin.inventory.items.adjustments.store');
