@@ -5,6 +5,7 @@ export type ApiStoreProduct = {
   id: string; title: string; description?: string | null; item_type: string;
   operational_status: string; sale_price_amount_minor: number; currency_code: string;
   stock_quantity: number; brand?: string | null; model?: string | null; main_image_url?: string | null;
+  photos?: readonly { id: string; url: string; is_primary: boolean }[];
   metadata?: { origin?: string | null; part_condition?: string | null; reference_price_minor?: number | null; reference_currency?: string | null; is_original?: boolean };
 };
 
@@ -40,7 +41,9 @@ export class ApiStorefrontProvider extends JsonStorefrontProvider {
         priceLabel: card.priceLabel, stockLabel: card.stockLabel, compatibilityLabel: card.compatibilityLabel,
         conditionLabel: item.metadata?.part_condition === 'functional' ? 'Condición funcional declarada' : card.subtitle,
         warrantyLabel: 'Consultá las condiciones de garantía.', heroLabel: 'FixPhone',
-        image: card.image, description: item.description || card.title,
+        image: card.image,
+        images: item.photos?.length ? item.photos.map((photo, photoIndex) => ({ src: photo.url, alt: card.title + ' · foto ' + (photoIndex + 1) })) : [card.image],
+        description: item.description || card.title,
         highlights: [card.compatibilityLabel, card.subtitle],
         specs: [{ label: 'Marca', value: item.brand || 'Consultar' }, { label: 'Modelo', value: item.model || 'Consultar' }, { label: 'Condición', value: card.subtitle }],
         gallery: [], notices: [], relatedProductSlugs: [],
