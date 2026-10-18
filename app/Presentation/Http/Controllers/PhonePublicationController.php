@@ -54,6 +54,25 @@ final class PhonePublicationController extends Controller
                     abort(409, 'No se puede publicar un equipo con ventas registradas.');
                 }
             }
+
+            $currentPrice = $item->sale_price_amount_minor !== null ? (int) $item->sale_price_amount_minor : null;
+            $newPrice = isset($data['price_minor']) && $data['price_minor'] !== null ? (int) $data['price_minor'] : null;
+            $priceChanged = $currentPrice !== $newPrice;
+
+            if ($priceChanged) {
+                if (in_array($item->operational_status, ['vendido', 'sold'], true)
+                    || DB::table('device_sale_records')->where('inventory_item_id', $id)->exists()) {
+                    abort(409, 'No se puede modificar el precio comercial de un equipo vendido o con venta registrada.');
+                }
+                if (DB::table('order_items')
+                    ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                    ->where('order_items.inventory_item_id', $id)
+                    ->whereIn('orders.status', ['pending', 'processing', 'ready'])
+                    ->exists()) {
+                    abort(409, 'No se puede modificar el precio comercial de un equipo reservado en un pedido comercial abierto.');
+                }
+            }
+
             $before = $this->summary($item);
             $item->fill([
                 'title' => $data['title'], 'description' => $data['description'],

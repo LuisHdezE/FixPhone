@@ -424,23 +424,36 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     }
   }
 
+  const isSold = Boolean(editDevice && (editDevice.operationalStatus === 'vendido' || editDevice.operationalStatus === 'sold'));
+  const isDismantling = Boolean(editDevice && (editDevice.dismantlingStatus === 'partial' || editDevice.dismantlingStatus === 'exhausted'));
+
   return <ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving} hideCloseButton density="compact" width="medium">
     <form className="device-intake-form grid gap-2 p-3" data-device-intake data-device-mode={editDevice ? 'edit' : 'create'} onSubmit={submit}>
       <p className="text-[11px] leading-4 text-slate-500">{editDevice
         ? 'El código FXP se conserva. El destino se modifica desde Cambiar estado.'
         : 'Marca, modelo y destino son obligatorios. Código FXP automático; IMEI opcional.'}</p>
+      {isSold && (
+        <p role="status" className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+          Equipo vendido: la identidad técnica y los datos de adquisición quedan protegidos para preservar la trazabilidad fiscal y comercial. Los atributos físicos pueden corregirse o completarse.
+        </p>
+      )}
+      {isDismantling && !isSold && (
+        <p role="status" className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+          Equipo con despiece: la identidad técnica queda protegida para preservar la compatibilidad de las piezas extraídas.
+        </p>
+      )}
       <fieldset className="min-w-0 border-0 p-0">
         <legend className="mb-1 text-[11px] font-semibold text-slate-900">Equipo</legend>
         <div className="grid gap-2 sm:grid-cols-[1fr_1.4fr_1.2fr]">
-          <SelectField id="device-brand" label={view.fields.brandId} onChange={setBrand} options={brandOptions} value={form.brandId} />
-          <SelectField id="device-model" label={view.fields.deviceModelId} onChange={setDeviceModel} options={filteredModelOptions} value={form.deviceModelId} />
+          <SelectField id="device-brand" label={view.fields.brandId} disabled={saving || isSold || isDismantling} onChange={setBrand} options={brandOptions} value={form.brandId} />
+          <SelectField id="device-model" label={view.fields.deviceModelId} disabled={saving || isSold || isDismantling} onChange={setDeviceModel} options={filteredModelOptions} value={form.deviceModelId} />
           <SelectField id="device-destination" label={view.fields.destination} disabled={Boolean(editDevice)} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
         </div>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <SelectField
             id="device-variant"
             label="Variante comercial (opcional)"
-            disabled={!form.deviceModelId || variantOptions.length === 0}
+            disabled={saving || isSold || isDismantling || !form.deviceModelId || variantOptions.length === 0}
             onChange={(value) => setField('deviceModelVariantId', value)}
             options={[
               {
@@ -508,13 +521,13 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">
         <legend className="text-[11px] font-semibold text-slate-900">Adquisición</legend>
         <div className="grid gap-2 sm:grid-cols-[1fr_1.5fr_1fr]">
-          <SelectField id="device-ownership" label="Propiedad" value={form.ownershipType} onChange={value => { setField('ownershipType', value as 'owned' | 'consignment'); setField('consignorId', ''); }} options={[{ value: 'owned', label: 'Propio' }, { value: 'consignment', label: 'En consignación' }]} />
-          <TextField id="device-source" label={view.fields.acquisitionSource} onChange={(value) => setField('acquisitionSource', value)} placeholder={view.placeholders.acquisitionSource} value={form.acquisitionSource} />
-          <TextField id="device-cost" label={view.fields.acquisitionCost} onChange={(value) => setField('acquisitionCost', value)} placeholder="UYU 4500 / USD 120" value={form.acquisitionCost} />
+          <SelectField id="device-ownership" label="Propiedad" disabled={saving || isSold} value={form.ownershipType} onChange={value => { setField('ownershipType', value as 'owned' | 'consignment'); setField('consignorId', ''); }} options={[{ value: 'owned', label: 'Propio' }, { value: 'consignment', label: 'En consignación' }]} />
+          <TextField id="device-source" label={view.fields.acquisitionSource} disabled={saving || isSold} onChange={(value) => setField('acquisitionSource', value)} placeholder={view.placeholders.acquisitionSource} value={form.acquisitionSource} />
+          <TextField id="device-cost" label={view.fields.acquisitionCost} disabled={saving || isSold} onChange={(value) => setField('acquisitionCost', value)} placeholder="UYU 4500 / USD 120" value={form.acquisitionCost} />
         </div>
         <div className={form.ownershipType === 'consignment' || (editDevice && form.ownershipType !== editDevice.ownershipType) ? 'mt-2 grid gap-2 sm:grid-cols-2' : 'contents'}>
-          {form.ownershipType === 'consignment' && <SelectField id="device-consignor" label="Consignante (obligatorio)" disabled={consignorsLoading} value={form.consignorId} onChange={value => setField('consignorId', value)} options={[{ value: '', label: 'Seleccionar consignante' }, ...consignors.map(item => ({ value: item.id, label: item.full_name }))]} />}
-          {editDevice && (form.ownershipType !== editDevice.ownershipType || (form.ownershipType === 'consignment' && form.consignorId !== (editDevice.consignorId ?? ''))) && <div className="sm:col-span-2"><TextAreaField id="device-ownership-reason" rows={2} label="Motivo de corrección de titularidad" value={form.ownershipCorrectionReason} onChange={value => setField('ownershipCorrectionReason', value)} placeholder="Ej.: se registró como propio por error" /></div>}
+          {form.ownershipType === 'consignment' && <SelectField id="device-consignor" label="Consignante (obligatorio)" disabled={saving || isSold || consignorsLoading} value={form.consignorId} onChange={value => setField('consignorId', value)} options={[{ value: '', label: 'Seleccionar consignante' }, ...consignors.map(item => ({ value: item.id, label: item.full_name }))]} />}
+          {editDevice && (form.ownershipType !== editDevice.ownershipType || (form.ownershipType === 'consignment' && form.consignorId !== (editDevice.consignorId ?? ''))) && <div className="sm:col-span-2"><TextAreaField id="device-ownership-reason" rows={2} disabled={saving || isSold} label="Motivo de corrección de titularidad" value={form.ownershipCorrectionReason} onChange={value => setField('ownershipCorrectionReason', value)} placeholder="Ej.: se registró como propio por error" /></div>}
           {form.ownershipType === 'consignment' && consignorsLoading ? <p role="status" className="text-[11px] text-slate-500">Cargando consignantes…</p> : null}
           {form.ownershipType === 'consignment' && consignorsError ? <p role="alert" className="text-[11px] text-red-700">{consignorsError}</p> : null}
           {form.ownershipType === 'consignment' && !consignorsLoading && !consignorsError && consignors.length === 0 ? <p className="text-[11px] text-amber-700">Registrá primero al propietario en Consignantes.</p> : null}
