@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Infrastructure\Inventory\InventoryItem;
+use App\Infrastructure\MasterData\DeviceModelReferenceGuard;
 use App\Infrastructure\MasterData\MasterDataEntry;
 use App\Infrastructure\Valuation\DeviceValuation;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ use Illuminate\Validation\ValidationException;
 final class DeviceInventoryCrudController extends Controller
 {
     private const EDITABLE = [
-        'brand_id', 'device_model_id', 'storage_capacity_id', 'color_id', 'condition_id',
+        'brand_id', 'device_model_id', 'device_model_variant_id', 'storage_capacity_id', 'color_id', 'condition_id',
         'description', 'serial_or_imei', 'powers_on', 'account_lock',
         'acquisition_source', 'cost_amount_minor', 'currency_code',
         'ownership_type', 'consignor_id', 'ownership_correction_reason',
@@ -33,6 +34,7 @@ final class DeviceInventoryCrudController extends Controller
         $values = $request->validate([
             'brand_id' => ['required', 'string'],
             'device_model_id' => ['required', 'string'],
+            'device_model_variant_id' => ['nullable', 'string', 'max:40'],
             'storage_capacity_id' => ['nullable', 'string'],
             'color_id' => ['nullable', 'string'],
             'condition_id' => ['nullable', 'string'],
@@ -79,13 +81,24 @@ final class DeviceInventoryCrudController extends Controller
                 ]);
             }
             $storage = $this->optionalMasterItem('storageCapacities', $values['storage_capacity_id'] ?? null, 'storage_capacity_id');
+
+            // Variant is optional. Omitted => keep it while the model is unchanged, otherwise clear it.
+            // A variant is never inferred or invented: it is only what the operator explicitly selected.
+            $variantId = array_key_exists('device_model_variant_id', $values)
+                ? ($values['device_model_variant_id'] ?: null)
+                : ($item->device_model_id === $values['device_model_id'] ? $item->device_model_variant_id : null);
+            app(DeviceModelReferenceGuard::class)->assertDeviceIdentity(
+                $values['device_model_id'], $variantId, $values['brand_id'],
+                requireActiveVariant: $variantId !== $item->device_model_variant_id,
+            );
             $color = $this->optionalMasterItem('colors', $values['color_id'] ?? null, 'color_id');
             $condition = $this->optionalMasterItem('conditions', $values['condition_id'] ?? null, 'condition_id');
 
-            $before = $item->only(['title', 'brand', 'model', 'description', 'cost_amount_minor', 'currency_code', 'inventory_purpose', 'consignor_id', 'metadata']);
+            $before = $item->only(['title', 'brand', 'model', 'description', 'cost_amount_minor', 'currency_code', 'inventory_purpose', 'consignor_id', 'device_model_id', 'device_model_variant_id', 'metadata']);
             $metadata = is_array($item->metadata) ? $item->metadata : [];
             $metadata['brand_id'] = $values['brand_id'];
             $metadata['device_model_id'] = $values['device_model_id'];
+            $metadata['device_model_variant_id'] = $variantId;
             if ($storage !== null) {
                 $metadata['storage_capacity_id'] = $values['storage_capacity_id'];
                 $metadata['storage'] = $storage['label'];
@@ -129,6 +142,8 @@ final class DeviceInventoryCrudController extends Controller
                 'title' => implode(' ', array_filter([$brand['name'], $model['name'], $metadata['storage'] ?? null])),
                 'brand' => $brand['name'],
                 'model' => $model['name'],
+                'device_model_id' => $values['device_model_id'],
+                'device_model_variant_id' => $variantId,
                 'description' => $values['description'] ?? null,
                 'cost_amount_minor' => $values['cost_amount_minor'] ?? null,
                 'currency_code' => $values['currency_code'],

@@ -18,7 +18,11 @@ import { DeviceComponentsModal } from './DeviceComponentsModal';
 import { DeviceDestinationModal } from './DeviceDestinationModal';
 import { DeviceRepairCostsModal } from './DeviceRepairCostsModal';
 import { PhonePublicationModal } from './PhonePublicationModal';
-import type { DismantlingStatus, InventoryDeviceListItemDto } from '../application/devices.dto';
+import type {
+  DeviceInventorySpecsResponseDto,
+  DismantlingStatus,
+  InventoryDeviceListItemDto,
+} from '../application/devices.dto';
 
 const dismantlingNames: Record<DismantlingStatus, string> = {
   unknown: 'Sin verificar',
@@ -36,6 +40,100 @@ const transitions: Record<DismantlingStatus, readonly DismantlingStatus[]> = {
 
 function optionLabel(options: readonly { value: string; label: string }[], value: string) {
   return options.find((option) => option.value === value)?.label ?? value;
+}
+function DeviceSpecificationsDetail({ inventoryId }: { inventoryId: string }) {
+  const [payload, setPayload] = useState<DeviceInventorySpecsResponseDto['data'] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setLoadError(null);
+    adminFetch(`/api/v1/admin/inventory/${encodeURIComponent(inventoryId)}/specifications`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => null) as { message?: string } | null;
+          throw new Error(body?.message || `Error al consultar especificaciones (${res.status})`);
+        }
+        return res.json() as Promise<DeviceInventorySpecsResponseDto>;
+      })
+      .then((response) => {
+        if (!alive) return;
+        setPayload(response.data);
+        setLoadError(null);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setLoadError(err instanceof Error ? err.message : 'No se pudo consultar la ficha técnica local.');
+        setPayload(null);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [inventoryId]);
+
+  if (loading) {
+    return <p className="text-[11px] text-slate-400">Consultando ficha técnica local…</p>;
+  }
+
+  if (loadError) {
+    return (
+      <div role="alert" className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+        <span className="font-semibold">Aviso:</span> {loadError}
+      </div>
+    );
+  }
+
+  if (!payload?.inherited) {
+    return (
+      <div className="mt-2 rounded border border-slate-100 bg-slate-50 p-2 text-[11px] text-slate-500">
+        Dispositivo histórico sin modelo comercial asignado en el catálogo local.
+      </div>
+    );
+  }
+
+  const inherited = payload.inherited;
+  const specs = inherited.effective_specs ?? inherited.effective ?? inherited.model_specs ?? {};
+  const variantLabel = inherited.variant ? `${inherited.variant.name} (${inherited.variant.variant_key})` : 'Modelo base (sin variante)';
+
+  return (
+    <div className="mt-2 space-y-2 border-t border-slate-100 pt-2 text-xs">
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="font-semibold text-slate-700">Ficha técnica heredada</span>
+        <span className="text-slate-500">{variantLabel}</span>
+      </div>
+      {Object.keys(specs).length > 0 ? (
+        <div className="grid grid-cols-2 gap-2 rounded bg-slate-50 p-2 text-[11px] text-slate-600 sm:grid-cols-3">
+          {Object.entries(specs).slice(0, 6).map(([key, val]) => (
+            <div key={key} className="truncate">
+              <span className="font-medium capitalize text-slate-500">{key.replace(/_/g, ' ')}:</span>{' '}
+              <span className="text-slate-800">{typeof val === 'object' ? JSON.stringify(val) : String(val)}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-[11px] text-slate-400">Sin especificaciones técnicas adicionales en el catálogo local.</p>
+      )}
+      {payload.consistency && payload.consistency.length > 0 ? (
+        <div className="rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+          <p className="font-semibold">Aviso de discrepancia con catálogo:</p>
+          <ul className="mt-1 list-disc pl-4 space-y-0.5">
+            {payload.consistency.map((c, i) => (
+              <li key={i}>{c.message}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function InventoryDevicesPage({
@@ -363,25 +461,28 @@ export function InventoryDevicesPage({
       onClose={() => setActiveAction(null)}
       title={(activeAction.kind === 'details' ? 'Detalle de ' : 'Actualizar despiece de ') + activeAction.device.id}
     >
-      {activeAction.kind === 'details' ? <dl className="grid gap-3 p-4 text-xs sm:grid-cols-2">
-        {([
-          ['Código', activeAction.device.id],
-          ['Equipo', activeAction.device.manufacturer + ' ' + activeAction.device.model],
-          ['IMEI / Serie', activeAction.device.serialOrImei],
-          ['Memoria / Color', activeAction.device.storage + ' · ' + activeAction.device.color],
-          ['Condición física', activeAction.device.physicalCondition === 'Unknown' ? 'Sin evaluar' : optionLabel(view.filters.conditionOptions, activeAction.device.physicalCondition)],
-          ['Enciende', activeAction.device.powersOn],
-          ['Bloqueo de cuenta', activeAction.device.accountLock],
-          ['Origen', activeAction.device.acquisitionSource],
-          ['Costo', activeAction.device.acquisitionCost],
-          ['Destino', optionLabel(view.filters.destinationOptions, activeAction.device.destination)],
-          ['Despiece', activeAction.device.isDonor ? dismantlingNames[activeAction.device.dismantlingStatus] : 'No aplica'],
-          ['Publicación', activeAction.device.phoneListingStatus === 'published' ? 'En tienda' : activeAction.device.publicListingStatus === 'published' ? 'Para repuestos' : 'Sin publicar'],
-        ] as const).map(([label, value]) => <div className="min-w-0" key={label}>
-          <dt className="font-semibold text-slate-500">{label}</dt>
-          <dd className="mt-1 break-words font-medium text-slate-800">{value || '—'}</dd>
-        </div>)}
-      </dl> : <div className="space-y-3 p-4">
+      {activeAction.kind === 'details' ? <div className="space-y-3 p-4">
+        <dl className="grid gap-3 text-xs sm:grid-cols-2">
+          {([
+            ['Código', activeAction.device.id],
+            ['Equipo', activeAction.device.manufacturer + ' ' + activeAction.device.model],
+            ['IMEI / Serie', activeAction.device.serialOrImei],
+            ['Memoria / Color', activeAction.device.storage + ' · ' + activeAction.device.color],
+            ['Condición física', activeAction.device.physicalCondition === 'Unknown' ? 'Sin evaluar' : optionLabel(view.filters.conditionOptions, activeAction.device.physicalCondition)],
+            ['Enciende', activeAction.device.powersOn],
+            ['Bloqueo de cuenta', activeAction.device.accountLock],
+            ['Origen', activeAction.device.acquisitionSource],
+            ['Costo', activeAction.device.acquisitionCost],
+            ['Destino', optionLabel(view.filters.destinationOptions, activeAction.device.destination)],
+            ['Despiece', activeAction.device.isDonor ? dismantlingNames[activeAction.device.dismantlingStatus] : 'No aplica'],
+            ['Publicación', activeAction.device.phoneListingStatus === 'published' ? 'En tienda' : activeAction.device.publicListingStatus === 'published' ? 'Para repuestos' : 'Sin publicar'],
+          ] as const).map(([label, value]) => <div className="min-w-0" key={label}>
+            <dt className="font-semibold text-slate-500">{label}</dt>
+            <dd className="mt-1 break-words font-medium text-slate-800">{value || '—'}</dd>
+          </div>)}
+        </dl>
+        <DeviceSpecificationsDetail inventoryId={activeAction.device.inventoryId} />
+      </div> : <div className="space-y-3 p-4">
         <p className="text-xs text-slate-600">Elegí el nuevo estado de despiece para {activeAction.device.id}. La operación requiere confirmación y quedará auditada.</p>
         <div className="flex flex-wrap gap-2">
           {transitions[activeAction.device.dismantlingStatus]

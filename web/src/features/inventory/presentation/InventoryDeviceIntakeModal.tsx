@@ -8,12 +8,20 @@ import { TextField } from '@/components/forms/TextField';
 import { ModalShell } from '@/components/layout/ModalShell';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
-import type { InventoryDeviceListItemDto } from '../application/devices.dto';
-import type { DeviceAccountLock, DeviceDestination, DevicePhysicalCondition, DevicePowerState } from '../application/devices.dto';
+import type {
+  DeviceAccountLock,
+  DeviceDestination,
+  DeviceModelResolvedSpecsResponseDto,
+  DeviceModelVariantOptionDto,
+  DevicePhysicalCondition,
+  DevicePowerState,
+  InventoryDeviceListItemDto,
+} from '../application/devices.dto';
 
 type IntakeFormState = {
   brandId: string;
   deviceModelId: string;
+  deviceModelVariantId: string;
   serialOrImei: string;
   storageCapacityId: string;
   colorId: string;
@@ -127,6 +135,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       return {
         brandId: view.defaults.brandId,
         deviceModelId: view.defaults.deviceModelId,
+        deviceModelVariantId: '',
         serialOrImei: '',
         storageCapacityId: view.defaults.storageCapacityId,
         colorId: view.defaults.colorId,
@@ -152,6 +161,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     return {
       brandId,
       deviceModelId: modelId,
+      deviceModelVariantId: editDevice.deviceModelVariantId ?? '',
       serialOrImei: editDevice.serialOrImei === '—' ? '' : editDevice.serialOrImei,
       storageCapacityId: catalogId(editDevice.storageCapacityId, editDevice.storage, storageCapacities, (storage) => storage.label),
       colorId: catalogId(editDevice.colorId, editDevice.color, colors, (color) => color.name),
@@ -222,6 +232,54 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     ...conditions.map((condition) => ({ value: condition.id, label: condition.name })),
   ], [conditions, view.placeholders.conditionId]);
 
+  const [variantOptions, setVariantOptions] = useState<readonly DeviceModelVariantOptionDto[]>([]);
+  const [resolvedSpecs, setResolvedSpecs] = useState<Record<string, unknown> | null>(null);
+  const [specsLoading, setSpecsLoading] = useState(false);
+  const [specsError, setSpecsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!form.deviceModelId) {
+      setVariantOptions([]);
+      setResolvedSpecs(null);
+      setSpecsError(null);
+      return;
+    }
+    let alive = true;
+    setSpecsLoading(true);
+    setSpecsError(null);
+    const query = form.deviceModelVariantId ? `?variant_id=${encodeURIComponent(form.deviceModelVariantId)}` : '';
+    adminFetch(`/api/v1/admin/device-models/${encodeURIComponent(form.deviceModelId)}/resolved-specs${query}`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const errPayload = await res.json().catch(() => null) as { message?: string } | null;
+          throw new Error(errPayload?.message || `Error al consultar la ficha técnica (${res.status})`);
+        }
+        return res.json() as Promise<DeviceModelResolvedSpecsResponseDto>;
+      })
+      .then((payload) => {
+        if (!alive) return;
+        setVariantOptions(payload.data.variants || []);
+        const effective = payload.data.resolved?.effective ?? payload.data.resolved?.effective_specs ?? null;
+        setResolvedSpecs(effective && Object.keys(effective).length > 0 ? effective : null);
+        setSpecsError(null);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setSpecsError(err instanceof Error ? err.message : 'No se pudo cargar la ficha técnica del catálogo.');
+        setResolvedSpecs(null);
+      })
+      .finally(() => {
+        if (alive) setSpecsLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [form.deviceModelId, form.deviceModelVariantId]);
+
   function setField<Key extends keyof IntakeFormState>(key: Key, value: IntakeFormState[Key]) {
     setCreatedId(null);
     setError(null);
@@ -231,7 +289,19 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   function setBrand(brandId: string) {
     setCreatedId(null);
     setError(null);
-    setForm((current) => ({ ...current, brandId, deviceModelId: '' }));
+    setVariantOptions([]);
+    setResolvedSpecs(null);
+    setSpecsError(null);
+    setForm((current) => ({ ...current, brandId, deviceModelId: '', deviceModelVariantId: '' }));
+  }
+
+  function setDeviceModel(deviceModelId: string) {
+    setCreatedId(null);
+    setError(null);
+    setVariantOptions([]);
+    setResolvedSpecs(null);
+    setSpecsError(null);
+    setForm((current) => ({ ...current, deviceModelId, deviceModelVariantId: '' }));
   }
 
   const selectedBrand = brands.find((brand) => brand.id === form.brandId);
@@ -262,6 +332,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         await gateway.updateDevice(editDevice.inventoryId, {
           brandId: selectedBrand.id,
           deviceModelId: selectedModel.id,
+          deviceModelVariantId: form.deviceModelVariantId || null,
           storageCapacityId: selectedStorage?.id ?? null,
           colorId: selectedColor?.id ?? null,
           conditionId: selectedCondition?.id ?? null,
@@ -284,6 +355,8 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         item_type: 'used_phone',
         brand: selectedBrand.name,
         model: selectedModel.name,
+        device_model_id: selectedModel.id,
+        device_model_variant_id: form.deviceModelVariantId || null,
         description: form.notes.trim() || null,
         operational_status: operationalStatus(form.destination),
         publication_status: 'no_publicable',
@@ -298,6 +371,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         metadata: {
           brand_id: selectedBrand.id,
           device_model_id: selectedModel.id,
+          device_model_variant_id: form.deviceModelVariantId || null,
           serial_or_imei: form.serialOrImei.trim() || null,
           storage_capacity_id: selectedStorage?.id ?? null,
           storage: selectedStorage?.label ?? null,
@@ -351,9 +425,60 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         <legend className="mb-1 text-[11px] font-semibold text-slate-900">Equipo</legend>
         <div className="grid gap-2 sm:grid-cols-[1fr_1.4fr_1.2fr]">
           <SelectField id="device-brand" label={view.fields.brandId} onChange={setBrand} options={brandOptions} value={form.brandId} />
-          <SelectField id="device-model" label={view.fields.deviceModelId} onChange={(value) => setField('deviceModelId', value)} options={filteredModelOptions} value={form.deviceModelId} />
+          <SelectField id="device-model" label={view.fields.deviceModelId} onChange={setDeviceModel} options={filteredModelOptions} value={form.deviceModelId} />
           <SelectField id="device-destination" label={view.fields.destination} disabled={Boolean(editDevice)} onChange={(value) => setField('destination', value as DeviceDestination)} options={view.options.destination} value={form.destination} />
         </div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <SelectField
+            id="device-variant"
+            label="Variante comercial (opcional)"
+            disabled={!form.deviceModelId || variantOptions.length === 0}
+            onChange={(value) => setField('deviceModelVariantId', value)}
+            options={[
+              {
+                value: '',
+                label: !form.deviceModelId
+                  ? 'Seleccioná un modelo primero'
+                  : variantOptions.length === 0
+                  ? 'Sin variantes registradas (modelo genérico)'
+                  : 'Sin especificar variante (opcional)',
+              },
+              ...variantOptions.map((v) => ({
+                value: v.id,
+                label: v.name + (v.variant_key ? ` (${v.variant_key})` : ''),
+              })),
+            ]}
+            value={form.deviceModelVariantId}
+          />
+        </div>
+        {selectedModel && (
+          <div className="mt-2 rounded-md border border-slate-200 bg-slate-50/70 p-2 text-xs">
+            <div className="flex items-center justify-between text-slate-700">
+              <span className="text-[11px] font-semibold text-slate-800">
+                Ficha técnica heredada del catálogo (solo lectura)
+              </span>
+              {specsLoading && <span className="text-[10px] text-slate-500">Cargando…</span>}
+            </div>
+            {specsError ? (
+              <p role="alert" className="mt-1 text-[11px] text-amber-700">
+                Aviso: {specsError}
+              </p>
+            ) : resolvedSpecs && Object.keys(resolvedSpecs).length > 0 ? (
+              <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-slate-600 sm:grid-cols-3">
+                {Object.entries(resolvedSpecs).slice(0, 6).map(([key, val]) => (
+                  <div key={key} className="truncate">
+                    <span className="font-medium capitalize text-slate-500">{key.replace(/_/g, ' ')}:</span>{' '}
+                    <span className="text-slate-800">{typeof val === 'object' ? JSON.stringify(val) : String(val)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : !specsLoading ? (
+              <p className="mt-1 text-[11px] text-slate-500">
+                Sin especificaciones técnicas base en catálogo para este modelo. Los atributos particulares de la unidad física se definen abajo.
+              </p>
+            ) : null}
+          </div>
+        )}
         {editDevice && (!form.brandId || !form.deviceModelId) ? <p role="alert" className="mt-1 text-[11px] text-amber-700">Seleccioná una marca y un modelo válidos del catálogo antes de guardar.</p> : null}
       </fieldset>
       <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">

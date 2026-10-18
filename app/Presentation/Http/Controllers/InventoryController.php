@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Infrastructure\MasterData\DeviceModelReferenceGuard;
+use App\Infrastructure\MasterData\MasterDataEntry;
 
 class InventoryController extends Controller
 {
@@ -60,6 +62,8 @@ class InventoryController extends Controller
             'social_publish_status' => 'nullable|string',
             'auto_publish_to_social' => 'boolean',
             'metadata' => 'nullable|array',
+            'device_model_id' => ['nullable', 'string', 'max:120'],
+            'device_model_variant_id' => ['nullable', 'string', 'max:40'],
             'ownership_type' => ['sometimes', 'required', 'in:owned,consignment'],
             'consignor_id' => ['nullable', 'string', Rule::exists('consignors', 'id')],
         ]);
@@ -80,6 +84,34 @@ class InventoryController extends Controller
         }
         $validated['consignor_id'] = $ownership === 'consignment' ? $validated['consignor_id'] : null;
         unset($validated['ownership_type']);
+
+        $isDevice = in_array($validated['item_type'], ['device', 'used_phone'], true);
+        $guard = app(DeviceModelReferenceGuard::class);
+        $modelId = $validated['device_model_id'] ?? null;
+        $variantId = $validated['device_model_variant_id'] ?? null;
+        $metaModel = $validated['metadata']['device_model_id'] ?? null;
+        $metaBrand = $validated['metadata']['brand_id'] ?? null;
+        if (!$isDevice && ($modelId !== null || $variantId !== null)) {
+            throw ValidationException::withMessages(['device_model_id' => 'Las referencias a modelos comerciales solo corresponden a teléfonos físicos.']);
+        }
+        if ($isDevice) {
+            if ($modelId !== null || $variantId !== null) {
+                // Explicit reference: any inconsistency is an error, never silently ignored.
+                $guard->assertDeviceIdentity($modelId, $variantId, is_string($metaBrand) ? $metaBrand : null, requireActiveVariant: true);
+            } elseif (is_string($metaModel) && $metaModel !== ''
+                && MasterDataEntry::query()->whereKey($metaModel)->where('kind', 'deviceModels')->exists()) {
+                // Legacy clients only send the model inside metadata. Promote it only when it is a
+                // valid catalog model of the declared brand; otherwise leave the FK empty (no guessing).
+                try {
+                    $guard->assertDeviceIdentity($metaModel, null, is_string($metaBrand) ? $metaBrand : null);
+                    $modelId = $metaModel;
+                } catch (ValidationException) {
+                    $modelId = null;
+                }
+            }
+            $validated['device_model_id'] = $modelId;
+            $validated['device_model_variant_id'] = $variantId;
+        }
 
         $item = DB::transaction(function () use ($validated, $request) {
             // New physical devices receive an immutable human-readable reference.

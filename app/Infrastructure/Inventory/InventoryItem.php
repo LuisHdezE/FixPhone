@@ -56,9 +56,8 @@ class InventoryItem extends Model
                 ]);
             }
 
-            $guard = app(DeviceModelReferenceGuard::class);
-            $guard->assertKind($item->device_model_id, 'deviceModels', 'device_model_id');
-            $guard->assertVariantBelongsToModel($item->device_model_variant_id, $item->device_model_id);
+            // Same central rule used by every controller; this hook is the last line of defence.
+            app(DeviceModelReferenceGuard::class)->assertDeviceIdentity($item->device_model_id, $item->device_model_variant_id);
         });
     }
 

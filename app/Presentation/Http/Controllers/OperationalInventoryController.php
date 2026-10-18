@@ -68,6 +68,11 @@ final class OperationalInventoryController extends Controller
             if (DB::table('device_part_extractions')->where('donor_item_id', $id)->exists()) {
                 abort(409, 'El donante con piezas extraídas conserva su identidad y titularidad.');
             }
+            if ($item->device_model_id !== null && in_array($item->item_type, ['device', 'used_phone'], true)
+                && ((array_key_exists('brand', $validated) && $validated['brand'] !== $item->brand)
+                    || (array_key_exists('model', $validated) && $validated['model'] !== $item->model))) {
+                throw ValidationException::withMessages(['model' => 'Este equipo está vinculado al catálogo. Corregí marca o modelo desde la edición del equipo para mantener coherente la referencia.']);
+            }
             if ($item->component_identity_key !== null && array_intersect(array_keys($validated), ['brand', 'model', 'brand_id', 'device_model_id', 'consignor_id'])) {
                 abort(409, 'El repuesto recuperado conserva su compatibilidad y propietario para mantener la trazabilidad.');
             }

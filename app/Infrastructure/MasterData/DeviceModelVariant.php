@@ -29,6 +29,14 @@ final class DeviceModelVariant extends Model
             $guard = app(DeviceModelReferenceGuard::class);
             $guard->assertKind($variant->device_model_id, 'deviceModels', 'device_model_id');
             $guard->assertCapacities($variant->ram_capacity_id, $variant->storage_capacity_id);
+            if ($variant->exists && $variant->isDirty('device_model_id')) {
+                // Moving a referenced variant to another model would orphan the pair.
+                $guard->assertVariantUnreferenced((string) $variant->getKey());
+            }
+        });
+
+        static::deleting(function (self $variant): void {
+            app(DeviceModelReferenceGuard::class)->assertVariantUnreferenced((string) $variant->getKey());
         });
     }
 
