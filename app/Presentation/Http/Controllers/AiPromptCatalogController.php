@@ -3,12 +3,12 @@
 namespace App\Presentation\Http\Controllers;
 
 use App\Application\Authorization\Contracts\AuthorizationGateway;
+use App\Infrastructure\AiPrompts\AiPromptCodeAllocator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 final class AiPromptCatalogController extends Controller
 {
@@ -19,7 +19,7 @@ final class AiPromptCatalogController extends Controller
         return response()->json([
             'data' => DB::table('ai_prompts')
                 ->orderBy('description')->limit(500)
-                ->get(['code', 'description', 'version', 'archived_at', 'updated_at']),
+                ->get(['code', 'description', 'version', 'lock_version', 'archived_at', 'updated_at']),
             'can_manage' => $this->authorization->hasPermission(
                 (string) $request->user()->getAuthIdentifier(), 'ai_prompts.manage'
             ),
@@ -38,27 +38,36 @@ final class AiPromptCatalogController extends Controller
             'data' => DB::table('ai_prompt_revisions')
                 ->where('ai_prompt_id', $prompt->id)
                 ->orderByDesc('version')
-                ->get(['version', 'description', 'action', 'actor_id', 'created_at']),
+                ->get(['version', 'prompt_version', 'description', 'action', 'actor_id', 'created_at']),
         ]);
     }
 
     public function store(Request $request): JsonResponse
     {
-        $request->merge(['code' => strtoupper(trim((string) $request->input('code', '')))]);
         $data = $request->validate([
-            'code' => ['required', 'string', 'max:80', 'regex:/^[A-Z][A-Z0-9_]{2,79}$/', Rule::unique('ai_prompts', 'code')],
+            'code' => ['prohibited'],
             'description' => ['required', 'string', 'max:255'],
             'content' => ['required', 'string', 'max:100000'],
+            'version' => ['nullable', 'string', 'max:20', 'regex:/^v?[0-9]+(\.[0-9]+)*$/'],
+        ], [
+            'code.prohibited' => 'El código se autogenera en el servidor y no debe ser enviado por el cliente.',
+            'version.regex' => 'El formato de versión no es válido (ejemplo: 1.0).',
         ]);
 
-        $prompt = DB::transaction(function () use ($data, $request) {
+        $promptVersion = isset($data['version']) && trim((string) $data['version']) !== ''
+            ? ltrim(trim((string) $data['version']), 'vV')
+            : '1.0';
+
+        $prompt = DB::transaction(function () use ($data, $promptVersion, $request) {
+            $code = AiPromptCodeAllocator::reserve();
             $id = (string) Str::ulid();
             $record = [
                 'id' => $id,
-                'code' => $data['code'],
+                'code' => $code,
                 'description' => trim($data['description']),
+                'version' => $promptVersion,
+                'lock_version' => 1,
                 'content' => $data['content'],
-                'version' => 1,
                 'archived_at' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -66,9 +75,7 @@ final class AiPromptCatalogController extends Controller
             if ($record['description'] === '' || trim($record['content']) === '') {
                 abort(422, 'La descripción y el contenido no pueden estar vacíos.');
             }
-            if (DB::table('ai_prompts')->insertOrIgnore($record) !== 1) {
-                abort(409, 'El código ya existe. Elegí otro código.');
-            }
+            DB::table('ai_prompts')->insert($record);
             $this->recordChange($record, 'created', $request);
             return $this->findPrompt($record['code']);
         });
@@ -82,15 +89,27 @@ final class AiPromptCatalogController extends Controller
             'code' => ['prohibited'],
             'description' => ['required', 'string', 'max:255'],
             'content' => ['required', 'string', 'max:100000'],
+            'version' => ['nullable', 'string', 'max:20', 'regex:/^v?[0-9]+(\.[0-9]+)*$/'],
             'expected_version' => ['required', 'integer', 'min:1'],
+        ], [
+            'code.prohibited' => 'El código no es editable una vez creado.',
+            'version.regex' => 'El formato de versión no es válido (ejemplo: 1.0).',
         ]);
         if (trim($data['description']) === '' || trim($data['content']) === '') {
             abort(422, 'La descripción y el contenido no pueden estar vacíos.');
         }
 
-        return $this->change($request, $code, (int) $data['expected_version'], function ($prompt) use ($data) {
+        $newVersion = isset($data['version']) && trim((string) $data['version']) !== ''
+            ? ltrim(trim((string) $data['version']), 'vV')
+            : null;
+
+        return $this->change($request, $code, (int) $data['expected_version'], function ($prompt) use ($data, $newVersion) {
             if ($prompt->archived_at !== null) abort(409, 'Restaurá este prompt antes de editarlo.');
-            return ['description' => trim($data['description']), 'content' => $data['content']];
+            $delta = ['description' => trim($data['description']), 'content' => $data['content']];
+            if ($newVersion !== null) {
+                $delta['version'] = $newVersion;
+            }
+            return $delta;
         }, 'updated');
     }
 
@@ -121,7 +140,11 @@ final class AiPromptCatalogController extends Controller
             $revision = DB::table('ai_prompt_revisions')
                 ->where('ai_prompt_id', $prompt->id)->where('version', $version)->first();
             abort_if($revision === null, 404, 'Versión histórica inexistente.');
-            return ['description' => $revision->description, 'content' => $revision->content];
+            $delta = ['description' => $revision->description, 'content' => $revision->content];
+            if (isset($revision->prompt_version) && (string) $revision->prompt_version !== '') {
+                $delta['version'] = (string) $revision->prompt_version;
+            }
+            return $delta;
         }, 'restored');
     }
 
@@ -130,15 +153,15 @@ final class AiPromptCatalogController extends Controller
         $prompt = DB::transaction(function () use ($request, $code, $expectedVersion, $changes, $action) {
             $original = DB::table('ai_prompts')->where('code', $code)->lockForUpdate()->first();
             abort_if($original === null, 404, 'No existe un prompt con ese código.');
-            if ($original->version !== $expectedVersion) {
+            if ((int) $original->lock_version !== $expectedVersion) {
                 abort(409, 'Este prompt cambió mientras lo editabas. Actualizá y volvé a intentarlo.');
             }
 
             $delta = $changes($original);
-            $version = $original->version + 1;
+            $newLockVersion = (int) $original->lock_version + 1;
             $affected = DB::table('ai_prompts')
-                ->where('id', $original->id)->where('version', $expectedVersion)
-                ->update([...$delta, 'version' => $version, 'updated_at' => now()]);
+                ->where('id', $original->id)->where('lock_version', $expectedVersion)
+                ->update([...$delta, 'lock_version' => $newLockVersion, 'updated_at' => now()]);
             if ($affected !== 1) abort(409, 'Conflicto de actualización. Volvé a cargar los datos.');
             $updated = (array) DB::table('ai_prompts')->where('id', $original->id)->first();
             $this->recordChange($updated, $action, $request);
@@ -150,7 +173,7 @@ final class AiPromptCatalogController extends Controller
     private function findPrompt(string $code): object
     {
         $prompt = DB::table('ai_prompts')->where('code', $code)
-            ->first(['id', 'code', 'description', 'content', 'version', 'archived_at', 'updated_at']);
+            ->first(['id', 'code', 'description', 'content', 'version', 'lock_version', 'archived_at', 'updated_at']);
         abort_if($prompt === null, 404, 'No existe un prompt con ese código.');
         return $prompt;
     }
@@ -161,7 +184,8 @@ final class AiPromptCatalogController extends Controller
         DB::table('ai_prompt_revisions')->insert([
             'id' => (string) Str::ulid(),
             'ai_prompt_id' => $prompt['id'],
-            'version' => $prompt['version'],
+            'version' => $prompt['lock_version'],
+            'prompt_version' => $prompt['version'],
             'description' => $prompt['description'],
             'content' => $prompt['content'],
             'action' => $action,
@@ -177,7 +201,7 @@ final class AiPromptCatalogController extends Controller
             'actor_type' => 'user',
             'actor_id' => $actor,
             'correlation_id' => $request->attributes->get('correlation_id'),
-            'metadata' => json_encode(['code' => $prompt['code'], 'version' => $prompt['version']]),
+            'metadata' => json_encode(['code' => $prompt['code'], 'version' => $prompt['version'], 'lock_version' => $prompt['lock_version']]),
             'occurred_at' => now(),
         ]);
     }

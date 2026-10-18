@@ -156,7 +156,13 @@ class InventoryController extends Controller
             ->get()->groupBy('inventory_item_id');
 
         return response()->json($items->map(function ($item) use ($photos): array {
-            $imageUrl = $item->main_image_url;
+            $realPhotos = ($photos->get($item->id) ?? collect())
+                ->map(fn (InventoryItemPhoto $photo): array => [
+                    'id' => $photo->id, 'url' => $photo->public_url, 'is_primary' => $photo->is_primary,
+                ])->values()->all();
+
+            $primaryPhoto = collect($realPhotos)->firstWhere('is_primary', true) ?? ($realPhotos[0] ?? null);
+            $imageUrl = $primaryPhoto['url'] ?? $item->main_image_url;
             if (!$imageUrl && $item->item_type === 'used_phone') {
                 $modelId = $item->device_model_id ?? ($item->metadata['device_model_id'] ?? null);
                 if ($modelId) {
@@ -165,10 +171,6 @@ class InventoryController extends Controller
                     $imageUrl = $model?->payload['imageUrl'] ?? null;
                 }
             }
-            $realPhotos = ($photos->get($item->id) ?? collect())
-                ->map(fn (InventoryItemPhoto $photo): array => [
-                    'id' => $photo->id, 'url' => $photo->public_url, 'is_primary' => $photo->is_primary,
-                ])->values()->all();
             return [
                 'id' => $item->id, 'title' => $item->title, 'description' => $item->description,
                 'item_type' => $item->item_type, 'brand' => $item->brand, 'model' => $item->model,
