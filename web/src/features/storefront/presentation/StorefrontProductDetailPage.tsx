@@ -76,6 +76,21 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
                   Sin imagen disponible
                 </div>
               )}
+              {selectedImage?.type === 'advertisement' ? (
+                <span
+                  className="absolute left-2.5 top-2.5 rounded-full bg-amber-500/90 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs backdrop-blur-xs pointer-events-none"
+                  data-storefront-gallery-ad-badge
+                >
+                  Publicidad
+                </span>
+              ) : selectedImage?.type === 'real_photo' ? (
+                <span
+                  className="absolute left-2.5 top-2.5 rounded-full bg-slate-900/75 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs backdrop-blur-xs pointer-events-none"
+                  data-storefront-gallery-real-badge
+                >
+                  Foto real
+                </span>
+              ) : null}
               {images.length > 1 ? (
                 <>
                   <button
@@ -114,11 +129,12 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
               >
                 {images.map((image, index) => {
                   const isActive = index === activeImage;
+                  const isAd = image.type === 'advertisement';
                   return (
                     <button
                       key={image.src + '-' + index}
                       type="button"
-                      aria-label={`Ver foto ${index + 1}`}
+                      aria-label={isAd ? `Ver publicidad ${index + 1}` : `Ver foto ${index + 1}`}
                       aria-current={isActive ? 'true' : undefined}
                       onClick={() => setActiveImage(index)}
                       className={`relative size-16 shrink-0 overflow-hidden rounded-lg border p-1 transition touch-manipulation focus:outline-none ${
@@ -127,6 +143,7 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
                           : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                       data-storefront-gallery-thumbnail={index}
+                      data-storefront-thumbnail-ad-tag={isAd ? 'true' : undefined}
                     >
                       <img
                         src={image.src}
@@ -134,6 +151,14 @@ export function StorefrontProductDetailPage({ provider }: { provider: Storefront
                         className="h-full w-full object-contain"
                         loading="lazy"
                       />
+                      {isAd ? (
+                        <span
+                          className="absolute bottom-0 inset-x-0 bg-amber-500/90 text-white text-[8px] font-bold text-center leading-3 pointer-events-none"
+                          data-storefront-thumbnail-ad-label
+                        >
+                          AD
+                        </span>
+                      ) : null}
                     </button>
                   );
                 })}
