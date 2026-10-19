@@ -122,7 +122,7 @@ final class InventoryDeviceCrudTest extends TestCase
     {
         $this->signIn('owner');
         $device = $this->device();
-        MasterDataEntry::query()->create([
+        $ram = MasterDataEntry::query()->create([
             'id' => 'ram-test-'.Str::lower(Str::random(8)), 'kind' => 'ramCapacities',
             'payload' => ['label' => '8 GB', 'active' => true],
         ]);
