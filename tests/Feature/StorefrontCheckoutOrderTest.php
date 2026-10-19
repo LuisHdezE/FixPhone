@@ -59,7 +59,7 @@ final class StorefrontCheckoutOrderTest extends TestCase
     {
         Http::fake();
         $user = $this->customer();
-        $item = $this->testPart();
+        $item = $this->test_part();
         $this->addToCart($user, $item);
 
         $response = $this->postJson('/api/v1/store/checkout', [
@@ -102,7 +102,7 @@ final class StorefrontCheckoutOrderTest extends TestCase
         $this->postJson('/api/v1/store/checkout')->assertUnauthorized();
 
         $user = $this->customer();
-        $item = $this->testPart();
+        $item = $this->test_part();
         $this->addToCart($user, $item);
 
         $this->postJson('/api/v1/store/checkout')->assertUnprocessable()
@@ -117,7 +117,7 @@ final class StorefrontCheckoutOrderTest extends TestCase
     {
         Http::fake();
         $user = $this->customer();
-        $item = $this->testPart();
+        $item = $this->test_part();
         $this->addToCart($user, $item);
         $key = 'fpstore_checkout_attempt_0002';
 
@@ -137,7 +137,7 @@ final class StorefrontCheckoutOrderTest extends TestCase
     public function test_checkout_reserves_stock_without_deducting_it_until_payment_is_added(): void
     {
         Http::fake();
-        $item = $this->testPart();
+        $item = $this->test_part();
         $firstCustomer = $this->customer();
         $secondCustomer = $this->customer();
 
@@ -157,7 +157,7 @@ final class StorefrontCheckoutOrderTest extends TestCase
 
     public function test_expired_order_releases_its_reservation_for_a_new_checkout(): void
     {
-        $item = $this->testPart();
+        $item = $this->test_part();
         $firstCustomer = $this->customer();
         $secondCustomer = $this->customer();
 
