@@ -179,6 +179,9 @@ final class StorefrontOrderService
             'currency_code' => $order->currency_code,
             'external_reference' => $order->external_reference,
             'reservation_expires_at' => $order->reservation_expires_at,
+            'payment_status' => $order->payment_status ?? null,
+            'payment_status_detail' => $order->payment_status_detail ?? null,
+            'preference_id' => $order->mercadopago_preference_id ?? null,
         ];
     }
 }

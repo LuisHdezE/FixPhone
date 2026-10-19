@@ -30,6 +30,8 @@ use App\Presentation\Http\Controllers\ReferencePriceImportController;
 use App\Presentation\Http\Controllers\ReferencePriceComparisonController;
 use App\Presentation\Http\Controllers\StorefrontCampaignController;
 use App\Presentation\Http\Controllers\Storefront\StorefrontCheckoutController;
+use App\Presentation\Http\Controllers\Storefront\StorefrontMercadoPagoWebhookController;
+use App\Presentation\Http\Controllers\Storefront\StorefrontOrderStatusController;
 use App\Presentation\Http\Controllers\InventoryItemPhotosController;
 use App\Presentation\Http\Controllers\InventoryItemPromotionalAssetsController;
 use Illuminate\Support\Facades\Route;
@@ -189,6 +191,8 @@ Route::prefix('v1')->group(function (): void {
  Route::get('/store/parts-donors/{id}', [PartsDonorStorefrontController::class, 'show'])->name('api.v1.store.parts-donors.show');
  Route::get('/store/campaigns', [StorefrontCampaignController::class, 'index']);
  Route::get('/store/products',[InventoryController::class, 'showroomList'])->name('api.v1.store.products.index');
+ Route::post('/store/payment/mercadopago/webhook', StorefrontMercadoPagoWebhookController::class)
+  ->middleware('throttle:120,1')->name('api.v1.storefront.mercadopago.webhook');
  Route::get('/admin/master-data',[MasterDataController::class, 'catalog'])->name('api.v1.admin.master-data.catalog');
  Route::get('/admin/master-data/{kind}',[MasterDataController::class, 'index'])->name('api.v1.admin.master-data.index');
  Route::post('/admin/master-data/{kind}',[MasterDataController::class, 'store'])->middleware(['auth:sanctum', 'permission:catalog.manage'])->name('api.v1.admin.master-data.store');
@@ -201,6 +205,7 @@ Route::prefix('v1')->group(function (): void {
   Route::patch('/store/cart/{product}', [\App\Presentation\Http\Controllers\StorefrontCartController::class, 'update']);
   Route::delete('/store/cart/{product}', [\App\Presentation\Http\Controllers\StorefrontCartController::class, 'remove']);
   Route::post('/store/checkout', [StorefrontCheckoutController::class, 'store'])->middleware('throttle:10,1');
+  Route::get('/store/orders/{id}', [StorefrontOrderStatusController::class, 'show'])->middleware('throttle:60,1');
   Route::get('/admin/device-models/{modelId}/technical', [DeviceModelSpecificationsController::class, 'show'])->middleware('permission:catalog.manage');
   Route::put('/admin/device-models/{modelId}/technical', [DeviceModelSpecificationsController::class, 'saveSpecs'])->middleware('permission:catalog.manage');
   Route::post('/admin/device-models/{modelId}/variants', [DeviceModelSpecificationsController::class, 'storeVariant'])->middleware('permission:catalog.manage');

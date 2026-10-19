@@ -45,6 +45,10 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
     try {
       checkoutKey.current ??= `fpstore_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const order = await startStoreCheckout(checkoutKey.current);
+      if (order.payment_initiated && order.checkout_url) {
+        window.location.assign(order.checkout_url);
+        return;
+      }
       setCreatedOrder(order);
       setStartingCheckout(false);
     } catch (reason) {
@@ -72,7 +76,7 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
       {error && <p role="alert" className="fp-cart-error">{error}</p>}
       {createdOrder && <div role="status" className="fp-cart-summary-note">
         <strong>Pedido {createdOrder.order_number} registrado.</strong>
-        <span> Total: {money(createdOrder.currency_code, createdOrder.total_amount_minor)}. El pago todavía no se inició.</span>
+        <span> Total: {money(createdOrder.currency_code, createdOrder.total_amount_minor)}. El pago no está habilitado en este entorno.</span>
       </div>}
       {fetching ? <p role="status" className="fp-cart-state">Cargando carrito…</p> : !lines.length && !error ? <div className="fp-cart-empty">
         <StorefrontIcon name="cart" />
@@ -118,7 +122,7 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
           {unavailable && <p className="fp-cart-stock">Los productos sin disponibilidad no se incluyen en el subtotal.</p>}
           <p className="fp-cart-summary-note">El envío se paga aparte. El precio y la disponibilidad se verifican al consultar; el carrito no reserva stock.</p>
           <button type="button" className="fp-cart-primary" disabled={startingCheckout || !!createdOrder || fetching || unavailable || lines.length === 0} onClick={() => { void checkout(); }}>
-            {startingCheckout ? 'Registrando pedido…' : createdOrder ? 'Pedido registrado' : 'Continuar al pago'}
+            {startingCheckout ? 'Preparando pago…' : createdOrder ? 'Pago no configurado' : 'Continuar al pago'}
           </button>
         </aside>
       </div>}
