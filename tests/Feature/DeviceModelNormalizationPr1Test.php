@@ -188,7 +188,9 @@ final class DeviceModelNormalizationPr1Test extends TestCase
     public function test_model_resolver_offers_only_active_variants_and_rejects_foreign_variant(): void
     {
         $fx = $this->fixtures();
-        $active = $this->variant($fx['model'], 'active');
+        $active = $this->variant($fx['model'], 'active', [
+            'ram_capacity_id' => 'ram-6', 'storage_capacity_id' => 'storage-128',
+        ]);
         $this->variant($fx['model'], 'retired', ['active' => false]);
         $foreign = $this->variant($fx['otherModel'], 'foreign');
 
@@ -196,7 +198,7 @@ final class DeviceModelNormalizationPr1Test extends TestCase
         $response = $this->getJson('/api/v1/admin/device-models/'.$fx['model'].'/resolved-specs')->assertOk();
         $response->assertJsonStructure([
             'data' => [
-                'variants' => [['id', 'name', 'variant_key']],
+                'variants' => [['id', 'name', 'variant_key', 'ram', 'storage']],
                 'resolved' => [
                     'device_model_id',
                     'variant_known',
@@ -208,6 +210,8 @@ final class DeviceModelNormalizationPr1Test extends TestCase
             ],
         ]);
         $this->assertSame([$active->id], array_column($response->json('data.variants'), 'id'));
+        $this->assertSame('6 GB', $response->json('data.variants.0.ram'));
+        $this->assertSame('128 GB', $response->json('data.variants.0.storage'));
         $this->getJson('/api/v1/admin/device-models/'.$fx['model'].'/resolved-specs?variant_id='.$foreign->id)->assertStatus(422);
     }
 

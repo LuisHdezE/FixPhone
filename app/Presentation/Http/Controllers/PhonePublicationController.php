@@ -18,7 +18,8 @@ final class PhonePublicationController extends Controller
             'description' => $item->description,
             'price_minor' => $item->sale_price_amount_minor,
             'currency' => $item->currency_code, 'image_url' => $item->main_image_url,
-            'published' => $item->publication_status === 'publicado',
+            'published' => $item->publication_status === 'publicado'
+                && ($item->metadata['destination'] ?? null) === 'Direct Sale',
             'stock_quantity' => $item->stock_quantity,
             'destination' => $item->metadata['destination'] ?? null,
         ];
@@ -44,7 +45,7 @@ final class PhonePublicationController extends Controller
             $item = InventoryItem::query()->whereIn('item_type', ['device', 'used_phone'])->whereKey($id)->lockForUpdate()->firstOrFail();
             $destination = $item->metadata['destination'] ?? null;
             if ($data['published']) {
-                if (($destination !== 'Direct Sale' && $item->inventory_purpose !== 'sell_as_used_phone')
+                if ($destination !== 'Direct Sale'
                     || !$item->is_sellable || $item->stock_quantity < 1 || empty($data['price_minor'])
                     || in_array($item->operational_status, ['vendido', 'sold', 'descartado'], true)
                     || in_array($item->dismantling_status, ['partial', 'exhausted'], true)) {

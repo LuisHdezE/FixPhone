@@ -10,6 +10,14 @@ final class StorefrontCatalog
         return InventoryItem::query()->where('publication_status', 'publicado')
             ->where('is_sellable', true)->where('stock_quantity', '>', 0)
             ->where('sale_price_amount_minor', '>', 0)
+            // A device is a phone listing only when its explicit routing destination is Direct Sale.
+            // Donors and pending-evaluation devices must never leak into the full-phone catalog,
+            // even when a legacy purpose or stale publication flag says otherwise.
+            ->where(function ($query): void {
+                $query->whereNotIn('item_type', ['device', 'used_phone'])
+                    ->orWhereNull('metadata->destination')
+                    ->orWhere('metadata->destination', 'Direct Sale');
+            })
             ->where(function ($query): void {
                 $query->whereIn('inventory_purpose', ['sell_as_used_phone', 'sell_as_spare_part'])
                     ->orWhere('metadata->destination', 'Direct Sale');
