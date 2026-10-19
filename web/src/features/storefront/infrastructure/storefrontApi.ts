@@ -5,7 +5,13 @@ export interface CartLine {
   product_id: string; title: string; quantity: number; stock_quantity: number;
   image_url: string | null; available: boolean; unit_price_minor: number; currency_code: string;
 }
+export interface StoreCheckoutOrder {
+  id: string; order_number: string; status: string; total_amount_minor: number;
+  currency_code: string; external_reference: string; reservation_expires_at: string;
+  payment_initiated: false; next_step: 'payment_provider';
+}
 export interface StoreCredentials { name?: string; email: string; password: string; password_confirmation?: string; }
+
 export async function readStoreResponse<T>(response: Response): Promise<T> {
   const body = await response.json() as { data: T; errors?: Record<string, string[]>; detail?: string; message?: string };
   if (!response.ok) throw new Error(response.status === 401 ? 'Correo o contraseña incorrectos.' :
@@ -26,6 +32,12 @@ export async function cartRequest(method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 
     ...(method === 'POST' || method === 'PATCH' ? { body: JSON.stringify({ product_id: product, quantity }) } : {}),
   }));
   return result.lines;
+}
+export async function startStoreCheckout(idempotencyKey: string): Promise<StoreCheckoutOrder> {
+  return readStoreResponse<StoreCheckoutOrder>(await adminFetch('/api/v1/store/checkout', {
+    method: 'POST', cache: 'no-store',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
+  }));
 }
 export function safeStoreReturn(value: unknown): string {
   return typeof value === 'string' && /^\/store(?:[/?#]|$)/.test(value) && !/[\\\r\n]/.test(value) ? value : '/store';

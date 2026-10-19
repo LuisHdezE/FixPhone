@@ -184,12 +184,18 @@ final class OperationalInventoryController extends Controller
 
             // Manual stock movements cannot consume quantities reserved by open
             // commercial orders. The inventory row lock serializes with order creation.
-            $committed = (int) DB::table('order_items')
+            $commercialCommitted = (int) DB::table('order_items')
                 ->join('orders', 'orders.id', '=', 'order_items.order_id')
                 ->where('order_items.inventory_item_id', $item->id)
                 ->whereIn('orders.status', ['pending', 'processing', 'ready'])
                 ->sum('order_items.quantity');
-            if ($after < $committed) {
+            $storefrontCommitted = (int) DB::table('storefront_order_items')
+                ->join('storefront_orders', 'storefront_orders.id', '=', 'storefront_order_items.order_id')
+                ->where('storefront_order_items.inventory_item_id', $item->id)
+                ->where('storefront_orders.status', 'awaiting_payment')
+                ->where('storefront_orders.reservation_expires_at', '>', now())
+                ->sum('storefront_order_items.quantity');
+            if ($after < $commercialCommitted + $storefrontCommitted) {
                 abort(409, 'El ajuste dejaría menos unidades que las comprometidas en pedidos abiertos.');
             }
 
