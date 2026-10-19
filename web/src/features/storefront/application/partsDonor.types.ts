@@ -4,7 +4,7 @@ export type PublicPartsDonor = {
   brand?: string | null;
   title: string;
   category: 'phones_for_parts';
-  fault_type: 'icloud' | 'no_signal' | 'board' | 'other';
+  fault_type: 'icloud' | 'no_signal' | 'board' | 'other' | 'no_account_lock';
   fault_label: string;
   screen_condition: 'good' | 'damaged' | 'unknown';
   power_state: 'yes' | 'no' | 'unknown';

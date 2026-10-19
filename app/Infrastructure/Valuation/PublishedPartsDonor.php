@@ -45,6 +45,7 @@ final class PublishedPartsDonor
             'fault_type' => $valuation->fault_type,
             'fault_label' => match ($valuation->fault_type) {
                 'icloud' => 'Bloqueo de activación iCloud',
+                'no_account_lock' => 'Sin bloqueo de cuenta',
                 'no_signal' => 'Sin señal móvil',
                 'board' => 'Falla de placa',
                 default => 'Equipo con falla',
