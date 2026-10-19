@@ -25,6 +25,7 @@ type IntakeFormState = {
   deviceModelVariantId: string;
   serialOrImei: string;
   storageCapacityId: string;
+  ramCapacityId: string;
   colorId: string;
   conditionId: string;
   powersOn: DevicePowerState;
@@ -128,6 +129,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const brands = useMemo(() => masterDataProvider.getBrands().filter((brand) => brand.active), [masterDataProvider]);
   const deviceModels = useMemo(() => masterDataProvider.getDeviceModels().filter((model) => model.active), [masterDataProvider]);
   const storageCapacities = useMemo(() => masterDataProvider.getStorageCapacities().filter((storage) => storage.active), [masterDataProvider]);
+  const ramCapacities = useMemo(() => masterDataProvider.getRamCapacities().filter((capacity) => capacity.active), [masterDataProvider]);
   const colors = useMemo(() => masterDataProvider.getColors().filter((color) => color.active), [masterDataProvider]);
   const conditions = useMemo(() => masterDataProvider.getConditions().filter((condition) => condition.active), [masterDataProvider]);
 
@@ -139,6 +141,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         deviceModelVariantId: '',
         serialOrImei: '',
         storageCapacityId: view.defaults.storageCapacityId,
+        ramCapacityId: '',
         colorId: view.defaults.colorId,
         conditionId: view.defaults.conditionId,
         powersOn: view.defaults.powersOn,
@@ -165,6 +168,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       deviceModelVariantId: editDevice.deviceModelVariantId ?? '',
       serialOrImei: editDevice.serialOrImei === '—' ? '' : editDevice.serialOrImei,
       storageCapacityId: catalogId(editDevice.storageCapacityId, editDevice.storage, storageCapacities, (storage) => storage.label),
+      ramCapacityId: editDevice.ramCapacityId ?? '',
       colorId: catalogId(editDevice.colorId, editDevice.color, colors, (color) => color.name),
       conditionId,
       powersOn: editDevice.powersOn,
@@ -223,6 +227,10 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     { value: '', label: view.placeholders.storageCapacityId },
     ...storageCapacities.map((storage) => ({ value: storage.id, label: storage.label })),
   ], [storageCapacities, view.placeholders.storageCapacityId]);
+  const ramOptions = useMemo(() => [
+    { value: '', label: 'Seleccionar RAM' },
+    ...ramCapacities.map((capacity) => ({ value: capacity.id, label: capacity.label })),
+  ], [ramCapacities]);
 
   const colorOptions = useMemo(() => [
     { value: '', label: view.placeholders.colorId },
@@ -309,6 +317,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const selectedBrand = brands.find((brand) => brand.id === form.brandId);
   const selectedModel = deviceModels.find((model) => model.id === form.deviceModelId);
   const selectedStorage = storageCapacities.find((storage) => storage.id === form.storageCapacityId);
+  const selectedRam = ramCapacities.find((capacity) => capacity.id === form.ramCapacityId);
   const selectedColor = colors.find((color) => color.id === form.colorId);
   const selectedCondition = conditions.find((condition) => condition.id === form.conditionId);
 
@@ -341,6 +350,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
           brandId: selectedBrand.id,
           deviceModelId: selectedModel.id,
           deviceModelVariantId: form.deviceModelVariantId || null,
+          ramCapacityId: selectedRam?.id ?? null,
           storageCapacityId: selectedStorage?.id ?? null,
           colorId: selectedColor?.id ?? null,
           conditionId: selectedCondition?.id ?? null,
@@ -383,6 +393,8 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
           serial_or_imei: form.serialOrImei.trim() || null,
           storage_capacity_id: selectedStorage?.id ?? null,
           storage: selectedStorage?.label ?? null,
+          ram_capacity_id: selectedRam?.id ?? null,
+          ram: selectedRam?.label ?? null,
           color_id: selectedColor?.id ?? null,
           color: selectedColor?.name ?? null,
           condition_id: selectedCondition?.id ?? null,
@@ -472,6 +484,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
             value={form.deviceModelVariantId}
           />
         </div>
+        {selectedModel && variantOptions.length === 0 && <p className="mt-1 text-[11px] text-slate-500">Para crear variantes: <a className="font-medium text-[var(--theme-primary)] underline" href="/admin/master-data/device-models" target="_blank" rel="noreferrer">Catálogos → Modelos → Ficha técnica y variantes</a>.</p>}
         {selectedModel && (
           <div className="mt-2 rounded-md border border-slate-200 bg-slate-50/70 p-2 text-xs">
             <div className="flex items-center justify-between text-slate-700">
@@ -504,8 +517,9 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
       </fieldset>
       <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2">
         <legend className="text-[11px] font-semibold text-slate-900">Identificación</legend>
-        <div className="grid gap-2 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,1fr)]">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))]">
           <TextField id="device-identity" label={view.fields.serialOrImei} onChange={(value) => setField('serialOrImei', value)} placeholder="IMEI o número de serie" value={form.serialOrImei} />
+          <SelectField id="device-ram" label="RAM" onChange={(value) => setField('ramCapacityId', value)} options={ramOptions} value={form.ramCapacityId} />
           <SelectField id="device-storage" label={view.fields.storageCapacityId} onChange={(value) => setField('storageCapacityId', value)} options={storageOptions} value={form.storageCapacityId} />
           <SelectField id="device-color" label={view.fields.colorId} onChange={(value) => setField('colorId', value)} options={colorOptions} value={form.colorId} />
         </div>
