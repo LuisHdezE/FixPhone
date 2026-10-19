@@ -118,6 +118,21 @@ final class InventoryDeviceCrudTest extends TestCase
         $this->assertSame('FXP-9001', $device->fresh()->sku);
     }
 
+    public function test_owner_can_save_the_devices_physical_ram_capacity(): void
+    {
+        $this->signIn('owner');
+        $device = $this->device();
+        $ram = MasterDataEntry::query()->create([
+            'id' => 'ram-test-'.Str::lower(Str::random(8)), 'kind' => 'ramCapacities',
+            'payload' => ['label' => '8 GB', 'active' => true],
+        ]);
+
+        $this->patchJson('/api/v1/admin/inventory/'.$device->id, [
+            ...$this->updatePayload(), 'ram_capacity_id' => $ram->id,
+        ])->assertOk()->assertJsonPath('data.metadata.ram_capacity_id', $ram->id)
+            ->assertJsonPath('data.metadata.ram', '8 GB');
+    }
+
     public function test_edit_rejects_model_of_another_brand_and_unknown_ids(): void
     {
         $this->signIn('owner');

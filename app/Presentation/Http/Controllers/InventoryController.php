@@ -66,6 +66,12 @@ class InventoryController extends Controller
             'metadata' => 'nullable|array',
             'device_model_id' => ['nullable', 'string', 'max:120'],
             'device_model_variant_id' => ['nullable', 'string', 'max:40'],
+            'metadata' => ['nullable', 'array', function (string $attribute, mixed $value, \Closure $fail): void {
+                $ramId = $value['ram_capacity_id'] ?? null;
+                if ($ramId !== null && (!is_string($ramId) || mb_strlen($ramId) > 120)) {
+                    $fail('La capacidad de RAM seleccionada no es válida.');
+                }
+            }],
             'ownership_type' => ['sometimes', 'required', 'in:owned,consignment'],
             'consignor_id' => ['nullable', 'string', Rule::exists('consignors', 'id')],
         ]);
@@ -113,6 +119,10 @@ class InventoryController extends Controller
             }
             $validated['device_model_id'] = $modelId;
             $validated['device_model_variant_id'] = $variantId;
+            $guard->assertCapacities(
+                is_string($validated['metadata']['ram_capacity_id'] ?? null) ? $validated['metadata']['ram_capacity_id'] : null,
+                is_string($validated['metadata']['storage_capacity_id'] ?? null) ? $validated['metadata']['storage_capacity_id'] : null,
+            );
         }
 
         $item = DB::transaction(function () use ($validated, $request) {

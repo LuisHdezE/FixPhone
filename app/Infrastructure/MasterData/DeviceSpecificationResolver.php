@@ -72,6 +72,8 @@ final class DeviceSpecificationResolver
         $meta = is_array($item->metadata) ? $item->metadata : [];
         $physical = [
             'serial_or_imei' => $meta['serial_or_imei'] ?? null,
+            'ram_capacity_id' => $meta['ram_capacity_id'] ?? null,
+            'ram' => $meta['ram'] ?? null,
             'storage_capacity_id' => $meta['storage_capacity_id'] ?? null,
             'storage' => $meta['storage'] ?? null,
             'color' => $meta['color'] ?? null,
@@ -97,6 +99,14 @@ final class DeviceSpecificationResolver
         $consistency = [];
         $variant = $inherited['variant'];
         if ($variant !== null) {
+            $variantRamId = DeviceModelVariant::query()->whereKey($variant['id'])->value('ram_capacity_id');
+            if ($variantRamId !== null && $physical['ram_capacity_id'] !== null
+                && $variantRamId !== $physical['ram_capacity_id']) {
+                $consistency[] = [
+                    'field' => 'ram',
+                    'message' => 'La RAM verificada en la unidad no coincide con la de su variante.',
+                ];
+            }
             $variantStorageId = DeviceModelVariant::query()->whereKey($variant['id'])->value('storage_capacity_id');
             if ($variantStorageId !== null && $physical['storage_capacity_id'] !== null
                 && $variantStorageId !== $physical['storage_capacity_id']) {

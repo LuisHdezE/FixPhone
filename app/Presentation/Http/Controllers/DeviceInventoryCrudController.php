@@ -20,7 +20,7 @@ use Illuminate\Validation\ValidationException;
 final class DeviceInventoryCrudController extends Controller
 {
     private const EDITABLE = [
-        'brand_id', 'device_model_id', 'device_model_variant_id', 'storage_capacity_id', 'color_id', 'condition_id',
+        'brand_id', 'device_model_id', 'device_model_variant_id', 'ram_capacity_id', 'storage_capacity_id', 'color_id', 'condition_id',
         'description', 'serial_or_imei', 'powers_on', 'account_lock',
         'acquisition_source', 'cost_amount_minor', 'currency_code',
         'ownership_type', 'consignor_id', 'ownership_correction_reason',
@@ -35,6 +35,7 @@ final class DeviceInventoryCrudController extends Controller
             'brand_id' => ['required', 'string'],
             'device_model_id' => ['required', 'string'],
             'device_model_variant_id' => ['nullable', 'string', 'max:40'],
+            'ram_capacity_id' => ['nullable', 'string'],
             'storage_capacity_id' => ['nullable', 'string'],
             'color_id' => ['nullable', 'string'],
             'condition_id' => ['nullable', 'string'],
@@ -71,6 +72,9 @@ final class DeviceInventoryCrudController extends Controller
             $currentStorageId = $item->metadata['storage_capacity_id'] ?? null;
             $newStorageId = ($values['storage_capacity_id'] ?? null) ?: null;
             $storageChanged = array_key_exists('storage_capacity_id', $values) && $currentStorageId !== $newStorageId;
+            $currentRamId = $item->metadata['ram_capacity_id'] ?? null;
+            $newRamId = ($values['ram_capacity_id'] ?? null) ?: null;
+            $ramChanged = array_key_exists('ram_capacity_id', $values) && $currentRamId !== $newRamId;
 
             $currentColorId = $item->metadata['color_id'] ?? null;
             $newColorId = ($values['color_id'] ?? null) ?: null;
@@ -114,6 +118,7 @@ final class DeviceInventoryCrudController extends Controller
 
             $hasChanges = $identityChanged
                 || $storageChanged
+                || $ramChanged
                 || $colorChanged
                 || $conditionChanged
                 || $serialChanged
@@ -190,6 +195,7 @@ final class DeviceInventoryCrudController extends Controller
                 ]);
             }
             $storage = $this->optionalMasterItem('storageCapacities', $values['storage_capacity_id'] ?? null, 'storage_capacity_id');
+            $ram = $this->optionalMasterItem('ramCapacities', $values['ram_capacity_id'] ?? null, 'ram_capacity_id');
 
             app(DeviceModelReferenceGuard::class)->assertDeviceIdentity(
                 $values['device_model_id'], $variantId, $values['brand_id'],
@@ -204,9 +210,14 @@ final class DeviceInventoryCrudController extends Controller
             $metadata['device_model_id'] = $values['device_model_id'];
             $metadata['device_model_variant_id'] = $variantId;
             if ($storage !== null) {
-                $metadata['storage_capacity_id'] = $values['storage_capacity_id'] ?? null;
+                $metadata['storage_capacity_id'] = $values['storage_capacity_id'];
                 $metadata['storage'] = $storage['label'];
                 $metadata['storage_capacity'] = null;
+            }
+            if ($ram !== null) {
+                $metadata['ram_capacity_id'] = $values['ram_capacity_id'];
+                $metadata['ram'] = $ram['label'];
+                $metadata['ram_capacity'] = null;
             }
             if ($color !== null) {
                 $metadata['color_id'] = $values['color_id'] ?? null;

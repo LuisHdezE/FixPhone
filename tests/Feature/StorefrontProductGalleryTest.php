@@ -105,6 +105,28 @@ final class StorefrontProductGalleryTest extends TestCase
         $this->assertSame('PROMPT-0001', $item['promotional_assets'][0]['prompt_code']);
     }
 
+    public function test_devices_marked_for_parts_are_not_published_as_used_phones(): void
+    {
+        $donor = $this->createDevice([
+            'sku' => 'FXP-PARTS-001',
+            'inventory_purpose' => 'sell_as_spare_part',
+            'metadata' => ['destination' => 'Donor'],
+        ]);
+        $part = InventoryItem::query()->create([
+            'sku' => 'PART-001', 'title' => 'Pantalla Samsung', 'item_type' => 'spare_part',
+            'operational_status' => 'en_stock', 'publication_status' => 'publicado',
+            'inventory_purpose' => 'sell_as_spare_part', 'is_sellable' => true,
+            'stock_quantity' => 1, 'sale_price_amount_minor' => 10000,
+            'currency_code' => 'UYU', 'metadata' => [],
+        ]);
+
+        $response = $this->getJson('/api/v1/store/products')->assertOk();
+        $ids = collect($response->json())->pluck('id');
+
+        $this->assertFalse($ids->contains($donor->id));
+        $this->assertTrue($ids->contains($part->id));
+    }
+
     public function test_prepared_uploaded_and_discarded_assets_are_never_exposed(): void
     {
         $device = $this->createDevice();

@@ -57,6 +57,7 @@ export interface InventoryDeviceEditDto {
   deviceModelId: string;
   deviceModelVariantId?: string | null;
   storageCapacityId: string | null;
+  ramCapacityId: string | null;
   colorId: string | null;
   conditionId: string | null;
   description: string;
@@ -76,6 +77,7 @@ export interface InventoryDeviceListItemDto {
   deviceModelId: string | null;
   deviceModelVariantId: string | null;
   storageCapacityId: string | null;
+  ramCapacityId: string | null;
   colorId: string | null;
   conditionId: string | null;
   title: string;
@@ -150,6 +152,8 @@ export interface DeviceInventorySpecsResponseDto {
     inherited: ModelResolvedSpecsDto | null;
     physical: {
       serial_or_imei: string | null;
+      ram_capacity_id: string | null;
+      ram: string | null;
       storage_capacity_id: string | null;
       storage: string | null;
       color: string | null;
@@ -164,7 +168,7 @@ export interface DeviceInventorySpecsResponseDto {
 
 // Static presentation reference data is not a persisted inventory record.
 export type InventoryDeviceReferenceDto = Omit<InventoryDeviceListItemDto,
-  'operationalStatus' | 'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'phoneListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'deviceModelVariantId' | 'storageCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
+  'operationalStatus' | 'inventoryId' | 'isDonor' | 'dismantlingStatus' | 'publicListingStatus' | 'phoneListingStatus' | 'publicValuationId' | 'title' | 'description' | 'acquisitionCostMinor' | 'currencyCode' | 'brandId' | 'deviceModelId' | 'deviceModelVariantId' | 'storageCapacityId' | 'ramCapacityId' | 'colorId' | 'conditionId' | 'ownershipType' | 'consignorId'>;
 
 export interface InventoryFilterOptionDto {
   value: string;
