@@ -82,6 +82,18 @@ final class PartsDonorStorefrontTest extends TestCase
         $this->assertSame(1, InventoryItem::query()->count());
     }
 
+    public function test_non_iphone_valuation_can_record_that_there_is_no_account_lock(): void
+    {
+        $this->login();
+        $created = $this->postJson('/api/v1/admin/valuations', [
+            ...$this->valuation(null),
+            'model_name' => 'Xiaomi Redmi 9A',
+            'fault_type' => 'no_account_lock',
+        ])->assertCreated();
+
+        $this->assertSame('no_account_lock', $created->json('data.fault_type'));
+    }
+
     public function test_publication_requires_real_inventory_provenance_photo_and_adequate_description(): void
     {
         $this->login();

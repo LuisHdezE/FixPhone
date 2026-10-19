@@ -68,7 +68,7 @@ final class DeviceValuationController extends Controller
                 Rule::unique('device_valuations', 'inventory_item_id')->ignore(request()->route('id')),
             ],
             'model_name' => [$required, 'string', 'max:120'],
-            'fault_type' => [$required, Rule::in(['icloud', 'no_signal', 'board', 'other'])],
+            'fault_type' => [$required, Rule::in(['icloud', 'no_signal', 'board', 'other', 'no_account_lock'])],
             'screen_condition' => ['sometimes', Rule::in(['good', 'damaged', 'unknown'])],
             'power_state' => ['sometimes', Rule::in(['yes', 'no', 'unknown'])],
             'estimated_min_minor' => ['sometimes', 'nullable', 'integer', 'min:0'],

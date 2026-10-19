@@ -45,7 +45,7 @@ const icloudEstimates: Record<string, readonly [number, number]> = {
   'iPhone 12': [3200, 4500],
 };
 const faults: Record<FaultType, string> = {
-  icloud: 'Bloqueo de activación iCloud', no_signal: 'Sin señal', board: 'Falla de placa', other: 'Otra falla',
+  icloud: 'Bloqueo de activación iCloud', no_account_lock: 'Sin bloqueo de cuenta', no_signal: 'Sin señal', board: 'Falla de placa', other: 'Otra falla',
 };
 const statuses: Record<PublicationStatus, string> = {
   draft: 'Borrador', published: 'Publicado', closed: 'Cerrado',
@@ -134,6 +134,8 @@ export function ValuPhonePage() {
   const hasSession = Boolean(adminToken());
   const reference = form.fault === 'icloud' && form.screen === 'good' ? icloudEstimates[form.model] : undefined;
   const selectedDevice = devices.find((device) => device.id === form.inventoryId);
+  const isIphone = /^iphone\b/i.test(form.model.trim());
+  const availableFaults = Object.entries(faults).filter(([value]) => isIphone || value !== 'icloud');
   const checks = publicationChecks(form, Boolean(id), selectedDevice);
   const readyCount = checks.filter((check) => check.ok).length;
   const savedPublicItem = id ? items.find((item) => item.id === id && item.public_listing_status === 'published') : undefined;
@@ -195,6 +197,15 @@ export function ValuPhonePage() {
       {error ? <p className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800" role="alert">{error}</p> : null}
       <SuccessToast message={notice} />
       <SurfaceCard>
+        <div className="mb-4 rounded-md bg-slate-50 p-3 text-xs text-slate-700">
+          <h3 className="font-bold text-slate-900">Cómo completar una valoración</h3>
+          <ol className="mt-1 grid gap-1 sm:grid-cols-2">
+            <li><strong>1.</strong> Vinculá el equipo del inventario si ya está marcado para repuestos.</li>
+            <li><strong>2.</strong> Registrá falla, estado y precios; guardá la ficha como borrador.</li>
+            <li><strong>3.</strong> Para mostrarlo en la tienda, agregá foto real, descripción y confirmá procedencia.</li>
+            <li><strong>4.</strong> Guardá como publicado. El texto de Facebook se copia y publica manualmente.</li>
+          </ol>
+        </div>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{id ? 'Editar valoración' : 'Nueva valoración'}</h2>
           <button className="rounded-md border px-2 py-1 text-xs" type="button" onClick={() => { setId(null); setForm(initial); setNotice(''); }}>Nueva ficha</button>
@@ -204,25 +215,36 @@ export function ValuPhonePage() {
             <label className={label}>Equipo ya registrado en inventario (opcional)
               <select className={input} value={form.inventoryId} onChange={(e) => {
                 const device = devices.find((value) => value.id === e.target.value);
-                setForm((current) => ({ ...current, inventoryId: e.target.value, model: device?.model || current.model }));
+                setForm((current) => {
+                  const model = device?.model || current.model;
+                  return { ...current, inventoryId: e.target.value, model,
+                    fault: /^iphone\b/i.test(model.trim()) ? current.fault : current.fault === 'icloud' ? 'no_account_lock' : current.fault };
+                });
               }}>
                 <option value="">No vinculado: valorar sin crear inventario</option>
                 {devices.map((d) => <option key={d.id} value={d.id}>{d.sku || d.id.slice(0, 8)} · {d.model || d.title}</option>)}
               </select>
             </label>
             <label className={label}>Modelo (iPhone 6 al 17, todas las variantes)
-              <select aria-label="Seleccionar modelo de iPhone" className={input} value={iphoneModels.includes(form.model) ? form.model : '__other__'} onChange={(e) => change('model', e.target.value === '__other__' ? '' : e.target.value)}>
+              <select aria-label="Seleccionar modelo de iPhone" className={input} value={iphoneModels.includes(form.model) ? form.model : '__other__'} onChange={(e) => {
+                const model = e.target.value === '__other__' ? '' : e.target.value;
+                setForm((current) => ({ ...current, model, fault: /^iphone\b/i.test(model) ? current.fault : current.fault === 'icloud' ? 'no_account_lock' : current.fault }));
+              }}>
                 {iphoneModels.map((m) => <option key={m} value={m}>{m}</option>)}
                 <option value="__other__">Otro modelo / modelo futuro…</option>
               </select>
               {!iphoneModels.includes(form.model) ? (
-                <input aria-label="Escribir otro modelo de teléfono" className={input} placeholder="Ej.: iPhone 18 o un modelo especial" required value={form.model} onChange={(e) => change('model', e.target.value)} />
+                <input aria-label="Escribir otro modelo de teléfono" className={input} placeholder="Ej.: iPhone 18 o Redmi 9A" required value={form.model} onChange={(e) => {
+                  const model = e.target.value;
+                  setForm((current) => ({ ...current, model, fault: /^iphone\b/i.test(model.trim()) ? current.fault : current.fault === 'icloud' ? 'no_account_lock' : current.fault }));
+                }} />
               ) : null}
             </label>
-            <label className={label}>Falla
+            <label className={label}>{isIphone ? 'Falla o bloqueo de cuenta' : 'Falla / cuenta (sin iCloud)'}
               <select className={input} value={form.fault} onChange={(e) => change('fault', e.target.value as FaultType)}>
-                {Object.entries(faults).map(([value, name]) => <option key={value} value={value}>{name}</option>)}
+                {availableFaults.map(([value, name]) => <option key={value} value={value}>{name}</option>)}
               </select>
+              <span className="font-normal text-slate-500">iCloud aplica a iPhone. Para otros equipos elegí “Sin bloqueo de cuenta” si corresponde.</span>
             </label>
             <label className={label}>Pantalla
               <select className={input} value={form.screen} onChange={(e) => change('screen', e.target.value as ScreenCondition)}>
@@ -266,8 +288,8 @@ export function ValuPhonePage() {
           </div>
           <section className="mt-4 grid gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Ficha pública para compartir en Facebook</h3>
-              <p className="mt-1 text-xs text-slate-700">Esta publicación es independiente del estado del anuncio de Facebook. No se activa hasta que la autorices y cumplas los requisitos de seguridad.</p>
+              <h3 className="text-sm font-bold text-slate-900">Paso 3: ficha de la tienda (opcional)</h3>
+              <p className="mt-1 text-xs text-slate-700">Completá esta parte solo si querés que la unidad aparezca en la tienda FixPhone. En borrador queda privada.</p>
             </div>
             {id ? <ValuationPhotoUpload key={id} valuationId={id} currentPrimaryUrl={form.publicImageUrl} onPrimaryChange={(url) => change('publicImageUrl', url)} /> : (
               <p className="rounded bg-white p-2 text-xs text-slate-700">Primero guardá esta valoración como <strong>borrador</strong>. Después podrás subir fotografías directamente a Cloudflare desde aquí.</p>
