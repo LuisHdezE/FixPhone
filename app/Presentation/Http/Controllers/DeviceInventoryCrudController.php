@@ -209,14 +209,14 @@ final class DeviceInventoryCrudController extends Controller
             $metadata['brand_id'] = $values['brand_id'];
             $metadata['device_model_id'] = $values['device_model_id'];
             $metadata['device_model_variant_id'] = $variantId;
-            if (array_key_exists('storage_capacity_id', $values)) {
-                $metadata['storage_capacity_id'] = $storage ? $values['storage_capacity_id'] : null;
-                $metadata['storage'] = $storage['label'] ?? null;
+            if ($storage !== null) {
+                $metadata['storage_capacity_id'] = $values['storage_capacity_id'];
+                $metadata['storage'] = $storage['label'];
                 $metadata['storage_capacity'] = null;
             }
-            if (array_key_exists('ram_capacity_id', $values)) {
-                $metadata['ram_capacity_id'] = $ram ? $values['ram_capacity_id'] : null;
-                $metadata['ram'] = $ram['label'] ?? null;
+            if ($ram !== null) {
+                $metadata['ram_capacity_id'] = $values['ram_capacity_id'];
+                $metadata['ram'] = $ram['label'];
                 $metadata['ram_capacity'] = null;
             }
             if ($color !== null) {

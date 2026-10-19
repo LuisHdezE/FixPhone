@@ -123,13 +123,13 @@ final class InventoryDeviceCrudTest extends TestCase
         $this->signIn('owner');
         $device = $this->device();
         MasterDataEntry::query()->create([
-            'id' => 'ram-8gb', 'kind' => 'ramCapacities',
-            'payload' => ['id' => 'ram-8gb', 'label' => '8 GB', 'active' => true],
+            'id' => 'ram-test-'.Str::lower(Str::random(8)), 'kind' => 'ramCapacities',
+            'payload' => ['label' => '8 GB', 'active' => true],
         ]);
 
         $this->patchJson('/api/v1/admin/inventory/'.$device->id, [
-            ...$this->updatePayload(), 'ram_capacity_id' => 'ram-8gb',
-        ])->assertOk()->assertJsonPath('data.metadata.ram_capacity_id', 'ram-8gb')
+            ...$this->updatePayload(), 'ram_capacity_id' => $ram->id,
+        ])->assertOk()->assertJsonPath('data.metadata.ram_capacity_id', $ram->id)
             ->assertJsonPath('data.metadata.ram', '8 GB');
     }
 
