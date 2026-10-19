@@ -338,7 +338,7 @@ final class InventoryItemPromotionalAssetsController extends Controller
         return response()->json(['data' => $asset->fresh(['sourcePhoto'])->publicData()]);
     }
 
-    public function discard(string $id, string $assetId, R2Presigner $signer): JsonResponse
+    public function discard(Request $request, string $id, string $assetId, R2Presigner $signer): JsonResponse
     {
         $this->item($id);
 
@@ -346,8 +346,17 @@ final class InventoryItemPromotionalAssetsController extends Controller
             ->where('inventory_item_id', $id)
             ->findOrFail($assetId);
 
-        // Delete from R2 to prevent dangling storage waste if already uploaded
-        if ($asset->object_key && $asset->media_storage_profile_id) {
+        // Idempotency: if already discarded, return without repeating side effects or audit
+        if ($asset->status === 'discarded') {
+            return response()->json(['data' => $asset->fresh(['sourcePhoto'])->publicData()]);
+        }
+
+        $previousStatus = $asset->status;
+
+        // For approved assets ("Retirar de la tienda"), preserve the R2 object to retain full
+        // historical auditability, prompt snapshots, approval metadata, and visual traceability.
+        // For unapproved assets (e.g. uploaded/prepared), clean up R2 storage to prevent dangling storage waste.
+        if ($previousStatus !== 'approved' && $asset->object_key && $asset->media_storage_profile_id) {
             $profile = MediaStorageProfile::query()->find($asset->media_storage_profile_id);
             if ($profile) {
                 try {
@@ -369,6 +378,29 @@ final class InventoryItemPromotionalAssetsController extends Controller
 
         $asset->status = 'discarded';
         $asset->save();
+
+        // Explicit retirement and discard audit
+        DB::table('audit_events')->insert([
+            'id' => (string) Str::ulid(),
+            'event_type' => 'inventory.promotional_asset_discarded',
+            'action' => 'discard',
+            'entity_type' => 'InventoryItemPromotionalAsset',
+            'entity_id' => $asset->id,
+            'actor_type' => 'user',
+            'actor_id' => (string) $request->user()?->getAuthIdentifier(),
+            'correlation_id' => $request->attributes->get('correlation_id'),
+            'metadata' => json_encode([
+                'inventory_item_id' => $id,
+                'promotional_asset_id' => $asset->id,
+                'previous_status' => $previousStatus,
+                'new_status' => 'discarded',
+                'prompt_code' => $asset->prompt_code,
+                'prompt_version' => $asset->prompt_version,
+                'source_photo_id' => $asset->source_photo_id,
+                'occurred_at' => now()->toIso8601String(),
+            ], JSON_THROW_ON_ERROR),
+            'occurred_at' => now(),
+        ]);
 
         return response()->json(['data' => $asset->fresh(['sourcePhoto'])->publicData()]);
     }

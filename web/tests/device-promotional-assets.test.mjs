@@ -332,4 +332,77 @@ test('DevicePhotoGallery renders promotional assets summary, limits display, and
   assert.equal(res.data[1].status, 'uploaded');
 });
 
+test('DevicePhotoGallery renders compact retire action for approved assets, confirmation modal, and updates status to discarded', async () => {
+  const gallerySource = read('../src/features/inventory/presentation/DevicePhotoGallery.tsx');
+
+  // 1. Static verifications for retire action and confirmation dialog
+  assert.match(gallerySource, /data-retire-promotional-asset-button/);
+  assert.match(gallerySource, /title="Retirar de la tienda"/);
+  assert.match(gallerySource, /asset\.status === 'approved'/);
+  assert.match(gallerySource, /data-confirm-retire-modal/);
+  assert.match(gallerySource, /¿Retirar esta publicidad de la tienda\?/);
+  assert.match(gallerySource, /La publicidad dejará de mostrarse públicamente/);
+  assert.match(gallerySource, /Las fotos reales y las demás publicidades no serán afectadas/);
+  assert.match(gallerySource, /El registro histórico de esta publicidad se conservará/);
+  assert.match(gallerySource, /data-confirm-retire-submit-button/);
+  assert.match(gallerySource, /Retirar publicidad/);
+  assert.match(gallerySource, /Cancelar/);
+  assert.match(gallerySource, /data-retire-asset-feedback/);
+  assert.match(gallerySource, /Publicidad retirada de la tienda\./);
+
+  // 2. Behavioral simulation of retiring an approved promotional asset
+  let discardCalls = 0;
+  let discardedAssetId = null;
+  let currentSummary = {
+    total: 3,
+    prepared: 0,
+    uploaded: 0,
+    approved: 3,
+    discarded: 0,
+    empty_prepared: 0,
+  };
+  let currentAssets = [
+    { id: 'ad-1', status: 'approved', image_url: 'https://cdn.test/ad-1.webp', prompt_code: 'PROMPT-0001' },
+    { id: 'ad-2', status: 'approved', image_url: 'https://cdn.test/ad-2.webp', prompt_code: 'PROMPT-0001' },
+    { id: 'ad-3', status: 'approved', image_url: 'https://cdn.test/ad-3.webp', prompt_code: 'PROMPT-0001' },
+  ];
+
+  const mockGateway = {
+    async list(invId) {
+      return { data: currentAssets, summary: currentSummary };
+    },
+    async discard(invId, assetId) {
+      discardCalls++;
+      discardedAssetId = assetId;
+      currentAssets = currentAssets.map((a) => (a.id === assetId ? { ...a, status: 'discarded' } : a));
+      currentSummary = {
+        ...currentSummary,
+        approved: currentSummary.approved - 1,
+        discarded: currentSummary.discarded + 1,
+      };
+      return currentAssets.find((a) => a.id === assetId);
+    },
+  };
+
+  // Initial state has 3 approved ads
+  let list = await mockGateway.list('FXP-0009');
+  assert.equal(list.summary.approved, 3);
+  assert.equal(list.summary.discarded, 0);
+
+  // Retire ad-2
+  const retired = await mockGateway.discard('FXP-0009', 'ad-2');
+  assert.equal(discardCalls, 1);
+  assert.equal(discardedAssetId, 'ad-2');
+  assert.equal(retired.status, 'discarded');
+
+  // Verify updated list and counters: approved 3 -> 2, discarded 0 -> 1
+  list = await mockGateway.list('FXP-0009');
+  assert.equal(list.summary.approved, 2);
+  assert.equal(list.summary.discarded, 1);
+  assert.equal(list.data.find((a) => a.id === 'ad-2').status, 'discarded');
+  assert.equal(list.data.find((a) => a.id === 'ad-1').status, 'approved');
+  assert.equal(list.data.find((a) => a.id === 'ad-3').status, 'approved');
+});
+
+
 
