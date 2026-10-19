@@ -15,6 +15,9 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
   const [cleaningEmpty, setCleaningEmpty] = useState(false);
   const [confirmCleanOpen, setConfirmCleanOpen] = useState(false);
   const [cleanMessage, setCleanMessage] = useState('');
+  const [retireTarget, setRetireTarget] = useState<PromotionalAsset | null>(null);
+  const [retiring, setRetiring] = useState(false);
+  const [retireMessage, setRetireMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -132,6 +135,23 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
       setCleaningEmpty(false);
     }
   }, [inventoryId, load]);
+
+  const handleRetireAsset = useCallback(async () => {
+    if (!retireTarget) return;
+    setRetiring(true);
+    setError('');
+    setRetireMessage('');
+    try {
+      await promoGateway.discard(inventoryId, retireTarget.id);
+      setRetireTarget(null);
+      setRetireMessage('Publicidad retirada de la tienda.');
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo retirar la publicidad.');
+    } finally {
+      setRetiring(false);
+    }
+  }, [inventoryId, retireTarget, load]);
 
   return (
     <fieldset className="min-w-0 border-0 border-t border-slate-100 p-0 pt-2" data-device-photo-gallery>
@@ -294,6 +314,22 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
             </div>
           )}
 
+          {retireMessage && (
+            <div
+              className="mb-2 flex items-center justify-between rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] text-emerald-800"
+              data-retire-asset-feedback
+            >
+              <span>{retireMessage}</span>
+              <button
+                type="button"
+                className="ml-2 text-emerald-600 hover:text-emerald-900"
+                onClick={() => setRetireMessage('')}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {promoSummary && promoSummary.total > promoAssets.length && (
             <p className="mb-2 text-[9px] italic text-slate-500">
               Mostrando las {promoAssets.length} publicidades principales priorizadas de {promoSummary.total}.
@@ -344,9 +380,26 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
                       ? 'Descartada'
                       : 'Preparada'}
                   </span>
-                  <span className="font-mono text-[8px] text-slate-500">
-                    {asset.prompt_code}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-mono text-[8px] text-slate-500">
+                      {asset.prompt_code}
+                    </span>
+                    {asset.status === 'approved' && (
+                      <button
+                        type="button"
+                        title="Retirar de la tienda"
+                        disabled={busy || retiring}
+                        onClick={() => setRetireTarget(asset)}
+                        className="rounded p-0.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 focus:outline-none transition"
+                        data-retire-promotional-asset-button={asset.id}
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                        </svg>
+                        <span className="sr-only">Retirar de la tienda</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -408,6 +461,49 @@ export function DevicePhotoGallery({ inventoryId }: { inventoryId: string }) {
                 data-confirm-clean-submit-button
               >
                 {cleaningEmpty ? 'Eliminando...' : 'Eliminar preparaciones vacías'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {retireTarget && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[80] grid place-items-center bg-black/60 p-4"
+          data-confirm-retire-modal
+        >
+          <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
+            <h3 className="text-sm font-semibold text-slate-900">
+              ¿Retirar esta publicidad de la tienda?
+            </h3>
+            <p className="mt-2 text-xs text-slate-600">
+              La publicidad dejará de mostrarse públicamente.
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Las fotos reales y las demás publicidades no serán afectadas.
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              El registro histórico de esta publicidad se conservará.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                onClick={() => setRetireTarget(null)}
+                disabled={retiring}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="rounded bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+                onClick={() => void handleRetireAsset()}
+                disabled={retiring}
+                data-confirm-retire-submit-button
+              >
+                {retiring ? 'Retirando...' : 'Retirar publicidad'}
               </button>
             </div>
           </div>

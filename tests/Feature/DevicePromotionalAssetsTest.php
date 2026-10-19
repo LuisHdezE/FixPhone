@@ -1066,6 +1066,147 @@ PROMPT_TEXT;
         $this->assertEquals(0, $res->json('remaining_count'));
         $this->assertEquals(0, InventoryItemPromotionalAsset::query()->where('inventory_item_id', $device->id)->count());
     }
+
+    public function test_retire_approved_promotional_asset_flow(): void
+    {
+        $admin = $this->auth('owner');
+        $profile = $this->profile();
+        $this->ensurePrompt();
+        $device = $this->device();
+
+        // 4 real confirmed photos
+        $photos = [];
+        for ($i = 1; $i <= 4; $i++) {
+            $photos[] = InventoryItemPhoto::query()->create([
+                'id' => (string) Str::ulid(),
+                'inventory_item_id' => $device->id,
+                'media_storage_profile_id' => $profile->id,
+                'object_key' => "inventory/devices/{$device->id}/photo-{$i}.webp",
+                'public_url' => "https://cdn.fixphone.test/real-photo-{$i}.webp",
+                'content_type' => 'image/webp',
+                'byte_size' => 1024 * $i,
+                'status' => 'confirmed',
+                'sort_order' => $i - 1,
+                'is_primary' => $i === 1,
+                'upload_expires_at' => now()->addHour(),
+            ]);
+        }
+
+        // 3 approved promotional assets
+        $ads = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $ads[] = InventoryItemPromotionalAsset::create([
+                'id' => (string) Str::ulid(),
+                'inventory_item_id' => $device->id,
+                'source_photo_id' => $photos[0]->id,
+                'prompt_code' => 'PROMPT-0001',
+                'prompt_version' => '1.0',
+                'prompt_snapshot' => "Snapshot {$i}",
+                'status' => 'approved',
+                'media_storage_profile_id' => $profile->id,
+                'object_key' => "inventory/devices/{$device->id}/promotional/ad-{$i}.webp",
+                'image_url' => "https://cdn.fixphone.test/ad-{$i}.webp",
+                'mime_type' => 'image/webp',
+                'size_bytes' => 2048 * $i,
+                'created_at' => now()->subMinutes(10 - $i),
+                'approved_by' => $admin->id,
+                'approved_at' => now()->subMinutes(10 - $i),
+            ]);
+        }
+
+        // 1. All 3 approved ads appear in storefront
+        $showroomRes = $this->getJson('/api/v1/store/products')->assertOk();
+        $item = collect($showroomRes->json())->firstWhere('id', $device->id);
+        $this->assertNotNull($item);
+        $this->assertCount(3, $item['promotional_assets']);
+        $this->assertCount(4, $item['photos']);
+        $this->assertCount(7, $item['gallery']);
+
+        // 8. Admin counters before retiring: approved 3, discarded 0
+        $adminResBefore = $this->getJson("/api/v1/admin/inventory/{$device->id}/promotional-assets")->assertOk();
+        $this->assertEquals(3, $adminResBefore->json('summary.approved'));
+        $this->assertEquals(0, $adminResBefore->json('summary.discarded'));
+
+        // Action: Retire 1 promotional asset ($ads[1])
+        Http::fake(['*' => Http::response('', 204)]);
+        $discardRes = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/{$ads[1]->id}/discard")
+            ->assertOk();
+        $this->assertEquals('discarded', $discardRes->json('data.status'));
+
+        // 2 & 3. Storefront: only 2 approved ads remain, and the other 2 ads remain
+        $showroomResAfter = $this->getJson('/api/v1/store/products')->assertOk();
+        $itemAfter = collect($showroomResAfter->json())->firstWhere('id', $device->id);
+        $this->assertNotNull($itemAfter);
+        $this->assertCount(2, $itemAfter['promotional_assets']);
+        $remainingAdIds = collect($itemAfter['promotional_assets'])->pluck('id')->all();
+        $this->assertContains($ads[0]->id, $remainingAdIds);
+        $this->assertContains($ads[2]->id, $remainingAdIds);
+
+        // 4. Discarded ad does NOT appear in storefront
+        $this->assertNotContains($ads[1]->id, $remainingAdIds);
+        $this->assertStringNotContainsString('ad-2.webp', json_encode($itemAfter));
+
+        // 5. All 4 real photos remain
+        $this->assertCount(4, $itemAfter['photos']);
+
+        // 6. Real photos remain strictly before advertisements in gallery (4 real photos + 2 ads)
+        $this->assertCount(6, $itemAfter['gallery']);
+        for ($i = 0; $i < 4; $i++) {
+            $this->assertEquals('real_photo', $itemAfter['gallery'][$i]['type']);
+        }
+        $this->assertEquals('advertisement', $itemAfter['gallery'][4]['type']);
+        $this->assertEquals('advertisement', $itemAfter['gallery'][5]['type']);
+
+        // 7. main_image_url never changes to an advertisement; stays as primary real photo
+        $this->assertEquals('https://cdn.fixphone.test/real-photo-1.webp', $itemAfter['main_image_url']);
+
+        // 8. Admin counters after retiring: approved 3 -> 2, discarded 0 -> 1
+        $adminResAfter = $this->getJson("/api/v1/admin/inventory/{$device->id}/promotional-assets")->assertOk();
+        $this->assertEquals(2, $adminResAfter->json('summary.approved'));
+        $this->assertEquals(1, $adminResAfter->json('summary.discarded'));
+
+        // Verify R2 object was preserved for approved asset (no delete request, metadata preserved)
+        Http::assertNothingSent();
+        $retiredInDb = InventoryItemPromotionalAsset::query()->findOrFail($ads[1]->id);
+        $this->assertEquals('discarded', $retiredInDb->status);
+        $this->assertEquals("inventory/devices/{$device->id}/promotional/ad-2.webp", $retiredInDb->object_key);
+        $this->assertEquals('https://cdn.fixphone.test/ad-2.webp', $retiredInDb->image_url);
+        $this->assertEquals($admin->id, $retiredInDb->approved_by);
+        $this->assertNotNull($retiredInDb->approved_at);
+
+        // Audit verification
+        $audit = DB::table('audit_events')
+            ->where('entity_type', 'InventoryItemPromotionalAsset')
+            ->where('entity_id', $ads[1]->id)
+            ->where('event_type', 'inventory.promotional_asset_discarded')
+            ->first();
+        $this->assertNotNull($audit);
+        $this->assertEquals('discard', $audit->action);
+        $this->assertEquals($admin->id, $audit->actor_id);
+        $meta = json_decode($audit->metadata, true);
+        $this->assertEquals($device->id, $meta['inventory_item_id']);
+        $this->assertEquals($ads[1]->id, $meta['promotional_asset_id']);
+        $this->assertEquals('approved', $meta['previous_status']);
+        $this->assertEquals('discarded', $meta['new_status']);
+
+        // Idempotency: Retiring again returns discarded without duplicating audit
+        $auditCountBefore = DB::table('audit_events')->where('entity_id', $ads[1]->id)->count();
+        $discardRes2 = $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/{$ads[1]->id}/discard")
+            ->assertOk();
+        $this->assertEquals('discarded', $discardRes2->json('data.status'));
+        $auditCountAfter = DB::table('audit_events')->where('entity_id', $ads[1]->id)->count();
+        $this->assertEquals($auditCountBefore, $auditCountAfter);
+
+        // Security: Cannot retire an asset belonging to a different device (404)
+        $otherDevice = $this->device(['sku' => 'FXP-OTHER-01']);
+        $this->postJson("/api/v1/admin/inventory/{$otherDevice->id}/promotional-assets/{$ads[1]->id}/discard")
+            ->assertNotFound();
+
+        // Permission: User without catalog.manage receives 403
+        $this->auth('technician');
+        $this->postJson("/api/v1/admin/inventory/{$device->id}/promotional-assets/{$ads[0]->id}/discard")
+            ->assertForbidden();
+    }
 }
 
 
