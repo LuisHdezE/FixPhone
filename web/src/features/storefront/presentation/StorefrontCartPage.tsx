@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import type { StorefrontProvider } from '../application/storefront.contracts';
-import { cartRequest, type CartLine } from '../infrastructure/storefrontApi';
+import { cartRequest, startStoreCheckout, type CartLine, type StoreCheckoutOrder } from '../infrastructure/storefrontApi';
 import { useStorefrontSession } from './useStorefrontSession';
 import { StorefrontIcon } from './StorefrontIcon';
 
@@ -15,11 +15,14 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
   const [lines, setLines] = useState<CartLine[]>([]);
   const [fetching, setFetching] = useState(false);
   const [busyProduct, setBusyProduct] = useState<string | null>(null);
+  const [startingCheckout, setStartingCheckout] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<StoreCheckoutOrder | null>(null);
+  const checkoutKey = useRef<string | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let active = true;
-    setLines([]); setError('');
+    setLines([]); setError(''); setCreatedOrder(null); checkoutKey.current = null;
     if (!customer) return;
     setFetching(true);
     cartRequest().then(result => { if (active) setLines(result); })
@@ -30,9 +33,24 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
 
   async function change(line: CartLine, quantity: number) {
     setBusyProduct(line.product_id); setError('');
-    try { setLines(await cartRequest(quantity === 0 ? 'DELETE' : 'PATCH', line.product_id, quantity)); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo actualizar el carrito.'); }
+    try {
+      setLines(await cartRequest(quantity === 0 ? 'DELETE' : 'PATCH', line.product_id, quantity));
+      setCreatedOrder(null); checkoutKey.current = null;
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo actualizar el carrito.'); }
     finally { setBusyProduct(null); }
+  }
+
+  async function checkout() {
+    setStartingCheckout(true); setError('');
+    try {
+      checkoutKey.current ??= `fpstore_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const order = await startStoreCheckout(checkoutKey.current);
+      setCreatedOrder(order);
+      setStartingCheckout(false);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo registrar el pedido.');
+      setStartingCheckout(false);
+    }
   }
 
   const totals = lines.filter(line => line.available).reduce<Record<string, number>>((acc, line) => {
@@ -52,6 +70,10 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
       <Link className="fp-cart-text-link" to="/store/products">Seguir viendo productos</Link>
     </div> : <>
       {error && <p role="alert" className="fp-cart-error">{error}</p>}
+      {createdOrder && <div role="status" className="fp-cart-summary-note">
+        <strong>Pedido {createdOrder.order_number} registrado.</strong>
+        <span> Total: {money(createdOrder.currency_code, createdOrder.total_amount_minor)}. El pago todavía no se inició.</span>
+      </div>}
       {fetching ? <p role="status" className="fp-cart-state">Cargando carrito…</p> : !lines.length && !error ? <div className="fp-cart-empty">
         <StorefrontIcon name="cart" />
         <p>Tu carrito está vacío.</p>
@@ -73,11 +95,11 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
               {!line.available && <p className="fp-cart-stock" role="status">Cantidad no disponible. Ajustá la cantidad o quitá el producto.</p>}
               <div className="fp-cart-actions">
                 <div className="fp-cart-quantity" aria-label={`Cantidad de ${line.title}`}>
-                  <button type="button" aria-label={'Reducir cantidad de ' + line.title} disabled={busyProduct !== null || line.quantity <= 1 || line.stock_quantity < 1} onClick={() => { void change(line, Math.min(line.quantity - 1, line.stock_quantity)); }}>−</button>
+                  <button type="button" aria-label={'Reducir cantidad de ' + line.title} disabled={startingCheckout || busyProduct !== null || line.quantity <= 1 || line.stock_quantity < 1} onClick={() => { void change(line, Math.min(line.quantity - 1, line.stock_quantity)); }}>−</button>
                   <span aria-live="polite">{line.quantity}</span>
-                  <button type="button" aria-label={'Aumentar cantidad de ' + line.title} disabled={busyProduct !== null || line.quantity >= Math.min(line.stock_quantity, 999)} onClick={() => { void change(line, line.quantity + 1); }}>+</button>
+                  <button type="button" aria-label={'Aumentar cantidad de ' + line.title} disabled={startingCheckout || busyProduct !== null || line.quantity >= Math.min(line.stock_quantity, 999)} onClick={() => { void change(line, line.quantity + 1); }}>+</button>
                 </div>
-                <button type="button" className="fp-cart-remove" aria-label={'Quitar ' + line.title + ' del carrito'} title="Quitar del carrito" disabled={busyProduct !== null} onClick={() => { void change(line, 0); }}>
+                <button type="button" className="fp-cart-remove" aria-label={'Quitar ' + line.title + ' del carrito'} title="Quitar del carrito" disabled={startingCheckout || busyProduct !== null} onClick={() => { void change(line, 0); }}>
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v6m4-6v6"/></svg>
                 </button>
               </div>
@@ -95,7 +117,9 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
           </div>)}
           {unavailable && <p className="fp-cart-stock">Los productos sin disponibilidad no se incluyen en el subtotal.</p>}
           <p className="fp-cart-summary-note">El envío se paga aparte. El precio y la disponibilidad se verifican al consultar; el carrito no reserva stock.</p>
-          <Link className="fp-cart-primary" to="/store/contact">Consultar mi compra</Link>
+          <button type="button" className="fp-cart-primary" disabled={startingCheckout || !!createdOrder || fetching || unavailable || lines.length === 0} onClick={() => { void checkout(); }}>
+            {startingCheckout ? 'Registrando pedido…' : createdOrder ? 'Pedido registrado' : 'Continuar al pago'}
+          </button>
         </aside>
       </div>}
     </>}

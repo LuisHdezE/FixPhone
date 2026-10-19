@@ -265,12 +265,20 @@ final class CommercialOrdersController extends Controller
 
     private function heldQuantity(string $itemId, ?string $excludeOrderId = null): int
     {
-        return (int) DB::table('order_items')
+        $commercial = (int) DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.inventory_item_id', $itemId)
             ->whereIn('orders.status', self::OPEN_STATES)
             ->when($excludeOrderId !== null, static fn ($q) => $q->where('orders.id', '!=', $excludeOrderId))
             ->sum('order_items.quantity');
+        $storefront = (int) DB::table('storefront_order_items')
+            ->join('storefront_orders', 'storefront_orders.id', '=', 'storefront_order_items.order_id')
+            ->where('storefront_order_items.inventory_item_id', $itemId)
+            ->where('storefront_orders.status', 'awaiting_payment')
+            ->where('storefront_orders.reservation_expires_at', '>', now())
+            ->sum('storefront_order_items.quantity');
+
+        return $commercial + $storefront;
     }
 
     private function saveLines(string $orderId, array $lines): void

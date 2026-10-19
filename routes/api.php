@@ -29,6 +29,7 @@ use App\Presentation\Http\Controllers\AiPromptCatalogController;
 use App\Presentation\Http\Controllers\ReferencePriceImportController;
 use App\Presentation\Http\Controllers\ReferencePriceComparisonController;
 use App\Presentation\Http\Controllers\StorefrontCampaignController;
+use App\Presentation\Http\Controllers\Storefront\StorefrontCheckoutController;
 use App\Presentation\Http\Controllers\InventoryItemPhotosController;
 use App\Presentation\Http\Controllers\InventoryItemPromotionalAssetsController;
 use Illuminate\Support\Facades\Route;
@@ -199,6 +200,7 @@ Route::prefix('v1')->group(function (): void {
   Route::post('/store/cart', [\App\Presentation\Http\Controllers\StorefrontCartController::class, 'add']);
   Route::patch('/store/cart/{product}', [\App\Presentation\Http\Controllers\StorefrontCartController::class, 'update']);
   Route::delete('/store/cart/{product}', [\App\Presentation\Http\Controllers\StorefrontCartController::class, 'remove']);
+  Route::post('/store/checkout', [StorefrontCheckoutController::class, 'store'])->middleware('throttle:10,1');
   Route::get('/admin/device-models/{modelId}/technical', [DeviceModelSpecificationsController::class, 'show'])->middleware('permission:catalog.manage');
   Route::put('/admin/device-models/{modelId}/technical', [DeviceModelSpecificationsController::class, 'saveSpecs'])->middleware('permission:catalog.manage');
   Route::post('/admin/device-models/{modelId}/variants', [DeviceModelSpecificationsController::class, 'storeVariant'])->middleware('permission:catalog.manage');
