@@ -27,8 +27,8 @@ final class StorefrontCheckoutController
             ['idempotency_key' => ['required', 'string', 'min:16', 'max:128', 'regex:/^[A-Za-z0-9._:-]+$/']]
         )->validate();
 
-        if ((bool) config('mercadopago.enabled') && ! $payments->isReady()) {
-            return response()->json(['message' => 'El pago está habilitándose. Intentá nuevamente más tarde.'], 503)
+        if ((bool) config('mercadopago.enabled') && ! $payments->configurationValid()) {
+            return response()->json(['message' => 'La configuración de Mercado Pago está incompleta o no es segura.'], 503)
                 ->header('Cache-Control', 'no-store');
         }
 
@@ -38,22 +38,22 @@ final class StorefrontCheckoutController
         $checkoutUrl = null;
         $preferenceId = null;
 
-        if ($payments->isReady()) {
-            try {
+        try {
+            if ($payments->isReady()) {
                 $order = $payments->ensurePreference($order);
                 $paymentInitiated = (bool) $order->mercadopago_preference_id;
                 $checkoutUrl = $order->mercadopago_checkout_url;
                 $preferenceId = $order->mercadopago_preference_id;
-            } catch (Throwable $exception) {
-                Log::warning('FixPhone could not initialize Mercado Pago checkout.', [
-                    'order_id' => $order->id,
-                    'exception' => get_class($exception),
-                ]);
-
-                return response()->json([
-                    'message' => 'No se pudo iniciar el pago. La orden quedó protegida temporalmente; volvé a intentarlo.',
-                ], 502)->header('Cache-Control', 'no-store');
             }
+        } catch (Throwable $exception) {
+            Log::warning('FixPhone could not initialize Mercado Pago checkout.', [
+                'order_id' => $order->id,
+                'exception' => get_class($exception),
+            ]);
+
+            return response()->json([
+                'message' => 'No se pudo iniciar el pago. La orden quedó protegida temporalmente; volvé a intentarlo.',
+            ], 502)->header('Cache-Control', 'no-store');
         }
 
         return response()->json([

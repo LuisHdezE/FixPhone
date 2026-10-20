@@ -40,8 +40,8 @@ export async function cartRequest(method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 
   }));
   return result.lines;
 }
-export async function startStoreCheckout(idempotencyKey: string): Promise<StoreCheckoutOrder> {
-  return readStoreResponse<StoreCheckoutOrder>(await adminFetch('/api/v1/store/checkout', {
+export async function startStoreCheckout(idempotencyKey: string, endpoint = '/api/v1/store/checkout'): Promise<StoreCheckoutOrder> {
+  return readStoreResponse<StoreCheckoutOrder>(await adminFetch(endpoint, {
     method: 'POST', cache: 'no-store',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
   }));

@@ -26,7 +26,6 @@ import { JsonStorefrontProvider } from '@/features/storefront/infrastructure/Jso
 import { StorefrontCartPage } from '@/features/storefront/presentation/StorefrontCartPage';
 import { PartsDonorCatalogPage, PartsDonorDetailPage } from '@/features/storefront/presentation/PartsDonorPages';
 import { StorefrontCatalogPage } from '@/features/storefront/presentation/StorefrontCatalogPage';
-import { StorefrontCheckoutPage } from '@/features/storefront/presentation/StorefrontCheckoutPage';
 import { StorefrontPaymentReturnPage } from '@/features/storefront/presentation/StorefrontPaymentReturnPage';
 import { StorefrontContactPage } from '@/features/storefront/presentation/StorefrontContactPage';
 import { StorefrontCustomerIdentityPage } from '@/features/storefront/presentation/StorefrontCustomerIdentityPage';
@@ -146,7 +145,7 @@ export function AppRouter() {
         <Route path="store/products/:slug" element={<StorefrontProductDetailPage provider={storefrontProvider} />} />
         <Route path="store/cart" element={<StorefrontCartPage provider={storefrontProvider} />} />
         <Route path="store/favorites" element={<StorefrontFavoritesPage provider={storefrontProvider} />} />
-        <Route path="store/checkout" element={<StorefrontCheckoutPage provider={storefrontProvider} />} />
+        <Route path="store/checkout" element={<Navigate replace to="/store/cart" />} />
         <Route path="store/payment/return" element={<StorefrontPaymentReturnPage />} />
         <Route path="store/shipping" element={<StorefrontShippingPage provider={storefrontProvider} />} />
         <Route path="store/contact" element={<StorefrontContactPage provider={storefrontProvider} />} />
