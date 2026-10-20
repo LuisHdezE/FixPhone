@@ -1,4 +1,4 @@
-export type FaultType = 'icloud' | 'no_signal' | 'board' | 'other';
+export type FaultType = 'icloud' | 'no_signal' | 'board' | 'other' | 'no_account_lock';
 export type ScreenCondition = 'good' | 'damaged' | 'unknown';
 export type PowerState = 'yes' | 'no' | 'unknown';
 export type PublicationStatus = 'draft' | 'published' | 'closed';
