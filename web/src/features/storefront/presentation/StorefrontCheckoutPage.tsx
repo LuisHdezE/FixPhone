@@ -113,9 +113,9 @@ export function StorefrontCheckoutPage({ provider }: StorefrontCheckoutPageProps
               <p className="text-xs font-bold text-slate-500">{checkout.orderSummary.totalLabel}</p>
               <p className="text-2xl font-black text-slate-950">{checkout.orderSummary.totalValue}</p>
             </div>
-            <button className="mt-4 w-full cursor-not-allowed rounded-full bg-slate-300 px-4 py-2 text-[11px] font-black text-slate-600" disabled type="button">
-              Confirmar compra pendiente
-            </button>
+            <Link className="mt-4 flex w-full justify-center rounded-full bg-[var(--storefront-primary)] px-4 py-2 text-[11px] font-black text-[var(--storefront-on-primary)]" to="/store/cart">
+              Volver al carrito
+            </Link>
           </aside>
         </div>
       </section>

@@ -12,76 +12,169 @@ use RuntimeException;
 final class StorefrontMercadoPagoService
 {
     public function __construct(
-        private readonly MercadoPagoApiClient $client,
+        private readonly MercadoPagoGateway $gateway,
         private readonly StorefrontOrderService $orders,
-    ) {
-    }
+    ) {}
 
     public function isReady(): bool
     {
-        return (bool) config('mercadopago.enabled')
-            && (string) config('mercadopago.access_token') !== ''
+        return (bool) config('mercadopago.enabled') && $this->configurationValid();
+    }
+
+    public function configurationValid(): bool
+    {
+        return (string) config('mercadopago.access_token') !== ''
             && (string) config('mercadopago.webhook_secret') !== ''
-            && (string) config('mercadopago.collector_id') !== '';
+            && (string) config('mercadopago.collector_id') !== ''
+            && (string) config('mercadopago.application_id') !== ''
+            && $this->isPublicHttpsUrl((string) config('mercadopago.public_url'))
+            && (string) config('mercadopago.site_id') === 'MLU'
+            && (string) config('mercadopago.currency') === 'UYU';
     }
 
     public function ensurePreference(object $order): object
     {
-        $claim = DB::transaction(function () use ($order): array {
+        $claim = $this->claimPreferenceAttempt($order);
+        if ($claim['mode'] === 'existing') {
+            return $claim['order'];
+        }
+
+        $order = $claim['order'];
+        $token = $claim['token'];
+        if ($claim['mode'] === 'reconcile') {
+            try {
+                $found = $this->gateway->findPreferenceByExternalReference((string) $order->external_reference);
+                if ($found !== null) {
+                    return $this->savePreference($order, $found, $token);
+                }
+            } catch (\Throwable $exception) {
+                $this->markPreferenceUncertain($order, $token, $exception);
+
+                throw $exception;
+            }
+
+            $this->markPreferenceUncertain($order, $token);
+            abort(409, 'La creación anterior todavía no se pudo confirmar. FixPhone seguirá conciliándola sin duplicar el pago.');
+        }
+
+        $this->markPreferenceDispatched($order, $token);
+
+        try {
+            $response = $this->gateway->createPreference($claim['payload']);
+            $this->assertPreferenceMatches($response, $order);
+
+            return $this->savePreference($order, $response, $token);
+        } catch (DefinitiveMercadoPagoFailure $exception) {
+            $this->markPreferenceDefinitivelyFailed($order, $token, $exception);
+
+            throw $exception;
+        } catch (\Throwable $exception) {
+            $this->markPreferenceUncertain($order, $token, $exception);
+
+            throw $exception;
+        }
+    }
+
+    private function claimPreferenceAttempt(object $order): array
+    {
+        return DB::transaction(function () use ($order): array {
             $locked = DB::table('storefront_orders')->where('id', $order->id)->lockForUpdate()->first();
             if (! $locked) {
                 abort(404);
+            }
+            if ($locked->mercadopago_preference_id && $locked->mercadopago_checkout_url) {
+                return ['order' => $locked, 'mode' => 'existing', 'token' => null, 'payload' => null];
             }
             if (in_array($locked->status, ['paid', 'payment_review', 'expired', 'cancelled'], true)
                 || CarbonImmutable::parse($locked->reservation_expires_at)->isPast()) {
                 throw ValidationException::withMessages(['checkout' => 'Esta orden ya no puede iniciar un pago.']);
             }
-            if ($locked->mercadopago_preference_id && $locked->mercadopago_checkout_url) {
-                return ['order' => $locked, 'create' => false, 'reconcile' => false];
+
+            $preference = DB::table('storefront_payment_preferences')
+                ->where('order_id', $locked->id)
+                ->lockForUpdate()
+                ->first();
+            if ($preference?->lease_expires_at !== null
+                && CarbonImmutable::parse($preference->lease_expires_at)->isFuture()) {
+                abort(409, 'La creación o conciliación del pago sigue en curso. Esperá unos segundos y volvé a intentarlo.');
             }
 
-            $startedAt = $locked->mercadopago_preference_started_at;
-            if ($startedAt !== null) {
-                if (CarbonImmutable::parse($startedAt)->gt(now()->subMinutes(2))) {
-                    abort(409, 'La creación del pago sigue en curso. Esperá unos segundos y volvé a intentarlo.');
-                }
-
-                return ['order' => $locked, 'create' => true, 'reconcile' => true];
+            $payload = $this->preferencePayload($locked);
+            $payloadHash = hash('sha256', json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '');
+            $token = (string) Str::uuid();
+            $mode = 'create';
+            if ($preference !== null) {
+                $safeToCreate = $preference->status === 'failed_definitive'
+                    || ($preference->status === 'claimed' && $preference->request_dispatched_at === null);
+                $mode = $safeToCreate ? 'create' : 'reconcile';
+            } elseif ($locked->mercadopago_preference_started_at !== null) {
+                // A legacy/incomplete attempt may have reached Mercado Pago. Search only.
+                $mode = 'reconcile';
             }
 
+            $values = [
+                'external_reference' => $locked->external_reference,
+                'status' => $mode === 'create' ? 'claimed' : 'reconciling',
+                'active_attempt_token' => $token,
+                'lease_expires_at' => now()->addMinutes(2),
+                'request_payload_hash' => $payloadHash,
+                'last_error_class' => null,
+                'started_at' => now(),
+                'updated_at' => now(),
+            ];
+            if ($mode === 'create') {
+                $values['request_dispatched_at'] = null;
+            }
+
+            if ($preference) {
+                DB::table('storefront_payment_preferences')->where('id', $preference->id)->update([
+                    ...$values,
+                    'attempt_count' => (int) $preference->attempt_count + 1,
+                ]);
+            } else {
+                DB::table('storefront_payment_preferences')->insert([
+                    ...$values,
+                    'id' => (string) Str::ulid(),
+                    'order_id' => $locked->id,
+                    'attempt_count' => 1,
+                    'request_dispatched_at' => $mode === 'reconcile'
+                        ? $locked->mercadopago_preference_started_at
+                        : null,
+                    'created_at' => now(),
+                ]);
+            }
             DB::table('storefront_orders')->where('id', $locked->id)->update([
                 'mercadopago_preference_started_at' => now(),
                 'updated_at' => now(),
             ]);
-            return ['order' => $locked, 'create' => true, 'reconcile' => false];
+
+            return ['order' => $locked, 'mode' => $mode, 'token' => $token, 'payload' => $payload];
         });
+    }
 
-        if (! $claim['create']) {
-            return $claim['order'];
-        }
-
-        $order = $claim['order'];
-        if ($claim['reconcile']) {
-            $found = $this->findExistingPreference($order);
-            if ($found !== null) {
-                return $this->savePreference($order, $found);
-            }
-        }
-
+    private function preferencePayload(object $order): array
+    {
         $items = DB::table('storefront_order_items')
             ->where('order_id', $order->id)
             ->orderBy('inventory_item_id')
             ->get();
+        $nameParts = preg_split('/\s+/', trim((string) $order->customer_name), 2) ?: [];
 
-        $payload = [
+        return [
             'items' => $items->map(static fn (object $item): array => [
                 'id' => $item->sku_snapshot,
                 'title' => $item->title_snapshot,
+                'description' => $item->title_snapshot,
+                'category_id' => 'electronics',
                 'quantity' => (int) $item->quantity,
                 'currency_id' => $order->currency_code,
                 'unit_price' => round(((int) $item->unit_price_minor) / 100, 2),
             ])->all(),
-            'payer' => ['email' => $order->customer_email],
+            'payer' => [
+                'first_name' => $nameParts[0] ?? (string) $order->customer_name,
+                'last_name' => $nameParts[1] ?? '',
+                'email' => $order->customer_email,
+            ],
             'external_reference' => $order->external_reference,
             'back_urls' => [
                 'success' => $this->returnUrl($order),
@@ -89,25 +182,93 @@ final class StorefrontMercadoPagoService
                 'failure' => $this->returnUrl($order),
             ],
             'auto_return' => 'approved',
-            'notification_url' => rtrim((string) config('app.url'), '/').'/api/v1/store/payment/mercadopago/webhook',
+            'notification_url' => rtrim((string) config('mercadopago.public_url'), '/').'/api/v1/store/payment/mercadopago/webhook?source_news=webhooks',
             'expires' => true,
             'expiration_date_from' => now()->subSeconds(5)->toIso8601String(),
             'expiration_date_to' => CarbonImmutable::parse($order->reservation_expires_at)->toIso8601String(),
             'metadata' => ['fixphone_order_id' => (string) $order->id],
+            'statement_descriptor' => 'FIXPHONE',
         ];
-
-        $response = $this->client->createPreference($payload);
-        $this->assertPreferenceMatches($response, $order);
-
-        return $this->savePreference($order, $response);
     }
 
-    public function processPayment(string $paymentId): string
+    private function markPreferenceDispatched(object $order, string $token): void
     {
-        $payment = $this->client->getPayment($paymentId);
-        $order = $this->validatePayment($payment);
+        DB::transaction(function () use ($order, $token): void {
+            $preference = DB::table('storefront_payment_preferences')
+                ->where('order_id', $order->id)
+                ->lockForUpdate()
+                ->first();
+            if (! $preference
+                || $preference->active_attempt_token !== $token
+                || $preference->status !== 'claimed'
+                || $preference->lease_expires_at === null
+                || CarbonImmutable::parse($preference->lease_expires_at)->isPast()) {
+                abort(409, 'El intento de creación perdió su control exclusivo antes del envío.');
+            }
 
-        return DB::transaction(function () use ($payment, $order, $paymentId): string {
+            DB::table('storefront_payment_preferences')->where('id', $preference->id)->update([
+                'status' => 'dispatching',
+                'request_dispatched_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+    }
+
+    private function markPreferenceUncertain(object $order, string $token, ?\Throwable $exception = null): void
+    {
+        DB::table('storefront_payment_preferences')
+            ->where('order_id', $order->id)
+            ->where('active_attempt_token', $token)
+            ->update([
+                'status' => 'uncertain',
+                'active_attempt_token' => null,
+                'lease_expires_at' => null,
+                'last_error_class' => $exception ? get_class($exception) : null,
+                'updated_at' => now(),
+            ]);
+    }
+
+    private function markPreferenceDefinitivelyFailed(object $order, string $token, \Throwable $exception): void
+    {
+        DB::transaction(function () use ($order, $token, $exception): void {
+            $preference = DB::table('storefront_payment_preferences')
+                ->where('order_id', $order->id)
+                ->lockForUpdate()
+                ->first();
+            if (! $preference || $preference->active_attempt_token !== $token) {
+                return;
+            }
+
+            DB::table('storefront_payment_preferences')->where('id', $preference->id)->update([
+                'status' => 'failed_definitive',
+                'active_attempt_token' => null,
+                'lease_expires_at' => null,
+                'last_error_class' => get_class($exception),
+                'updated_at' => now(),
+            ]);
+            DB::table('storefront_orders')->where('id', $order->id)->update([
+                'mercadopago_preference_started_at' => null,
+                'updated_at' => now(),
+            ]);
+        });
+    }
+
+    public function processPayment(string $paymentId, ?array $merchantOrder = null): string
+    {
+        $payment = $this->gateway->getPayment($paymentId);
+        $reference = trim((string) ($payment['external_reference'] ?? ''));
+        if ($merchantOrder === null) {
+            $merchantOrderId = $payment['order']['id'] ?? null;
+            $merchantOrder = $merchantOrderId !== null
+                ? $this->gateway->getMerchantOrder((string) $merchantOrderId)
+                : $this->gateway->findMerchantOrderForPayment($reference, $paymentId);
+        }
+        if ($merchantOrder === null) {
+            throw new InvalidMercadoPagoPayment('No se pudo demostrar la relación entre el pago y su orden comercial.');
+        }
+        $order = $this->validatePayment($paymentId, $payment, $merchantOrder);
+
+        return DB::transaction(function () use ($payment, $merchantOrder, $order, $paymentId): string {
             $locked = DB::table('storefront_orders')->where('id', $order->id)->lockForUpdate()->first();
             if (! $locked) {
                 throw new InvalidMercadoPagoPayment('La orden local ya no existe.');
@@ -115,22 +276,37 @@ final class StorefrontMercadoPagoService
             $status = (string) ($payment['status'] ?? '');
             $detail = (string) ($payment['status_detail'] ?? '');
             $amountMinor = (int) round(((float) $payment['transaction_amount']) * 100);
-            $payloadHash = hash('sha256', json_encode($payment, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '');
+            $preferenceId = (string) $merchantOrder['preference_id'];
+            $merchantOrderId = (string) $merchantOrder['id'];
+            $providerUpdatedAt = $payment['date_last_updated'] ?? $payment['date_created'] ?? null;
+            $payloadHash = hash('sha256', json_encode(['payment' => $payment, 'merchant_order' => $merchantOrder], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '');
             $attempt = DB::table('storefront_payment_attempts')->where('payment_id', $paymentId)->lockForUpdate()->first();
 
             if ($attempt && (string) $attempt->order_id !== (string) $locked->id) {
                 throw new InvalidMercadoPagoPayment('El pago ya está asociado a otra orden.');
+            }
+            if ($attempt && $attempt->provider_updated_at && $providerUpdatedAt
+                && CarbonImmutable::parse($providerUpdatedAt)->lt(CarbonImmutable::parse($attempt->provider_updated_at))) {
+                return 'stale_event_ignored';
+            }
+            if ($attempt && (
+                ($attempt->status === 'approved' && ! in_array($status, ['approved', 'refunded', 'charged_back'], true))
+                || (in_array($attempt->status, ['refunded', 'charged_back'], true) && $attempt->status !== $status)
+            )) {
+                return 'state_regression_ignored';
             }
             $isReplay = $attempt
                 && $attempt->status === $status
                 && $attempt->status_detail === $detail
                 && (int) $attempt->amount_minor === $amountMinor
                 && $attempt->currency_code === (string) $payment['currency_id']
-                && $attempt->preference_id === (string) $payment['preference_id'];
+                && $attempt->preference_id === $preferenceId;
 
             $attemptData = [
                 'order_id' => $locked->id,
-                'preference_id' => (string) $payment['preference_id'],
+                'preference_id' => $preferenceId,
+                'merchant_order_id' => $merchantOrderId,
+                'application_id' => (string) $merchantOrder['application_id'],
                 'status' => $status,
                 'status_detail' => $detail,
                 'amount_minor' => $amountMinor,
@@ -138,6 +314,7 @@ final class StorefrontMercadoPagoService
                 'collector_id' => (string) $payment['collector_id'],
                 'payment_method_id' => isset($payment['payment_method_id']) ? (string) $payment['payment_method_id'] : null,
                 'approved_at' => $status === 'approved' ? ($payment['date_approved'] ?? now()) : null,
+                'provider_updated_at' => $providerUpdatedAt,
                 'provider_payload_hash' => $payloadHash,
                 'updated_at' => now(),
             ];
@@ -157,12 +334,14 @@ final class StorefrontMercadoPagoService
             DB::table('storefront_orders')->where('id', $locked->id)->update([
                 'payment_status' => $status,
                 'payment_status_detail' => $detail,
+                'mercadopago_merchant_order_id' => $merchantOrderId,
                 'payment_checked_at' => now(),
                 'updated_at' => now(),
             ]);
             if (! $isReplay) {
                 $this->audit($locked, 'payment.'.$status, [
                     'payment_id' => $paymentId,
+                    'merchant_order_id' => $merchantOrderId,
                     'status' => $status,
                     'status_detail' => $detail,
                     'amount_minor' => $amountMinor,
@@ -178,15 +357,11 @@ final class StorefrontMercadoPagoService
     private function applyPaymentState(object $order, string $paymentId, string $status, string $detail, int $amountMinor): string
     {
         if ($status === 'refunded') {
-            DB::table('storefront_orders')->where('id', $order->id)->update([
-                'status' => 'refunded',
-                'updated_at' => now(),
-            ]);
-            return 'refunded';
+            return $this->markPaymentReview($order, 'refund_requires_manual_stock_review', 'refunded');
         }
 
-        if ($status === 'charged_back') {
-            return $this->markPaymentReview($order, 'chargeback');
+        if (in_array($status, ['charged_back', 'in_mediation'], true)) {
+            return $this->markPaymentReview($order, $status === 'charged_back' ? 'chargeback' : 'payment_in_mediation');
         }
 
         if ($status !== 'approved') {
@@ -200,7 +375,9 @@ final class StorefrontMercadoPagoService
                 ->where('status', 'approved')
                 ->exists();
 
-            return $anotherApprovedPayment ? 'duplicate_approved_payment' : 'already_paid';
+            return $anotherApprovedPayment
+                ? $this->markPaymentReview($order, 'duplicate_approved_payment')
+                : 'already_paid';
         }
 
         $lines = DB::table('storefront_order_items')
@@ -228,18 +405,39 @@ final class StorefrontMercadoPagoService
                 ->sum('order_items.quantity');
 
             if ((int) $item->stock_quantity - $storefrontHeld - $commercialHeld < (int) $line->quantity) {
-                return $this->markPaymentReview($order, 'reserved_stock_no_longer_available');
+                $reason = CarbonImmutable::parse($order->reservation_expires_at)->isPast()
+                    ? 'late_approved_payment_stock_unavailable'
+                    : 'reserved_stock_no_longer_available';
+
+                return $this->markPaymentReview($order, $reason);
             }
             $items[] = [$item, (int) $line->quantity];
         }
 
         foreach ($items as [$item, $quantity]) {
-            $item->stock_quantity = (int) $item->stock_quantity - $quantity;
+            $before = (int) $item->stock_quantity;
+            $after = $before - $quantity;
+            DB::table('inventory_stock_adjustments')->insertOrIgnore([
+                'id' => (string) Str::ulid(),
+                'inventory_item_id' => $item->id,
+                'request_id' => (string) Str::uuid(),
+                'quantity_before' => $before,
+                'quantity_delta' => -$quantity,
+                'quantity_after' => $after,
+                'reason' => 'Venta online '.$order->order_number,
+                'source_type' => 'storefront_order',
+                'source_id' => $order->id,
+                'actor_id' => $order->user_id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $item->stock_quantity = $after;
             $item->save();
         }
 
         DB::table('storefront_orders')->where('id', $order->id)->update([
             'status' => 'paid',
+            'payment_review_reason' => null,
             'stock_deducted_at' => now(),
             'paid_at' => now(),
             'updated_at' => now(),
@@ -253,19 +451,19 @@ final class StorefrontMercadoPagoService
         return 'paid';
     }
 
-    private function validatePayment(array $payment): object
+    private function validatePayment(string $paymentId, array $payment, array $merchantOrder): object
     {
         $collector = (string) config('mercadopago.collector_id');
+        $application = (string) config('mercadopago.application_id');
         $reference = (string) ($payment['external_reference'] ?? '');
-        $preferenceId = (string) ($payment['preference_id'] ?? '');
         $amount = $payment['transaction_amount'] ?? null;
 
-        if ((string) ($payment['collector_id'] ?? '') !== $collector
+        if ((string) ($payment['id'] ?? '') !== $paymentId
+            || (string) ($payment['collector_id'] ?? '') !== $collector
             || ($payment['currency_id'] ?? null) !== 'UYU'
             || ! is_numeric($amount)
             || (int) round(((float) $amount) * 100) < 1
-            || $reference === ''
-            || $preferenceId === '') {
+            || $reference === '') {
             throw new InvalidMercadoPagoPayment('El pago no supera las validaciones de vendedor, moneda, importe o referencia.');
         }
 
@@ -273,101 +471,160 @@ final class StorefrontMercadoPagoService
             throw new InvalidMercadoPagoPayment('El pago no pertenece al entorno productivo.');
         }
 
+        $merchantContainsPayment = collect($merchantOrder['payments'] ?? [])->contains(
+            static fn ($candidate): bool => (string) data_get($candidate, 'id', '') === $paymentId,
+        );
+        if ((string) ($merchantOrder['external_reference'] ?? '') !== $reference
+            || empty($merchantOrder['id'])
+            || empty($merchantOrder['preference_id'])
+            || (string) ($merchantOrder['application_id'] ?? '') !== $application
+            || (string) ($merchantOrder['collector']['id'] ?? '') !== $collector
+            || (isset($merchantOrder['site_id']) && (string) $merchantOrder['site_id'] !== 'MLU')
+            || ! $merchantContainsPayment) {
+            throw new InvalidMercadoPagoPayment('La orden comercial no demuestra que el pago pertenezca a FixPhone.');
+        }
+
         $order = DB::table('storefront_orders')->where('external_reference', $reference)->first();
         if (! $order
-            || (string) $order->mercadopago_preference_id !== $preferenceId
+            || (string) $order->mercadopago_preference_id !== (string) $merchantOrder['preference_id']
             || (int) $order->total_amount_minor !== (int) round(((float) $amount) * 100)) {
             throw new InvalidMercadoPagoPayment('El pago no coincide con una orden y preferencia de FixPhone.');
         }
 
-        if (! in_array((string) ($payment['status'] ?? ''), ['approved', 'pending', 'in_process', 'rejected', 'cancelled', 'refunded', 'charged_back'], true)) {
+        $preference = DB::table('storefront_payment_preferences')->where('order_id', $order->id)->first();
+        if (! $preference
+            || (string) $preference->preference_id !== (string) $merchantOrder['preference_id']
+            || (string) $preference->client_id !== $application
+            || (string) $preference->collector_id !== $collector) {
+            throw new InvalidMercadoPagoPayment('La preferencia no tiene una vinculación local verificable.');
+        }
+
+        if (! in_array((string) ($payment['status'] ?? ''), ['approved', 'authorized', 'pending', 'in_process', 'in_mediation', 'rejected', 'cancelled', 'refunded', 'charged_back'], true)) {
             throw new InvalidMercadoPagoPayment('Mercado Pago devolvió un estado de pago no reconocido.');
         }
 
         return $order;
     }
 
-    private function markPaymentReview(object $order, string $reason): string
+    private function markPaymentReview(object $order, string $reason, string $status = 'payment_review'): string
     {
         DB::table('storefront_orders')->where('id', $order->id)->update([
-            'status' => 'payment_review',
+            'status' => $status,
+            'payment_review_reason' => $reason,
             'updated_at' => now(),
         ]);
+
         return $reason;
-    }
-
-    private function findExistingPreference(object $order): ?array
-    {
-        $response = $this->client->searchPreferences((string) $order->external_reference);
-        foreach (($response['elements'] ?? []) as $preference) {
-            if ((string) ($preference['external_reference'] ?? '') === (string) $order->external_reference
-                && (string) ($preference['collector_id'] ?? '') === (string) config('mercadopago.collector_id')
-                && ! empty($preference['id'])
-                && ! empty($preference['init_point'])) {
-                return $preference;
-            }
-        }
-
-        return null;
     }
 
     private function assertPreferenceMatches(array $preference, object $order): void
     {
-        if ((string) ($preference['collector_id'] ?? '') !== (string) config('mercadopago.collector_id')
+        if ((string) ($preference['client_id'] ?? '') !== (string) config('mercadopago.application_id')
+            || (string) ($preference['collector_id'] ?? '') !== (string) config('mercadopago.collector_id')
             || (string) ($preference['external_reference'] ?? '') !== (string) $order->external_reference
+            || (isset($preference['site_id']) && (string) $preference['site_id'] !== 'MLU')
             || empty($preference['id'])
             || ! $this->isSafeCheckoutUrl((string) ($preference['init_point'] ?? ''))) {
             throw new RuntimeException('La preferencia no coincide con FixPhone o no devolvió una URL segura.');
         }
 
-        if (isset($preference['items'])) {
-            $items = collect($preference['items']);
-            $currencyMatches = $items->every(static fn (array $item): bool => ($item['currency_id'] ?? null) === 'UYU');
-            $preferenceAmountMinor = (int) round(
-                $items->sum(static fn (array $item): float => ((float) ($item['unit_price'] ?? 0)) * ((int) ($item['quantity'] ?? 0))) * 100
-            );
-            if (! $currencyMatches || $preferenceAmountMinor !== (int) $order->total_amount_minor) {
-                throw new RuntimeException('El importe de la preferencia no coincide con la orden.');
-            }
+        $items = collect($preference['items'] ?? []);
+        $currencyMatches = $items->isNotEmpty()
+            && $items->every(static fn ($item): bool => data_get($item, 'currency_id') === 'UYU');
+        $preferenceAmountMinor = (int) round(
+            $items->sum(static fn ($item): float => ((float) data_get($item, 'unit_price', 0)) * ((int) data_get($item, 'quantity', 0))) * 100
+        );
+        if (! $currencyMatches || $preferenceAmountMinor !== (int) $order->total_amount_minor) {
+            throw new RuntimeException('El importe de la preferencia no coincide con la orden.');
         }
     }
 
-    private function savePreference(object $order, array $preference): object
+    private function savePreference(object $order, array $preference, string $token): object
     {
-        $this->assertPreferenceMatches($preference, $order);
-        DB::table('storefront_orders')->where('id', $order->id)->update([
-            'mercadopago_preference_id' => (string) $preference['id'],
-            'mercadopago_checkout_url' => (string) $preference['init_point'],
-            'payment_status' => 'preference_created',
-            'payment_status_detail' => null,
-            'updated_at' => now(),
-        ]);
+        return DB::transaction(function () use ($order, $preference, $token): object {
+            $lockedOrder = DB::table('storefront_orders')->where('id', $order->id)->lockForUpdate()->first();
+            $lockedPreference = DB::table('storefront_payment_preferences')
+                ->where('order_id', $order->id)
+                ->lockForUpdate()
+                ->first();
+            if (! $lockedOrder || ! $lockedPreference) {
+                throw new RuntimeException('El intento local de preferencia ya no existe.');
+            }
 
-        $saved = DB::table('storefront_orders')->where('id', $order->id)->first();
-        if (! $saved) {
-            abort(404);
-        }
+            $this->assertPreferenceMatches($preference, $lockedOrder);
+            if ($lockedPreference->status === 'completed') {
+                if ((string) $lockedPreference->preference_id === (string) $preference['id']
+                    && (string) $lockedOrder->mercadopago_preference_id === (string) $preference['id']) {
+                    return $lockedOrder;
+                }
 
-        return $saved;
+                throw new RuntimeException('Un intento anterior ya confirmó otra preferencia para esta orden.');
+            }
+            if ($lockedPreference->active_attempt_token !== $token) {
+                throw new RuntimeException('El intento perdió su control exclusivo y no puede guardar una respuesta antigua.');
+            }
+
+            $orderUpdated = DB::table('storefront_orders')->where('id', $lockedOrder->id)->update([
+                'mercadopago_preference_id' => (string) $preference['id'],
+                'mercadopago_checkout_url' => (string) $preference['init_point'],
+                'payment_status' => 'preference_created',
+                'payment_status_detail' => null,
+                'updated_at' => now(),
+            ]);
+            if ($orderUpdated !== 1) {
+                throw new RuntimeException('No se pudo confirmar la preferencia en la orden local.');
+            }
+
+            $preferenceUpdated = DB::table('storefront_payment_preferences')
+                ->where('id', $lockedPreference->id)
+                ->where('active_attempt_token', $token)
+                ->update([
+                    'preference_id' => (string) $preference['id'],
+                    'client_id' => (string) $preference['client_id'],
+                    'collector_id' => (string) $preference['collector_id'],
+                    'status' => 'completed',
+                    'active_attempt_token' => null,
+                    'lease_expires_at' => null,
+                    'checkout_url' => (string) $preference['init_point'],
+                    'response_payload_hash' => hash('sha256', json_encode($preference, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: ''),
+                    'last_error_class' => null,
+                    'completed_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            if ($preferenceUpdated !== 1) {
+                throw new RuntimeException('No se pudo confirmar la verificación local de la preferencia.');
+            }
+
+            return DB::table('storefront_orders')->where('id', $lockedOrder->id)->first();
+        });
     }
 
     private function isSafeCheckoutUrl(string $url): bool
     {
         $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
         return parse_url($url, PHP_URL_SCHEME) === 'https'
             && in_array($host, [
                 'www.mercadopago.com.uy',
                 'mercadopago.com.uy',
-                'sandbox.mercadopago.com.uy',
                 'www.mercadopago.com',
                 'mercadopago.com',
-                'sandbox.mercadopago.com',
             ], true);
+    }
+
+    private function isPublicHttpsUrl(string $url): bool
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        return parse_url($url, PHP_URL_SCHEME) === 'https'
+            && $host !== ''
+            && $host !== 'localhost'
+            && filter_var($host, FILTER_VALIDATE_IP) === false;
     }
 
     private function returnUrl(object $order): string
     {
-        return rtrim((string) config('app.url'), '/').'/store/payment/return?order_id='.urlencode((string) $order->id);
+        return rtrim((string) config('mercadopago.public_url'), '/').'/store/payment/return?order_id='.urlencode((string) $order->id);
     }
 
     private function audit(object $order, string $eventType, array $metadata): void

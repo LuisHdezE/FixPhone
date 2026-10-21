@@ -14,7 +14,8 @@ export interface StoreCheckoutOrder {
 }
 export interface StoreOrderStatus {
   id: string; order_number: string; status: string; payment_status: string | null;
-  payment_status_detail: string | null; total_amount_minor: number; currency_code: string;
+  payment_status_detail: string | null; payment_review_reason: string | null; preference_id: string | null;
+  total_amount_minor: number; currency_code: string;
   reservation_expires_at: string; paid_at: string | null;
 }
 export interface StoreCredentials { name?: string; email: string; password: string; password_confirmation?: string; }
@@ -40,8 +41,8 @@ export async function cartRequest(method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 
   }));
   return result.lines;
 }
-export async function startStoreCheckout(idempotencyKey: string): Promise<StoreCheckoutOrder> {
-  return readStoreResponse<StoreCheckoutOrder>(await adminFetch('/api/v1/store/checkout', {
+export async function startStoreCheckout(idempotencyKey: string, endpoint = '/api/v1/store/checkout'): Promise<StoreCheckoutOrder> {
+  return readStoreResponse<StoreCheckoutOrder>(await adminFetch(endpoint, {
     method: 'POST', cache: 'no-store',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
   }));

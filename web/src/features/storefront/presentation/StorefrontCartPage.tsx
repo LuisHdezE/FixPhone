@@ -43,10 +43,12 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
   async function checkout() {
     setStartingCheckout(true); setError('');
     try {
+      const preferenceRoute = '/api/v1/store/checkout';
       checkoutKey.current ??= `fpstore_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const order = await startStoreCheckout(checkoutKey.current);
-      if (order.payment_initiated && order.checkout_url) {
-        window.location.assign(order.checkout_url);
+      const order = await startStoreCheckout(checkoutKey.current, preferenceRoute);
+      const init_point = order.checkout_url;
+      if (order.payment_initiated && init_point) {
+        window.location.assign(init_point);
         return;
       }
       setCreatedOrder(order);
@@ -121,9 +123,10 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
           </div>)}
           {unavailable && <p className="fp-cart-stock">Los productos sin disponibilidad no se incluyen en el subtotal.</p>}
           <p className="fp-cart-summary-note">El envío se paga aparte. El precio y la disponibilidad se verifican al consultar; el carrito no reserva stock.</p>
-          <button type="button" className="fp-cart-primary" disabled={startingCheckout || !!createdOrder || fetching || unavailable || lines.length === 0} onClick={() => { void checkout(); }}>
-            {startingCheckout ? 'Preparando pago…' : createdOrder ? 'Pago no configurado' : 'Continuar al pago'}
+          <button data-mp-checkout-cta="checkout-pro" type="button" className="fp-cart-primary" aria-busy={startingCheckout} disabled={startingCheckout || !!createdOrder || fetching || unavailable || lines.length === 0} onClick={checkout}>
+            Pagar con Mercado Pago
           </button>
+          {startingCheckout && <p role="status" className="fp-cart-summary-note">Preparando pago…</p>}
         </aside>
       </div>}
     </>}

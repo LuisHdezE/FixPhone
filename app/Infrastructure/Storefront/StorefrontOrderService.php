@@ -169,6 +169,18 @@ final class StorefrontOrderService
         });
     }
 
+    public function expireReservations(): int
+    {
+        return DB::table('storefront_orders')
+            ->where('status', 'awaiting_payment')
+            ->whereNotNull('reservation_expires_at')
+            ->where('reservation_expires_at', '<=', now())
+            ->update([
+                'status' => 'expired',
+                'updated_at' => now(),
+            ]);
+    }
+
     public function present(object $order): array
     {
         return [

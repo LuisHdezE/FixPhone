@@ -28,6 +28,8 @@ final class StorefrontOrderStatusController
             'status' => $order->status,
             'payment_status' => $order->payment_status,
             'payment_status_detail' => $order->payment_status_detail,
+            'payment_review_reason' => $order->payment_review_reason,
+            'preference_id' => $order->mercadopago_preference_id,
             'total_amount_minor' => (int) $order->total_amount_minor,
             'currency_code' => $order->currency_code,
             'reservation_expires_at' => $order->reservation_expires_at,
