@@ -34,55 +34,133 @@ final class StorefrontMercadoPagoService
 
     public function ensurePreference(object $order): object
     {
-        $claim = DB::transaction(function () use ($order): array {
+        $claim = $this->claimPreferenceAttempt($order);
+        if ($claim['mode'] === 'existing') {
+            return $claim['order'];
+        }
+
+        $order = $claim['order'];
+        $token = $claim['token'];
+        if ($claim['mode'] === 'reconcile') {
+            try {
+                $found = $this->gateway->findPreferenceByExternalReference((string) $order->external_reference);
+                if ($found !== null) {
+                    return $this->savePreference($order, $found, $token);
+                }
+            } catch (\Throwable $exception) {
+                $this->markPreferenceUncertain($order, $token, $exception);
+
+                throw $exception;
+            }
+
+            $this->markPreferenceUncertain($order, $token);
+            abort(409, 'La creación anterior todavía no se pudo confirmar. FixPhone seguirá conciliándola sin duplicar el pago.');
+        }
+
+        $this->markPreferenceDispatched($order, $token);
+
+        try {
+            $response = $this->gateway->createPreference($claim['payload']);
+            $this->assertPreferenceMatches($response, $order);
+
+            return $this->savePreference($order, $response, $token);
+        } catch (DefinitiveMercadoPagoFailure $exception) {
+            $this->markPreferenceDefinitivelyFailed($order, $token, $exception);
+
+            throw $exception;
+        } catch (\Throwable $exception) {
+            $this->markPreferenceUncertain($order, $token, $exception);
+
+            throw $exception;
+        }
+    }
+
+    private function claimPreferenceAttempt(object $order): array
+    {
+        return DB::transaction(function () use ($order): array {
             $locked = DB::table('storefront_orders')->where('id', $order->id)->lockForUpdate()->first();
             if (! $locked) {
                 abort(404);
+            }
+            if ($locked->mercadopago_preference_id && $locked->mercadopago_checkout_url) {
+                return ['order' => $locked, 'mode' => 'existing', 'token' => null, 'payload' => null];
             }
             if (in_array($locked->status, ['paid', 'payment_review', 'expired', 'cancelled'], true)
                 || CarbonImmutable::parse($locked->reservation_expires_at)->isPast()) {
                 throw ValidationException::withMessages(['checkout' => 'Esta orden ya no puede iniciar un pago.']);
             }
-            if ($locked->mercadopago_preference_id && $locked->mercadopago_checkout_url) {
-                return ['order' => $locked, 'create' => false, 'reconcile' => false];
+
+            $preference = DB::table('storefront_payment_preferences')
+                ->where('order_id', $locked->id)
+                ->lockForUpdate()
+                ->first();
+            if ($preference?->lease_expires_at !== null
+                && CarbonImmutable::parse($preference->lease_expires_at)->isFuture()) {
+                abort(409, 'La creación o conciliación del pago sigue en curso. Esperá unos segundos y volvé a intentarlo.');
             }
 
-            $startedAt = $locked->mercadopago_preference_started_at;
-            if ($startedAt !== null) {
-                if (CarbonImmutable::parse($startedAt)->gt(now()->subMinutes(2))) {
-                    abort(409, 'La creación del pago sigue en curso. Esperá unos segundos y volvé a intentarlo.');
-                }
-
-                return ['order' => $locked, 'create' => true, 'reconcile' => true];
+            $payload = $this->preferencePayload($locked);
+            $payloadHash = hash('sha256', json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '');
+            $token = (string) Str::uuid();
+            $mode = 'create';
+            if ($preference !== null) {
+                $safeToCreate = $preference->status === 'failed_definitive'
+                    || ($preference->status === 'claimed' && $preference->request_dispatched_at === null);
+                $mode = $safeToCreate ? 'create' : 'reconcile';
+            } elseif ($locked->mercadopago_preference_started_at !== null) {
+                // A legacy/incomplete attempt may have reached Mercado Pago. Search only.
+                $mode = 'reconcile';
             }
 
+            $values = [
+                'external_reference' => $locked->external_reference,
+                'status' => $mode === 'create' ? 'claimed' : 'reconciling',
+                'active_attempt_token' => $token,
+                'lease_expires_at' => now()->addMinutes(2),
+                'request_payload_hash' => $payloadHash,
+                'last_error_class' => null,
+                'started_at' => now(),
+                'updated_at' => now(),
+            ];
+            if ($mode === 'create') {
+                $values['request_dispatched_at'] = null;
+            }
+
+            if ($preference) {
+                DB::table('storefront_payment_preferences')->where('id', $preference->id)->update([
+                    ...$values,
+                    'attempt_count' => (int) $preference->attempt_count + 1,
+                ]);
+            } else {
+                DB::table('storefront_payment_preferences')->insert([
+                    ...$values,
+                    'id' => (string) Str::ulid(),
+                    'order_id' => $locked->id,
+                    'attempt_count' => 1,
+                    'request_dispatched_at' => $mode === 'reconcile'
+                        ? $locked->mercadopago_preference_started_at
+                        : null,
+                    'created_at' => now(),
+                ]);
+            }
             DB::table('storefront_orders')->where('id', $locked->id)->update([
                 'mercadopago_preference_started_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            return ['order' => $locked, 'create' => true, 'reconcile' => false];
+            return ['order' => $locked, 'mode' => $mode, 'token' => $token, 'payload' => $payload];
         });
+    }
 
-        if (! $claim['create']) {
-            return $claim['order'];
-        }
-
-        $order = $claim['order'];
-        if ($claim['reconcile']) {
-            $found = $this->gateway->findPreferenceByExternalReference((string) $order->external_reference);
-            if ($found !== null) {
-                return $this->savePreference($order, $found);
-            }
-        }
-
+    private function preferencePayload(object $order): array
+    {
         $items = DB::table('storefront_order_items')
             ->where('order_id', $order->id)
             ->orderBy('inventory_item_id')
             ->get();
         $nameParts = preg_split('/\s+/', trim((string) $order->customer_name), 2) ?: [];
 
-        $payload = [
+        return [
             'items' => $items->map(static fn (object $item): array => [
                 'id' => $item->sku_snapshot,
                 'title' => $item->title_snapshot,
@@ -111,51 +189,68 @@ final class StorefrontMercadoPagoService
             'metadata' => ['fixphone_order_id' => (string) $order->id],
             'statement_descriptor' => 'FIXPHONE',
         ];
+    }
 
-        $payloadHash = hash('sha256', json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '');
-        DB::transaction(function () use ($order, $payloadHash): void {
+    private function markPreferenceDispatched(object $order, string $token): void
+    {
+        DB::transaction(function () use ($order, $token): void {
             $preference = DB::table('storefront_payment_preferences')
                 ->where('order_id', $order->id)
                 ->lockForUpdate()
                 ->first();
-            $values = [
-                'external_reference' => $order->external_reference,
-                'status' => 'creating',
-                'request_payload_hash' => $payloadHash,
-                'last_error_class' => null,
-                'started_at' => now(),
-                'updated_at' => now(),
-            ];
-
-            if ($preference) {
-                DB::table('storefront_payment_preferences')->where('id', $preference->id)->update([
-                    ...$values,
-                    'attempt_count' => (int) $preference->attempt_count + 1,
-                ]);
-            } else {
-                DB::table('storefront_payment_preferences')->insert([
-                    ...$values,
-                    'id' => (string) Str::ulid(),
-                    'order_id' => $order->id,
-                    'attempt_count' => 1,
-                    'created_at' => now(),
-                ]);
+            if (! $preference
+                || $preference->active_attempt_token !== $token
+                || $preference->status !== 'claimed'
+                || $preference->lease_expires_at === null
+                || CarbonImmutable::parse($preference->lease_expires_at)->isPast()) {
+                abort(409, 'El intento de creación perdió su control exclusivo antes del envío.');
             }
+
+            DB::table('storefront_payment_preferences')->where('id', $preference->id)->update([
+                'status' => 'dispatching',
+                'request_dispatched_at' => now(),
+                'updated_at' => now(),
+            ]);
         });
+    }
 
-        try {
-            $response = $this->gateway->createPreference($payload);
-            $this->assertPreferenceMatches($response, $order);
-
-            return $this->savePreference($order, $response);
-        } catch (\Throwable $exception) {
-            DB::table('storefront_payment_preferences')->where('order_id', $order->id)->update([
+    private function markPreferenceUncertain(object $order, string $token, ?\Throwable $exception = null): void
+    {
+        DB::table('storefront_payment_preferences')
+            ->where('order_id', $order->id)
+            ->where('active_attempt_token', $token)
+            ->update([
                 'status' => 'uncertain',
+                'active_attempt_token' => null,
+                'lease_expires_at' => null,
+                'last_error_class' => $exception ? get_class($exception) : null,
+                'updated_at' => now(),
+            ]);
+    }
+
+    private function markPreferenceDefinitivelyFailed(object $order, string $token, \Throwable $exception): void
+    {
+        DB::transaction(function () use ($order, $token, $exception): void {
+            $preference = DB::table('storefront_payment_preferences')
+                ->where('order_id', $order->id)
+                ->lockForUpdate()
+                ->first();
+            if (! $preference || $preference->active_attempt_token !== $token) {
+                return;
+            }
+
+            DB::table('storefront_payment_preferences')->where('id', $preference->id)->update([
+                'status' => 'failed_definitive',
+                'active_attempt_token' => null,
+                'lease_expires_at' => null,
                 'last_error_class' => get_class($exception),
                 'updated_at' => now(),
             ]);
-            throw $exception;
-        }
+            DB::table('storefront_orders')->where('id', $order->id)->update([
+                'mercadopago_preference_started_at' => null,
+                'updated_at' => now(),
+            ]);
+        });
     }
 
     public function processPayment(string $paymentId, ?array $merchantOrder = null): string
@@ -444,34 +539,64 @@ final class StorefrontMercadoPagoService
         }
     }
 
-    private function savePreference(object $order, array $preference): object
+    private function savePreference(object $order, array $preference, string $token): object
     {
-        $this->assertPreferenceMatches($preference, $order);
-        DB::table('storefront_orders')->where('id', $order->id)->update([
-            'mercadopago_preference_id' => (string) $preference['id'],
-            'mercadopago_checkout_url' => (string) $preference['init_point'],
-            'payment_status' => 'preference_created',
-            'payment_status_detail' => null,
-            'updated_at' => now(),
-        ]);
-        DB::table('storefront_payment_preferences')->where('order_id', $order->id)->update([
-            'preference_id' => (string) $preference['id'],
-            'client_id' => (string) $preference['client_id'],
-            'collector_id' => (string) $preference['collector_id'],
-            'status' => 'completed',
-            'checkout_url' => (string) $preference['init_point'],
-            'response_payload_hash' => hash('sha256', json_encode($preference, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: ''),
-            'last_error_class' => null,
-            'completed_at' => now(),
-            'updated_at' => now(),
-        ]);
+        return DB::transaction(function () use ($order, $preference, $token): object {
+            $lockedOrder = DB::table('storefront_orders')->where('id', $order->id)->lockForUpdate()->first();
+            $lockedPreference = DB::table('storefront_payment_preferences')
+                ->where('order_id', $order->id)
+                ->lockForUpdate()
+                ->first();
+            if (! $lockedOrder || ! $lockedPreference) {
+                throw new RuntimeException('El intento local de preferencia ya no existe.');
+            }
 
-        $saved = DB::table('storefront_orders')->where('id', $order->id)->first();
-        if (! $saved) {
-            abort(404);
-        }
+            $this->assertPreferenceMatches($preference, $lockedOrder);
+            if ($lockedPreference->status === 'completed') {
+                if ((string) $lockedPreference->preference_id === (string) $preference['id']
+                    && (string) $lockedOrder->mercadopago_preference_id === (string) $preference['id']) {
+                    return $lockedOrder;
+                }
 
-        return $saved;
+                throw new RuntimeException('Un intento anterior ya confirmó otra preferencia para esta orden.');
+            }
+            if ($lockedPreference->active_attempt_token !== $token) {
+                throw new RuntimeException('El intento perdió su control exclusivo y no puede guardar una respuesta antigua.');
+            }
+
+            $orderUpdated = DB::table('storefront_orders')->where('id', $lockedOrder->id)->update([
+                'mercadopago_preference_id' => (string) $preference['id'],
+                'mercadopago_checkout_url' => (string) $preference['init_point'],
+                'payment_status' => 'preference_created',
+                'payment_status_detail' => null,
+                'updated_at' => now(),
+            ]);
+            if ($orderUpdated !== 1) {
+                throw new RuntimeException('No se pudo confirmar la preferencia en la orden local.');
+            }
+
+            $preferenceUpdated = DB::table('storefront_payment_preferences')
+                ->where('id', $lockedPreference->id)
+                ->where('active_attempt_token', $token)
+                ->update([
+                    'preference_id' => (string) $preference['id'],
+                    'client_id' => (string) $preference['client_id'],
+                    'collector_id' => (string) $preference['collector_id'],
+                    'status' => 'completed',
+                    'active_attempt_token' => null,
+                    'lease_expires_at' => null,
+                    'checkout_url' => (string) $preference['init_point'],
+                    'response_payload_hash' => hash('sha256', json_encode($preference, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: ''),
+                    'last_error_class' => null,
+                    'completed_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            if ($preferenceUpdated !== 1) {
+                throw new RuntimeException('No se pudo confirmar la verificación local de la preferencia.');
+            }
+
+            return DB::table('storefront_orders')->where('id', $lockedOrder->id)->first();
+        });
     }
 
     private function isSafeCheckoutUrl(string $url): bool

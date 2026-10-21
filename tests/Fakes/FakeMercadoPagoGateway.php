@@ -4,6 +4,7 @@ namespace Tests\Fakes;
 
 use App\Infrastructure\Storefront\MercadoPagoGateway;
 use RuntimeException;
+use Throwable;
 
 final class FakeMercadoPagoGateway implements MercadoPagoGateway
 {
@@ -19,9 +20,15 @@ final class FakeMercadoPagoGateway implements MercadoPagoGateway
 
     public array $createdPayloads = [];
 
+    public ?Throwable $createException = null;
+
     public function createPreference(array $payload): array
     {
         $this->createdPayloads[] = $payload;
+
+        if ($this->createException !== null) {
+            throw $this->createException;
+        }
 
         return $this->preference ?? throw new RuntimeException('No hay preferencia simulada.');
     }

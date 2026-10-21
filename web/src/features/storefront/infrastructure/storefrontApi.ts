@@ -14,7 +14,8 @@ export interface StoreCheckoutOrder {
 }
 export interface StoreOrderStatus {
   id: string; order_number: string; status: string; payment_status: string | null;
-  payment_status_detail: string | null; total_amount_minor: number; currency_code: string;
+  payment_status_detail: string | null; payment_review_reason: string | null; preference_id: string | null;
+  total_amount_minor: number; currency_code: string;
   reservation_expires_at: string; paid_at: string | null;
 }
 export interface StoreCredentials { name?: string; email: string; password: string; password_confirmation?: string; }

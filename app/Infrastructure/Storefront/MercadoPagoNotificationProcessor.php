@@ -88,7 +88,8 @@ final class MercadoPagoNotificationProcessor
         $count = 0;
         $orders = DB::table('storefront_orders')
             ->whereNotNull('mercadopago_preference_id')
-            ->whereIn('status', ['awaiting_payment', 'payment_review'])
+            // Reservation expiry releases stock but does not end financial tracking.
+            ->whereIn('status', ['awaiting_payment', 'expired', 'payment_review'])
             ->orderBy('payment_checked_at')
             ->limit(max(1, min($limit, 100)))
             ->get();

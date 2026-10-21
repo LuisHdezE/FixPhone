@@ -35,6 +35,9 @@ return new class extends Migration
             $table->string('collector_id', 40)->nullable();
             $table->string('status', 30);
             $table->unsignedInteger('attempt_count')->default(0);
+            $table->uuid('active_attempt_token')->nullable()->unique();
+            $table->timestamp('lease_expires_at')->nullable();
+            $table->timestamp('request_dispatched_at')->nullable();
             $table->text('checkout_url')->nullable();
             $table->char('request_payload_hash', 64);
             $table->char('response_payload_hash', 64)->nullable();

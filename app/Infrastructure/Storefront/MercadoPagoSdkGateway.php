@@ -7,6 +7,7 @@ use MercadoPago\Client\Common\RequestOptions;
 use MercadoPago\Client\MerchantOrder\MerchantOrderClient;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\Exceptions\MPApiException;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Net\MPResource;
 use MercadoPago\Net\MPSearchRequest;
@@ -18,7 +19,23 @@ final class MercadoPagoSdkGateway implements MercadoPagoGateway
     {
         $this->configure();
 
-        return $this->content((new PreferenceClient)->create($payload, $this->requestOptions(false)));
+        try {
+            $resource = (new PreferenceClient)->create($payload, $this->requestOptions(false));
+        } catch (MPApiException $exception) {
+            $failure = in_array($exception->getStatusCode(), [400, 401, 403, 404, 422], true)
+                ? DefinitiveMercadoPagoFailure::class
+                : UncertainMercadoPagoFailure::class;
+
+            throw new $failure('Mercado Pago rechazó la creación de la preferencia.', 0, $exception);
+        } catch (\Throwable $exception) {
+            throw new UncertainMercadoPagoFailure(
+                'No se pudo confirmar si Mercado Pago creó la preferencia.',
+                0,
+                $exception,
+            );
+        }
+
+        return $this->content($resource);
     }
 
     public function findPreferenceByExternalReference(string $externalReference): ?array
