@@ -169,6 +169,18 @@ final class StorefrontOrderService
         });
     }
 
+    public function expireReservations(): int
+    {
+        return DB::table('storefront_orders')
+            ->where('status', 'awaiting_payment')
+            ->whereNotNull('reservation_expires_at')
+            ->where('reservation_expires_at', '<=', now())
+            ->update([
+                'status' => 'expired',
+                'updated_at' => now(),
+            ]);
+    }
+
     public function present(object $order): array
     {
         return [
@@ -179,6 +191,9 @@ final class StorefrontOrderService
             'currency_code' => $order->currency_code,
             'external_reference' => $order->external_reference,
             'reservation_expires_at' => $order->reservation_expires_at,
+            'payment_status' => $order->payment_status ?? null,
+            'payment_status_detail' => $order->payment_status_detail ?? null,
+            'preference_id' => $order->mercadopago_preference_id ?? null,
         ];
     }
 }

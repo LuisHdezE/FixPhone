@@ -43,8 +43,14 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
   async function checkout() {
     setStartingCheckout(true); setError('');
     try {
+      const preferenceRoute = '/api/v1/store/checkout';
       checkoutKey.current ??= `fpstore_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const order = await startStoreCheckout(checkoutKey.current);
+      const order = await startStoreCheckout(checkoutKey.current, preferenceRoute);
+      const init_point = order.checkout_url;
+      if (order.payment_initiated && init_point) {
+        window.location.assign(init_point);
+        return;
+      }
       setCreatedOrder(order);
       setStartingCheckout(false);
     } catch (reason) {
@@ -72,7 +78,7 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
       {error && <p role="alert" className="fp-cart-error">{error}</p>}
       {createdOrder && <div role="status" className="fp-cart-summary-note">
         <strong>Pedido {createdOrder.order_number} registrado.</strong>
-        <span> Total: {money(createdOrder.currency_code, createdOrder.total_amount_minor)}. El pago todavía no se inició.</span>
+        <span> Total: {money(createdOrder.currency_code, createdOrder.total_amount_minor)}. El pago no está habilitado en este entorno.</span>
       </div>}
       {fetching ? <p role="status" className="fp-cart-state">Cargando carrito…</p> : !lines.length && !error ? <div className="fp-cart-empty">
         <StorefrontIcon name="cart" />
@@ -117,9 +123,10 @@ export function StorefrontCartPage({ provider }: { provider: StorefrontProvider 
           </div>)}
           {unavailable && <p className="fp-cart-stock">Los productos sin disponibilidad no se incluyen en el subtotal.</p>}
           <p className="fp-cart-summary-note">El envío se paga aparte. El precio y la disponibilidad se verifican al consultar; el carrito no reserva stock.</p>
-          <button type="button" className="fp-cart-primary" disabled={startingCheckout || !!createdOrder || fetching || unavailable || lines.length === 0} onClick={() => { void checkout(); }}>
-            {startingCheckout ? 'Registrando pedido…' : createdOrder ? 'Pedido registrado' : 'Continuar al pago'}
+          <button data-mp-checkout-cta="checkout-pro" type="button" className="fp-cart-primary" aria-busy={startingCheckout} disabled={startingCheckout || !!createdOrder || fetching || unavailable || lines.length === 0} onClick={checkout}>
+            Pagar con Mercado Pago
           </button>
+          {startingCheckout && <p role="status" className="fp-cart-summary-note">Preparando pago…</p>}
         </aside>
       </div>}
     </>}
