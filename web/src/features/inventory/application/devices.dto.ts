@@ -112,6 +112,8 @@ export interface DeviceModelVariantOptionDto {
   id: string;
   name: string;
   variant_key: string;
+  ram?: string | null;
+  storage?: string | null;
 }
 
 export interface DeviceModelVariantDetailDto {

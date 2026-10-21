@@ -6,6 +6,7 @@ use App\Infrastructure\Inventory\InventoryItem;
 use App\Infrastructure\MasterData\DeviceModelReferenceGuard;
 use App\Infrastructure\MasterData\DeviceModelVariant;
 use App\Infrastructure\MasterData\DeviceSpecificationResolver;
+use App\Infrastructure\MasterData\MasterDataEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -22,10 +23,25 @@ final class DeviceSpecificationsReadController extends Controller
         $values = $request->validate(['variant_id' => ['nullable', 'string', 'max:40']]);
         app(DeviceModelReferenceGuard::class)->assertKind($modelId, 'deviceModels', 'device_model_id');
 
+        // Only active variants are offered for NEW assignments; RAM and storage are
+        // surfaced beside each option so staff can identify the correct SKU at intake.
+        $variants = DeviceModelVariant::query()->where('device_model_id', $modelId)->where('active', true)
+            ->orderBy('name')->get(['id', 'name', 'variant_key', 'ram_capacity_id', 'storage_capacity_id']);
+        $capacityIds = $variants->pluck('ram_capacity_id')->merge($variants->pluck('storage_capacity_id'))
+            ->filter()->unique()->values();
+        $capacityLabels = MasterDataEntry::query()->whereIn('id', $capacityIds)->get(['id', 'payload'])
+            ->mapWithKeys(static fn (MasterDataEntry $entry): array => [
+                $entry->id => $entry->payload['label'] ?? $entry->payload['name'] ?? null,
+            ]);
+
         return response()->json(['data' => [
-            // Only active variants are offered for NEW assignments; they stay optional.
-            'variants' => DeviceModelVariant::query()->where('device_model_id', $modelId)->where('active', true)
-                ->orderBy('name')->get(['id', 'name', 'variant_key'])->all(),
+            'variants' => $variants->map(fn (DeviceModelVariant $variant): array => [
+                'id' => $variant->id,
+                'name' => $variant->name,
+                'variant_key' => $variant->variant_key,
+                'ram' => $variant->ram_capacity_id ? ($capacityLabels[$variant->ram_capacity_id] ?? null) : null,
+                'storage' => $variant->storage_capacity_id ? ($capacityLabels[$variant->storage_capacity_id] ?? null) : null,
+            ])->values(),
             'resolved' => $resolver->forModel($modelId, $values['variant_id'] ?? null),
         ]])->header('Cache-Control', 'private, no-store');
     }

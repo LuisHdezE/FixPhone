@@ -18,6 +18,7 @@ export function PhonePublicationModal({ id, onClose, onSaved }: {
   const [uploading, setUploading] = useState(false);
   const locked = busy || uploading;
   const url = '/api/v1/admin/inventory/phones/' + encodeURIComponent(id) + '/publication';
+  const canPublish = data?.destination === 'Direct Sale';
 
   useEffect(() => {
     let active = true;
@@ -84,8 +85,9 @@ export function PhonePublicationModal({ id, onClose, onSaved }: {
           </label>
         </div>
         <StoreProductImageField value={data.image_url} onChange={image_url => setData(current => current ? { ...current, image_url } : current)} disabled={busy} onUploadingChange={setUploading} productLabel={data.title} />
-        <label className="flex items-center gap-2"><input type="checkbox" checked={data.published} onChange={event => setData({ ...data, published: event.target.checked })} /> Visible en tienda</label>
-        <p className="text-[11px] text-slate-500">Podés venderlo sin reparar. Indicá los defectos reales. Publicar no registra una venta ni cambia el stock.</p>
+        <label className="flex items-center gap-2"><input type="checkbox" disabled={!canPublish} checked={canPublish && data.published} onChange={event => setData({ ...data, published: event.target.checked })} /> Visible en tienda</label>
+        {!canPublish ? <p role="status" className="rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">Este equipo no está destinado a venta directa. Los dispositivos para repuestos o pendientes de evaluación no se pueden publicar como teléfono completo.</p> : null}
+        <p className="text-[11px] text-slate-500">Podés venderlo sin reparar si su destino es Venta directa. Indicá los defectos reales. Publicar no registra una venta ni cambia el stock.</p>
       </> : !error ? <p>Cargando ficha…</p> : null}
       {error ? <p role="alert" className="rounded bg-red-50 p-2 text-red-700">{error}</p> : null}
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">

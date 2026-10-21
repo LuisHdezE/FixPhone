@@ -8,6 +8,8 @@ import { TextField } from '@/components/forms/TextField';
 import { ModalShell } from '@/components/layout/ModalShell';
 import { DevicePhotoGallery } from './DevicePhotoGallery';
 import type { MasterDataProvider } from '@/features/master-data/application/master-data.contracts';
+import type { MasterDataDeviceModelDto } from '@/features/master-data/application/master-data.dto';
+import { DeviceModelTechnicalModal } from '@/features/master-data/presentation/DeviceModelTechnicalModal';
 import type { InventoryDemoProvider, InventoryDevicesGateway } from '../application/inventory.contracts';
 import type {
   DeviceAccountLock,
@@ -243,6 +245,8 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   ], [conditions, view.placeholders.conditionId]);
 
   const [variantOptions, setVariantOptions] = useState<readonly DeviceModelVariantOptionDto[]>([]);
+  const [technicalModel, setTechnicalModel] = useState<MasterDataDeviceModelDto | null>(null);
+  const [variantRefresh, setVariantRefresh] = useState(0);
   const [resolvedSpecs, setResolvedSpecs] = useState<Record<string, unknown> | null>(null);
   const [specsLoading, setSpecsLoading] = useState(false);
   const [specsError, setSpecsError] = useState<string | null>(null);
@@ -288,7 +292,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
     return () => {
       alive = false;
     };
-  }, [form.deviceModelId, form.deviceModelVariantId]);
+  }, [form.deviceModelId, form.deviceModelVariantId, variantRefresh]);
 
   function setField<Key extends keyof IntakeFormState>(key: Key, value: IntakeFormState[Key]) {
     setCreatedId(null);
@@ -439,7 +443,7 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
   const isSold = Boolean(editDevice && (editDevice.operationalStatus === 'vendido' || editDevice.operationalStatus === 'sold'));
   const isDismantling = Boolean(editDevice && (editDevice.dismantlingStatus === 'partial' || editDevice.dismantlingStatus === 'exhausted'));
 
-  return <ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving} hideCloseButton density="compact" width="medium">
+  return <><ModalShell title={editDevice ? 'Editar dispositivo ' + editDevice.id : view.title} onClose={onClose} disabled={saving || Boolean(technicalModel)} hideCloseButton density="compact" width="medium">
     <form className="device-intake-form grid gap-2 p-3" data-device-intake data-device-mode={editDevice ? 'edit' : 'create'} onSubmit={submit}>
       <p className="text-[11px] leading-4 text-slate-500">{editDevice
         ? 'El código FXP se conserva. El destino se modifica desde Cambiar estado.'
@@ -478,11 +482,20 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
               },
               ...variantOptions.map((v) => ({
                 value: v.id,
-                label: v.name + (v.variant_key ? ` (${v.variant_key})` : ''),
+                label: [v.name, v.ram ? `RAM ${v.ram}` : null, v.storage, v.variant_key ? `(${v.variant_key})` : null]
+                  .filter(Boolean).join(' · '),
               })),
             ]}
             value={form.deviceModelVariantId}
           />
+          {selectedModel ? <button
+            type="button"
+            className="justify-self-start text-[11px] font-medium text-[var(--theme-primary)] underline underline-offset-2 disabled:opacity-50"
+            disabled={saving || isSold || isDismantling}
+            onClick={() => setTechnicalModel(selectedModel)}
+          >
+            {variantOptions.length === 0 ? 'Crear variante con RAM y almacenamiento' : 'Administrar variantes y RAM'}
+          </button> : null}
         </div>
         {selectedModel && variantOptions.length === 0 && <p className="mt-1 text-[11px] text-slate-500">Para crear variantes: <a className="font-medium text-[var(--theme-primary)] underline" href="/admin/master-data/device-models" target="_blank" rel="noreferrer">Catálogos → Modelos → Ficha técnica y variantes</a>.</p>}
         {selectedModel && (
@@ -556,5 +569,16 @@ export function InventoryDeviceIntakeModal({ provider, masterDataProvider, onClo
         <button className="h-7 rounded-md bg-[var(--theme-primary)] px-3 text-xs font-medium text-white hover:brightness-95 disabled:opacity-50" disabled={!canSubmit} aria-busy={saving} type="submit">{editDevice && !hasFormChanges ? 'Cerrar' : 'Guardar'}</button>
       </div>
     </form>
-  </ModalShell>;
+  </ModalShell>
+  {technicalModel ? <DeviceModelTechnicalModal
+    key={technicalModel.id}
+    model={technicalModel}
+    ram={masterDataProvider.getRamCapacities()}
+    storage={masterDataProvider.getStorageCapacities()}
+    onClose={() => {
+      setTechnicalModel(null);
+      setVariantRefresh((current) => current + 1);
+    }}
+  /> : null}
+  </>;
 }

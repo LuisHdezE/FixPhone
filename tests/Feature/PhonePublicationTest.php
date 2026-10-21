@@ -72,6 +72,9 @@ final class PhonePublicationTest extends TestCase
         $this->signIn();
         $cases = [
             ['inventory_purpose' => 'parts_donor', 'metadata' => ['destination' => 'Donor']],
+            // Destination is authoritative even when a stale legacy purpose says used phone.
+            ['inventory_purpose' => 'sell_as_used_phone', 'metadata' => ['destination' => 'Donor']],
+            ['inventory_purpose' => 'sell_as_used_phone', 'metadata' => ['destination' => 'Pending evaluation']],
             ['is_sellable' => false],
             ['stock_quantity' => 0],
             ['operational_status' => 'vendido'],
@@ -83,5 +86,18 @@ final class PhonePublicationTest extends TestCase
                 ->assertUnprocessable();
             $this->assertSame('no_publicable', $item->fresh()->publication_status);
         }
+    }
+
+    public function test_stale_published_donor_is_hidden_and_shown_as_unpublished(): void
+    {
+        $item = $this->phone([
+            'publication_status' => 'publicado',
+            'metadata' => ['destination' => 'Donor'],
+        ]);
+
+        $this->signIn();
+        $this->getJson('/api/v1/admin/inventory/phones/'.$item->id.'/publication')
+            ->assertOk()->assertJsonPath('data.published', false);
+        $this->getJson('/api/v1/store/products')->assertOk()->assertDontSee($item->id);
     }
 }
